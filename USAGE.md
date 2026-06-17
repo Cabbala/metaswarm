@@ -219,6 +219,7 @@ Prerequisites: `npx playwright install chromium`
 | `/review-design <path>` | Run the 6-agent Design Review Gate |
 | `/brainstorm` | Refine an idea before implementation |
 | `/self-reflect` | Extract learnings from recent PR reviews |
+| `/handoff` | Write a self-contained handoff doc so a fresh agent can resume the work |
 | `/pr-shepherd <pr>` | Monitor PR through to merge |
 | `/handle-pr-comments <pr>` | Address PR review feedback |
 | `/create-issue` | Create a GitHub issue with agent instructions |

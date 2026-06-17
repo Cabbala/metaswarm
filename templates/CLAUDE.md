@@ -32,6 +32,7 @@ This triggers the full pipeline: Research → Plan → Design Review Gate → Wo
 | `/review-design` | Trigger parallel design review gate (5 agents) |
 | `/pr-shepherd <pr>` | Monitor a PR through to merge |
 | `/self-reflect` | Extract learnings after a PR merge |
+| `/handoff` | Write a self-contained handoff doc so a fresh agent can resume the work |
 | `/handle-pr-comments` | Handle PR review comments |
 | `/brainstorm` | Refine an idea before implementation |
 | `/create-issue` | Create a well-structured GitHub Issue |

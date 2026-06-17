@@ -55,7 +55,7 @@ fi
 # 5. TOML commands exist
 TOML_DIR="$ROOT/commands/metaswarm"
 expected_commands=(
-  start-task prime review-design self-reflect pr-shepherd brainstorm
+  start-task prime review-design self-reflect handoff pr-shepherd brainstorm
   setup update status handle-pr-comments create-issue external-tools-health
 )
 
