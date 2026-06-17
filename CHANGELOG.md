@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.12.0
 
 ### Added
 - **`/handoff` command and `handoff` skill**: Analyzes the current session and writes a self-contained handoff document to `docs/handoffs/handoff-<YYYY-MM-DD-HHmm>.md` capturing the objective, current status, working-tree state, required reading (specs/designs/plans/code `file:line`/tests), and key decisions — so a fresh agent with zero prior context can resume the work. Emits a single closing sentence of the form `Read <file>.md and do <concrete next action>.` Wired across all platforms: Claude command (`commands/handoff.md`, `.claude/commands/handoff.md`), Gemini/Codex TOML (`commands/metaswarm/handoff.toml`, generated from `lib/sync-resources.js`), and skill definition (`skills/handoff/SKILL.md`)
+- **First-class Codex CLI plugin support** (#44): Native `.codex-plugin/plugin.json` manifest and marketplace entry, platform-aware setup/status skills, and expanded session-start hook handling so Codex CLI is a first-class target alongside Claude Code and Gemini CLI
 
 ## 0.11.0
 
