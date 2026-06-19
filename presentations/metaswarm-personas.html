@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dramatis Personae of the Swarm — metaswarm</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/dist/reveal.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:        #0c0b08;
+  --ink-2:      #15130d;
+  --ink-3:      #1d1a12;
+  --paper:      #ece3d0;
+  --paper-dim:  #b7ad97;
+  --muted:      #82795f;
+  --signal:     #f0a818;   /* amber — the swarm signal */
+  --signal-soft:#caa24a;
+  --coral:      #e0596b;   /* adversarial / danger */
+  --jade:       #5fbf9a;   /* pass / green */
+  --line:       rgba(236,227,208,0.14);
+  --line-strong:rgba(236,227,208,0.30);
+}
+
+/* ---------- base ---------- */
+.reveal{
+  font-family:"Newsreader", Georgia, serif;
+  font-size:30px;
+  color:var(--paper);
+  font-weight:330;
+}
+.reveal .slides{ text-align:left; }
+.reveal .slides section{ height:100%; }
+
+html, body{ background:var(--ink); }
+.reveal-viewport{
+  background:
+    radial-gradient(120% 80% at 12% 0%, #181408 0%, rgba(24,20,8,0) 55%),
+    radial-gradient(90% 70% at 100% 100%, #1a0f0c 0%, rgba(26,15,12,0) 50%),
+    var(--ink);
+}
+/* film grain overlay */
+.reveal-viewport::after{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:60; opacity:.55;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+}
+
+/* ---------- typography ---------- */
+.reveal h1,.reveal h2,.reveal h3,.reveal h4{
+  font-family:"Fraunces", Georgia, serif;
+  color:var(--paper);
+  text-transform:none;
+  line-height:1.02;
+  letter-spacing:-0.02em;
+  margin:0 0 .3em;
+  font-weight:560;
+}
+.reveal h1{ font-size:3.4em; font-weight:600; }
+.reveal em{ color:var(--signal); font-style:italic; }
+.reveal strong{ color:var(--paper); font-weight:600; }
+.reveal a{ color:var(--signal); }
+
+.mono{ font-family:"JetBrains Mono", monospace; }
+.eyebrow{
+  font-family:"JetBrains Mono", monospace;
+  font-size:.46em; font-weight:600; letter-spacing:.32em;
+  text-transform:uppercase; color:var(--signal);
+  display:flex; align-items:center; gap:.9em;
+}
+.eyebrow::before{ content:""; width:34px; height:1px; background:var(--signal); display:inline-block; }
+.dim{ color:var(--paper-dim); }
+.muted{ color:var(--muted); }
+
+/* ---------- layout helpers ---------- */
+.pad{ padding:6vh 7vw; height:100%; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; }
+.spread{ justify-content:space-between; }
+.tag{
+  font-family:"JetBrains Mono", monospace; font-size:.42em; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--signal-soft);
+  border:1px solid var(--line-strong); border-radius:2px;
+  padding:.32em .7em; display:inline-block;
+}
+
+/* progress bar accent */
+.reveal .progress{ color:var(--signal); height:3px; }
+.reveal .controls{ color:var(--signal-soft); }
+.reveal .slide-number{ background:transparent; color:var(--muted); font-family:"JetBrains Mono",monospace; }
+
+/* ====================================================== */
+/*  TITLE                                                  */
+/* ====================================================== */
+.title-wrap{ position:relative; }
+.title-wrap h1{
+  font-size:5.4em; line-height:.92; font-weight:340; font-style:italic;
+}
+.title-wrap h1 .sw{ font-style:normal; font-weight:640; display:block; color:var(--signal); }
+.title-sub{
+  margin-top:1.1em; max-width:24ch; font-size:1.02em; color:var(--paper-dim); line-height:1.4;
+}
+.title-meta{
+  position:absolute; right:7vw; bottom:6vh; text-align:right;
+  font-family:"JetBrains Mono",monospace; font-size:.5em; color:var(--muted);
+  letter-spacing:.1em; line-height:1.9;
+}
+.swarm-dots{ position:absolute; inset:0; pointer-events:none; z-index:0; }
+
+/* ====================================================== */
+/*  STATEMENT / SECTION                                    */
+/* ====================================================== */
+.statement{ font-family:"Fraunces",serif; font-size:2.05em; line-height:1.18; font-weight:380; max-width:20ch; }
+.statement em{ font-style:italic; }
+.section-no{
+  font-family:"Fraunces",serif; font-size:9em; font-weight:300; line-height:.8;
+  color:transparent; -webkit-text-stroke:1.4px var(--signal-soft); opacity:.6;
+}
+
+/* ====================================================== */
+/*  CAST GRID                                              */
+/* ====================================================== */
+.cast-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:.6em; }
+.cast-cell{ background:var(--ink); padding:.85em 1em; min-height:2.4em; transition:background .25s; }
+.cast-cell:hover{ background:var(--ink-3); }
+.cast-cell .cn{ font-family:"JetBrains Mono",monospace; font-size:.4em; color:var(--muted); letter-spacing:.1em; }
+.cast-cell .nm{ font-family:"Fraunces",serif; font-size:.82em; color:var(--paper); font-weight:520; line-height:1.05; margin-top:.18em; }
+.cast-group-label{ font-family:"JetBrains Mono",monospace; font-size:.4em; letter-spacing:.18em; text-transform:uppercase; }
+
+/* ====================================================== */
+/*  PERSONA DOSSIER                                        */
+/* ====================================================== */
+.dossier{ display:grid; grid-template-columns:0.92fr 1.35fr; gap:0; height:100%; }
+.dossier .left{
+  padding:6vh 3.2vw 6vh 7vw; display:flex; flex-direction:column; justify-content:center;
+  border-right:1px solid var(--line);
+}
+.dossier .right{ padding:6vh 7vw 6vh 3.4vw; display:flex; flex-direction:column; justify-content:center; }
+
+.persona-idx{
+  font-family:"Fraunces",serif; font-weight:300; font-size:5.6em; line-height:.8;
+  color:transparent; -webkit-text-stroke:1.3px var(--accent,var(--signal));
+}
+.persona-cat{ margin:.9em 0 .2em; }
+.persona-role{ font-family:"JetBrains Mono",monospace; font-size:.5em; letter-spacing:.06em; color:var(--paper-dim); line-height:1.5; text-transform:uppercase; }
+.persona-name{ font-family:"Fraunces",serif; font-size:2.55em; font-weight:560; line-height:.98; margin:.28em 0 .55em; letter-spacing:-0.02em; }
+.persona-name .accentdot{ color:var(--accent,var(--signal)); }
+
+.voice{
+  border-left:2px solid var(--accent,var(--signal));
+  padding:.1em 0 .1em 1em; margin-top:.4em;
+  font-style:italic; font-size:1.02em; color:var(--paper); line-height:1.3; max-width:30ch;
+}
+.voice::before{ content:"“"; color:var(--accent,var(--signal)); }
+.voice::after{ content:"”"; color:var(--accent,var(--signal)); }
+
+.field{ margin-bottom:1.05em; }
+.field-k{ font-family:"JetBrains Mono",monospace; font-size:.42em; letter-spacing:.22em; text-transform:uppercase; color:var(--accent,var(--signal)); margin-bottom:.45em; }
+.field-v{ font-size:.82em; line-height:1.4; color:var(--paper); }
+.field-v.muted{ color:var(--paper-dim); }
+.does-list{ list-style:none; padding:0; margin:0; }
+.does-list li{ font-size:.78em; line-height:1.32; padding-left:1.2em; position:relative; margin-bottom:.4em; color:var(--paper-dim); }
+.does-list li::before{ content:"▸"; position:absolute; left:0; color:var(--accent,var(--signal)); font-size:.85em; top:.05em; }
+.does-list li b{ color:var(--paper); font-weight:560; }
+.chip-row{ display:flex; flex-wrap:wrap; gap:.4em; }
+.chip{ font-family:"JetBrains Mono",monospace; font-size:.4em; letter-spacing:.05em; padding:.4em .7em; border:1px solid var(--line-strong); border-radius:2px; color:var(--paper-dim); }
+.trigger{ font-family:"JetBrains Mono",monospace; font-size:.62em; color:var(--accent,var(--signal)); background:rgba(240,168,24,0.06); border:1px solid var(--line); border-radius:3px; padding:.55em .8em; display:inline-block; }
+
+/* ====================================================== */
+/*  THEORY: PHASE FLOW                                     */
+/* ====================================================== */
+.phases{ display:flex; flex-direction:column; gap:.55em; margin-top:.5em; }
+.phase{ display:grid; grid-template-columns:2.6em 1fr; gap:1.1em; align-items:start; padding-bottom:.55em; border-bottom:1px solid var(--line); }
+.phase .pn{ font-family:"JetBrains Mono",monospace; font-size:.85em; color:var(--signal); padding-top:.18em; }
+.phase .pt{ font-family:"Fraunces",serif; font-size:.95em; font-weight:560; }
+.phase .pd{ font-size:.66em; color:var(--paper-dim); line-height:1.3; margin-top:.12em; }
+.phase .who{ font-family:"JetBrains Mono",monospace; font-size:.5em; color:var(--muted); letter-spacing:.05em; text-transform:uppercase; }
+
+/* loop diagram */
+.loop{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line-strong); margin-top:.8em; }
+.loop .step{ background:var(--ink); padding:1.1em 1em; position:relative; }
+.loop .step .sn{ font-family:"JetBrains Mono",monospace; font-size:.42em; letter-spacing:.18em; color:var(--lc,var(--signal)); }
+.loop .step .st{ font-family:"Fraunces",serif; font-size:1.05em; font-weight:580; margin:.25em 0 .35em; }
+.loop .step .sd{ font-size:.62em; line-height:1.3; color:var(--paper-dim); }
+.loop .step .who{ font-family:"JetBrains Mono",monospace; font-size:.46em; color:var(--muted); margin-top:.6em; text-transform:uppercase; letter-spacing:.08em; }
+.loop-note{ margin-top:.9em; font-family:"JetBrains Mono",monospace; font-size:.5em; color:var(--coral); letter-spacing:.04em; }
+
+/* gates */
+.gates{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.2em; margin-top:.7em; }
+.gate{ border:1px solid var(--line-strong); border-top:3px solid var(--gc,var(--signal)); padding:1.1em 1.1em 1.3em; background:linear-gradient(180deg,rgba(255,255,255,0.015),transparent); }
+.gate h4{ font-size:1.05em; margin-bottom:.15em; }
+.gate .gsub{ font-family:"JetBrains Mono",monospace; font-size:.44em; letter-spacing:.14em; text-transform:uppercase; color:var(--gc,var(--signal)); margin-bottom:.7em; }
+.gate ul{ list-style:none; padding:0; margin:0; }
+.gate li{ font-size:.66em; line-height:1.25; color:var(--paper-dim); padding-left:1em; position:relative; margin-bottom:.35em; }
+.gate li::before{ content:"·"; position:absolute; left:.15em; color:var(--gc,var(--signal)); font-weight:700; }
+.gate .verdict{ margin-top:.8em; font-family:"JetBrains Mono",monospace; font-size:.5em; color:var(--gc,var(--signal)); letter-spacing:.06em; }
+
+/* two-col compare */
+.compare{ display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--line-strong); margin-top:.7em; }
+.compare .col{ padding:1.3em 1.5em; }
+.compare .col:first-child{ border-right:1px solid var(--line); }
+.compare h4{ font-size:1.15em; display:flex; align-items:baseline; gap:.5em; }
+.compare .tagline{ font-family:"JetBrains Mono",monospace; font-size:.44em; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.compare ul{ list-style:none; padding:0; margin:.7em 0 0; }
+.compare li{ font-size:.72em; line-height:1.35; color:var(--paper-dim); padding-left:1.1em; position:relative; margin-bottom:.45em; }
+.compare li::before{ content:"—"; position:absolute; left:0; color:var(--signal-soft); }
+
+/* principles list */
+.principles{ counter-reset:p; margin-top:.5em; }
+.principle{ display:grid; grid-template-columns:auto 1fr; gap:1.2em; padding:.7em 0; border-bottom:1px solid var(--line); align-items:baseline; }
+.principle::before{ counter-increment:p; content:"0" counter(p); font-family:"JetBrains Mono",monospace; font-size:.7em; color:var(--signal); }
+.principle .pttl{ font-family:"Fraunces",serif; font-size:1.05em; font-weight:560; }
+.principle .pbody{ font-size:.72em; color:var(--paper-dim); line-height:1.35; margin-top:.1em; }
+
+.lead{ font-size:1.05em; color:var(--paper-dim); line-height:1.45; max-width:34ch; }
+.kicker{ font-size:.8em; color:var(--muted); font-family:"JetBrains Mono",monospace; letter-spacing:.05em; }
+
+.reveal .slides section .fragment.fade-in-then{ }
+.colspan{ grid-column:1 / -1; }
+
+/* fresh-reviewer visual */
+.fresh{ display:flex; gap:1.4em; align-items:stretch; margin-top:.8em; }
+.fresh .panel{ flex:1; border:1px solid var(--line-strong); padding:1.2em 1.3em; }
+.fresh .bad{ border-left:3px solid var(--coral); }
+.fresh .good{ border-left:3px solid var(--jade); }
+.fresh .panel .lbl{ font-family:"JetBrains Mono",monospace; font-size:.46em; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.5em; }
+.fresh .bad .lbl{ color:var(--coral); }
+.fresh .good .lbl{ color:var(--jade); }
+.fresh .panel p{ font-size:.74em; line-height:1.4; color:var(--paper-dim); margin:0; }
+.fresh .panel p b{ color:var(--paper); }
+
+@media(max-width:1100px){
+  .dossier{ grid-template-columns:1fr; }
+  .dossier .left{ border-right:none; border-bottom:1px solid var(--line); }
+  .loop,.gates,.cast-grid{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============ TITLE ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad title-wrap">
+    <svg class="swarm-dots" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="eyebrow">metaswarm · a field guide</div>
+    <h1>Dramatis Personae<br><span class="sw">of the Swarm</span></h1>
+    <p class="title-sub">Eighteen specialized agents, one development pipeline. Who they are, what they believe, and the theory that makes them work together.</p>
+    <div class="title-meta">
+      18 AGENTS<br>
+      9 PHASES · 3 GATES<br>
+      4-PHASE EXECUTION LOOP
+    </div>
+  </div>
+</section>
+
+<!-- ============ THESIS ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">The premise</div>
+    <p class="statement" style="margin-top:.4em;">
+      A single agent that <em>plans, builds, reviews,</em> and <em>ships</em> its own work
+      grades its own homework.
+    </p>
+    <p class="statement fragment fade-in" style="margin-top:.8em; color:var(--paper-dim);">
+      metaswarm splits that one mind into <em>many</em> — each with narrow expertise,
+      a distinct point of view, and the authority to <strong>block</strong> the others.
+    </p>
+  </div>
+</section>
+
+<!-- ============ WHY PERSONAS ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">Why personas at all</div>
+    <h2 style="font-size:2.2em; margin-top:.3em;">Specialization is a feature, not decoration.</h2>
+    <div class="principles" style="max-width:none;">
+      <div class="principle fragment fade-in">
+        <div><div class="pttl">Narrow &amp; deep beats broad &amp; shallow</div>
+        <div class="pbody">The Researcher doesn't design. The Designer doesn't implement. Each persona carries one mandate and judges only that.</div></div>
+      </div>
+      <div class="principle fragment fade-in">
+        <div><div class="pttl">Adversaries, not collaborators</div>
+        <div class="pbody">Reviewers exist to <em>refute</em>, not to agree. A fresh reviewer verifies the contract — never "did they fix what I flagged?"</div></div>
+      </div>
+      <div class="principle fragment fade-in">
+        <div><div class="pttl">Gates are blocking, not advisory</div>
+        <div class="pbody">Typecheck, lint, tests, coverage, DoD — all are mandatory state transitions. No persona may wave another through.</div></div>
+      </div>
+      <div class="principle fragment fade-in">
+        <div><div class="pttl">Complexity hidden from the human</div>
+        <div class="pbody">A nine-phase pipeline runs underneath one instruction: <span class="mono" style="color:var(--signal)">"describe what you want."</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE CAST (grid generated) ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">The cast · 18 agents in 6 acts</div>
+    <h2 style="font-size:1.9em; margin:.2em 0 .1em;">Everyone on the roster.</h2>
+    <div id="cast-mount"></div>
+  </div>
+</section>
+
+<!-- personas injected here -->
+<div id="persona-mount"></div>
+
+<!-- ============ THEORY DIVIDER ============ -->
+<section data-background-color="#100d07">
+  <div class="pad spread">
+    <div class="section-no">II</div>
+    <div>
+      <div class="eyebrow">Part two</div>
+      <h2 style="font-size:3em; max-width:16ch;">The theory of how they work <em>together</em>.</h2>
+      <p class="lead" style="margin-top:.6em;">Personas are inert alone. The value is in the choreography — the sequence, the gates, and the rule that keeps reviewers honest.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9-PHASE WORKFLOW ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">The pipeline · 9 phases</div>
+    <h2 style="font-size:1.7em; margin:.2em 0 .3em;">From "what you want" to production.</h2>
+    <div class="phases" id="phase-mount"></div>
+  </div>
+</section>
+
+<!-- ============ THE THREE GATES ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">Quality gates · pay before you pass</div>
+    <h2 style="font-size:1.7em; margin:.2em 0 0;">Three gates stand between an idea and a commit.</h2>
+    <div class="gates">
+      <div class="gate fragment fade-in" style="--gc:var(--signal)">
+        <div class="gsub">Before implementation</div>
+        <h4>Design Review</h4>
+        <ul>
+          <li>Product Manager — use cases &amp; user benefit</li>
+          <li>Architect — pattern &amp; architecture fit</li>
+          <li>Designer — API / UX / DX quality</li>
+          <li>Security Design — STRIDE threat model</li>
+          <li>CTO — testing strategy &amp; correctness</li>
+        </ul>
+        <div class="verdict">5 IN PARALLEL · ALL MUST APPROVE</div>
+      </div>
+      <div class="gate fragment fade-in" style="--gc:var(--coral)">
+        <div class="gsub">Before the plan reaches you</div>
+        <h4>Plan Review</h4>
+        <ul>
+          <li>Feasibility — is it actually buildable?</li>
+          <li>Completeness — every requirement covered?</li>
+          <li>Scope &amp; Alignment — right size, right goal?</li>
+          <li>Binary PASS / FAIL — no suggestions</li>
+          <li>Fresh reviewer each pass — no anchoring</li>
+        </ul>
+        <div class="verdict" style="color:var(--coral)">3 ADVERSARIAL · ALL MUST PASS</div>
+      </div>
+      <div class="gate fragment fade-in" style="--gc:var(--jade)">
+        <div class="gsub">Before every commit</div>
+        <h4>Coverage &amp; Validation</h4>
+        <ul>
+          <li><span class="mono">tsc --noEmit</span> — types clean</li>
+          <li><span class="mono">eslint</span> — style enforced</li>
+          <li><span class="mono">vitest run</span> — tests green</li>
+          <li>100% lines · branches · funcs · statements</li>
+          <li>Orchestrator runs it <em>itself</em> — never trusts reports</li>
+        </ul>
+        <div class="verdict" style="color:var(--jade)">DETERMINISTIC · BLOCKING</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4-PHASE LOOP ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">Inside execution · the work-unit loop</div>
+    <h2 style="font-size:1.7em; margin:.2em 0 0;">Every work unit runs the same four beats.</h2>
+    <div class="loop">
+      <div class="step fragment fade-in" style="--lc:var(--signal)">
+        <div class="sn">01 · RED→GREEN→REFACTOR</div>
+        <div class="st">Implement</div>
+        <div class="sd">Coder writes failing tests first, then the minimal code to pass, within a declared file scope.</div>
+        <div class="who">▸ Coder + Test Automator</div>
+      </div>
+      <div class="step fragment fade-in" style="--lc:var(--signal)">
+        <div class="sn">02 · DETERMINISTIC</div>
+        <div class="st">Validate</div>
+        <div class="sd">Orchestrator runs tsc, eslint, vitest and checks <span class="mono">git diff</span> against the file scope — personally.</div>
+        <div class="who">▸ Issue Orchestrator</div>
+      </div>
+      <div class="step fragment fade-in" style="--lc:var(--coral)">
+        <div class="sn">03 · BINARY PASS/FAIL</div>
+        <div class="st">Adversarial Review</div>
+        <div class="sd">A <em>fresh</em> reviewer verifies each Definition-of-Done item with file:line evidence. One blocker fails it all.</div>
+        <div class="who">▸ FRESH Code Review Agent</div>
+      </div>
+      <div class="step fragment fade-in" style="--lc:var(--jade)">
+        <div class="sn">04 · DoD VERIFIED</div>
+        <div class="st">Commit</div>
+        <div class="sd">Only now: git commit, close the task, update project context for the next unit.</div>
+        <div class="who">▸ Issue Orchestrator</div>
+      </div>
+    </div>
+    <div class="loop-note fragment fade-in">↻ ANY FAIL → back to step 01 · max 3 retries per gate → escalate to human</div>
+  </div>
+</section>
+
+<!-- ============ FRESH REVIEWER PRINCIPLE ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">The keystone rule</div>
+    <h2 style="font-size:2em; margin:.2em 0 0;">The reviewer is <em>always</em> a stranger.</h2>
+    <p class="lead" style="margin-top:.4em; max-width:46ch;">After any FAIL, a brand-new reviewer instance is spawned — no memory of the prior round. This is the single rule that holds in <strong>both</strong> Team Mode and Task Mode, without exception.</p>
+    <div class="fresh">
+      <div class="panel bad fragment fade-in">
+        <div class="lbl">✕ Anchored reviewer</div>
+        <p>Remembers its earlier notes. Asks: <b>"did they fix the three things I flagged?"</b> Sees three green checks, approves — and never re-checks the contract as a whole. Bias smuggled in as efficiency.</p>
+      </div>
+      <div class="panel good fragment fade-in">
+        <div class="lbl">✓ Fresh reviewer</div>
+        <p>Has never seen this code. Asks: <b>"does this satisfy the Definition of Done?"</b> Verifies every item independently, with file:line evidence. The only thing it can be loyal to is the spec.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TEAM vs TASK MODE ============ -->
+<section data-background-color="#0c0b08">
+  <div class="pad">
+    <div class="eyebrow">Two dispatch mechanisms · identical work product</div>
+    <h2 style="font-size:1.7em; margin:.2em 0 0;">Team Mode &amp; Task Mode.</h2>
+    <div class="compare">
+      <div class="col fragment fade-in">
+        <h4>Task Mode <span class="tagline">default · zero overhead</span></h4>
+        <ul>
+          <li>Fire-and-forget subagents; full context passed in the prompt.</li>
+          <li>Cold start each spawn — but everything it needs is in-prompt.</li>
+          <li>Sequential handoffs flow through the orchestrator.</li>
+          <li>Parallel work = parallel Task() calls (the 5-agent design panel).</li>
+          <li>Always available. The safe fallback.</li>
+        </ul>
+      </div>
+      <div class="col fragment fade-in">
+        <h4>Team Mode <span class="tagline">persistent teammates</span></h4>
+        <ul>
+          <li>Named teammates persist and talk directly via SendMessage.</li>
+          <li>Coder keeps context across WU-001 → WU-002 — no cold start.</li>
+          <li>Design reviewers retain context across revisions.</li>
+          <li>Bridge rule: <em>only</em> the orchestrator writes to the durable record.</li>
+          <li>Adversarial reviewer is still a fresh Task() — never a teammate.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="kicker fragment fade-in" style="margin-top:1em;">Detected once at startup: if TeamCreate + SendMessage exist → Team Mode, else → Task Mode.</p>
+  </div>
+</section>
+
+<!-- ============ CLOSING ============ -->
+<section data-background-color="#100d07">
+  <div class="pad spread">
+    <div>
+      <div class="eyebrow">What the swarm is really for</div>
+      <h2 style="font-size:2.6em; max-width:18ch; margin-top:.2em;">Build the thing right. Check it's the <em>right</em> thing. Verify it without bias.</h2>
+    </div>
+    <div class="title-meta" style="position:static; text-align:left; margin-top:1.5em;">
+      RESEARCH → PLAN → DESIGN GATE → DECOMPOSE → EXECUTE → REVIEW → PR → RELEASE → LEARN<br>
+      <span style="color:var(--signal)">metaswarm</span> · github.com/dsifry/metaswarm
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/dist/reveal.js"></script>
+<script>
+/* ---------------- persona data ---------------- */
+const ACCENT = { amber:'var(--signal)', coral:'var(--coral)', jade:'var(--jade)', soft:'var(--signal-soft)' };
+
+const ACTS = [
+  { act:'I', label:'Research & Planning', color:'amber' },
+  { act:'II', label:'Design Review Gate', color:'soft' },
+  { act:'III', label:'Implementation', color:'amber' },
+  { act:'IV', label:'Code Quality', color:'coral' },
+  { act:'V', label:'Orchestration', color:'jade' },
+  { act:'VI', label:'Ops · Knowledge · Metrics', color:'soft' },
+];
+
+const PERSONAS = [
+ { n:'01', act:'I', cat:'Research & Planning', acc:'amber',
+   name:'Researcher', role:'Codebase exploration · prior-art scout',
+   voice:'Find what exists before designing new.',
+   purpose:'Explores the codebase and prior art so planning is grounded in reality, not assumption.',
+   does:['Searches for <b>similar patterns</b> and existing implementations','Maps internal &amp; external <b>dependencies</b>','Surfaces <b>constraints and risks</b> early','Hands findings to the Architect'],
+   trigger:'Issue intake · complex feature needing context',
+   tools:['codebase read','web search (Context7)','BEADS CLI'] },
+
+ { n:'02', act:'I', cat:'Research & Planning', acc:'amber',
+   name:'Architect', role:'Implementation planning · system design',
+   voice:'Design before coding; follow established patterns.',
+   purpose:'Turns research into a concrete plan — component decomposition, service layering, and chosen design patterns.',
+   does:['Layers services: <b>API → Orchestrator → Pure → Persistence</b>','Selects patterns: Strategy, Factory, Adapter, Repository','Documents API contracts, schema &amp; test strategy','Prepares the plan for CTO review — not yet code'],
+   trigger:'After research completes',
+   tools:['codebase read','architecture-rubric','BEADS CLI'] },
+
+ { n:'03', act:'I', cat:'Research & Planning', acc:'amber',
+   name:'CTO', role:'Plan review · technical correctness',
+   voice:'The simplest plan that meets requirements wins.',
+   purpose:'The final technical sign-off on the implementation plan after the design gate approves.',
+   does:['Checks requirements alignment &amp; architecture fit','Verifies the <b>TDD strategy</b> and coverage targets','Iterates with the Architect up to 3×','<b>Over- and under-engineering are equal failures</b>'],
+   trigger:'Design Review Gate approves → CTO reviews the plan',
+   tools:['codebase read','plan-review-rubric','BEADS CLI'] },
+
+ { n:'04', act:'II', cat:'Design Review Gate', acc:'soft',
+   name:'Product Manager', role:'Use-case & user-benefit review',
+   voice:'Building the right thing matters more than building it right.',
+   purpose:'Guards the gate against solutions looking for problems; validates user value before any code is written.',
+   does:['Validates each use case in <b>WHO / WANTS / SO-THAT</b> form','Confirms user benefits are measurable','Draws the line between MVP and <b>scope creep</b>','Verdict: APPROVED | NEEDS_REVISION (JSON)'],
+   trigger:'Design Review Gate · in parallel',
+   tools:['product docs','user research','BEADS CLI'] },
+
+ { n:'05', act:'II', cat:'Design Review Gate', acc:'soft',
+   name:'Designer', role:'API · UX · developer-experience review',
+   voice:'Good design is invisible; bad design is friction.',
+   purpose:'Reviews interface and flow quality before implementation — intuitiveness, consistency, testability.',
+   does:['Assesses API design &amp; error handling','Evaluates <b>developer experience</b> (mockability, testability)','Catches god interfaces, stringly-typed APIs, leaky abstractions','Flags missing loading / error / edge states'],
+   trigger:'Design Review Gate · in parallel',
+   tools:['codebase read','existing API patterns','BEADS CLI'] },
+
+ { n:'06', act:'II', cat:'Design Review Gate', acc:'coral',
+   name:'Security Design', role:'Threat modeling · pre-implementation',
+   voice:'Security bugs are 100× cheaper to fix in design than in production.',
+   purpose:'Models threats while the design is still cheap to change — before a single line ships.',
+   does:['<b>STRIDE</b> threat modeling across the data flow','Checks against the <b>OWASP Top 10</b>','Verifies input validation &amp; rate-limiting are designed in','Reviews error handling for info leakage'],
+   trigger:'Design Review Gate · auth / user-data / external-API designs',
+   tools:['OWASP guidelines','security patterns','BEADS CLI'] },
+
+ { n:'07', act:'III', cat:'Implementation', acc:'amber',
+   name:'Coder', role:'TDD implementation',
+   voice:'Code without tests is legacy code on day one.',
+   purpose:'Implements features against the approved plan, test-first, with 100% coverage as a floor.',
+   does:['<b>RED → GREEN → REFACTOR</b>, tests written first','Constructor dependency injection; Zod for validation','<b>Never</b> uses <span class="mono">as any</span>; stays in declared file scope','Reuses shared mock factories — no hand-rolled mocks'],
+   trigger:'CTO approval complete',
+   tools:['full read/write','test runner','BEADS CLI'] },
+
+ { n:'08', act:'III', cat:'Implementation', acc:'amber',
+   name:'Test Automator', role:'Test authoring · coverage analysis',
+   voice:'Every code path exists for a reason — so test it.',
+   purpose:'The TDD partner to the Coder: writes the failing tests and owns coverage rigor.',
+   does:['Writes tests <b>before</b> implementation; confirms they fail (RED)','Pure services: no mocks · Orchestrators: mock all','Drives <b>null / empty / boundary</b> edge cases','Treats 100% coverage as the floor, not the ceiling'],
+   trigger:'TDD workflow · alongside Coder',
+   tools:['test runner','test-coverage-rubric','BEADS CLI'] },
+
+ { n:'09', act:'IV', cat:'Code Quality', acc:'coral',
+   name:'Code Review', role:'Pre-PR review · two modes',
+   voice:'Catch issues here, not in production.',
+   purpose:'Reviews implemented code in one of two modes — holistic feedback, or binary adversarial verdict.',
+   does:['<b>Collaborative</b>: severity-graded quality feedback','<b>Adversarial</b>: binary PASS/FAIL, file:line evidence per DoD','Enforces conventions, security, meaningful tests','<b>Fresh reviewer</b> on every re-review — no memory of prior rounds'],
+   trigger:'Implementation complete · before PR',
+   tools:['codebase read','review rubrics','BEADS CLI'] },
+
+ { n:'10', act:'IV', cat:'Code Quality', acc:'coral',
+   name:'Security Auditor', role:'Vulnerability detection in code',
+   voice:'Exploitable = critical.',
+   purpose:'Audits the implemented code for vulnerabilities, running in parallel with Code Review.',
+   does:['Full <b>OWASP A01–A10</b> audit of the diff','Hunts SQL injection, IDOR, missing userId filters','Grades severity — CRITICAL blocks the PR','Provides remediation guidance, not just findings'],
+   trigger:'Implementation complete · parallel to Code Review',
+   tools:['codebase read','security-review-rubric','BEADS CLI'] },
+
+ { n:'11', act:'V', cat:'Orchestration', acc:'jade',
+   name:'Issue Orchestrator', role:'Single-issue lifecycle conductor',
+   voice:'Never trust self-reports — validate everything.',
+   purpose:'The primary coordinator: drives a GitHub Issue from intake to merged PR through every gate.',
+   does:['Spawns Researcher → Architect → CTO, then the 5-agent gate','Decomposes the plan into <b>work units</b> with DoD &amp; file scope','Runs tsc / eslint / vitest <b>itself</b> — never trusts subagents','Spawns a <b>fresh</b> reviewer after each FAIL'],
+   trigger:'Issue labeled agent-ready · or @beads start #N',
+   tools:['BEADS CLI','GitHub API','Task / Team dispatch'] },
+
+ { n:'12', act:'V', cat:'Orchestration', acc:'jade',
+   name:'Swarm Coordinator', role:'Multi-issue meta-orchestrator',
+   voice:'Maximize throughput, detect conflicts early, prioritize ruthlessly.',
+   purpose:'Conducts many Issue Orchestrators at once — load-balancing work and preventing collisions.',
+   does:['Spawns one orchestrator per active issue','Detects <b>file &amp; schema conflicts</b> before they merge-clash','Enforces P0 > P1 > P2 ordering; preempts for P0','<b>Phase gate</b>: next phase waits until prior PRs squash-merge'],
+   trigger:'Multiple active agent-ready epics',
+   tools:['BEADS CLI','GitHub API','TeamCreate / SendMessage'] },
+
+ { n:'13', act:'V', cat:'Orchestration', acc:'jade',
+   name:'PR Shepherd', role:'PR lifecycle · creation → merge-ready',
+   voice:'Stay on top of CI, fix fast, don’t let threads linger.',
+   purpose:'Babysits a pull request through CI and review until it is genuinely merge-ready.',
+   does:['Monitors CI &amp; review comments continuously','Auto-fixes lint, Prettier, type and test failures','Resolves review threads; escalates the ambiguous','State machine: MONITOR → FIX → HANDLE → DONE'],
+   trigger:'Orchestrator creates the PR',
+   tools:['GitHub CLI','pr-shepherd skill','BEADS CLI'] },
+
+ { n:'14', act:'VI', cat:'Deployment & Ops', acc:'coral',
+   name:'Release Engineer', role:'Merge → deploy → soak',
+   voice:'Approved code should reach production with zero surprises.',
+   purpose:'Owns the dangerous last mile: merge, deploy, verify, and decide on rollback.',
+   does:['Squash-merges with <span class="mono">refs #N</span> (issue stays open)','Activates a <b>merge freeze</b> by default on every merge','Pre-deploy health check; 15-min minimum <b>soak</b>','Anomaly → rollback; 3 P1s in 48h → halt &amp; escalate'],
+   trigger:'PR Shepherd reports merge-ready',
+   tools:['GitHub CLI','deploy CLI','monitoring','BEADS CLI'] },
+
+ { n:'15', act:'VI', cat:'Deployment & Ops', acc:'coral',
+   name:'SRE', role:'Production investigation · read-only',
+   voice:'Read-only investigation; find root cause, recommend fixes.',
+   purpose:'Investigates production incidents forensically — without the power to change anything.',
+   does:['<span class="mono">/production-mode on</span> before any access (blocks writes)','Analyzes logs, metrics, <b>SELECT-only</b> queries','Identifies root cause &amp; contributing factors','Never restarts services or writes data — escalates instead'],
+   trigger:'@beads investigate · or an investigation task',
+   tools:['SSH (read-only)','logs','metrics','production-mode'] },
+
+ { n:'16', act:'VI', cat:'Deployment & Ops', acc:'soft',
+   name:'Customer Service', role:'User support investigation · read-only',
+   voice:'Investigate thoroughly, recommend solutions, protect privacy.',
+   purpose:'Diagnoses a user’s problem from the data — read-only, with PII masked throughout.',
+   does:['Builds a user profile from Stripe + PostHog (read-only)','Diagnoses quota, billing, connection issues','<b>Masks PII</b> — emails, names, payment details never exposed','Escalates refunds &amp; account changes to a human'],
+   trigger:'@beads customer user@email · or a support request',
+   tools:['Stripe (read)','PostHog (read)','DB (SELECT)','BEADS CLI'] },
+
+ { n:'17', act:'VI', cat:'Knowledge & Metrics', acc:'amber',
+   name:'Knowledge Curator', role:'Learning extraction · KB hygiene',
+   voice:'Capture learning while context is fresh; organize for reuse.',
+   purpose:'Mines completed work for durable lessons and keeps the knowledge base clean and trustworthy.',
+   does:['Extracts insights from reviews &amp; agent discoveries','Generalizes specifics into <b>reusable facts</b>','Dedupes; raises confidence when sources agree','Flags stale facts unreferenced for 90+ days'],
+   trigger:'PR merged · epic closed · weekly maintenance',
+   tools:['GitHub API','BEADS CLI','knowledge base'] },
+
+ { n:'18', act:'VI', cat:'Knowledge & Metrics', acc:'amber',
+   name:'Metrics', role:'Swarm performance reporting',
+   voice:'Visibility enables improvement.',
+   purpose:'Measures the swarm itself — throughput, quality, and health — and raises the alarm.',
+   does:['Tracks tasks, success rates, cycle &amp; lead time','Reports swarm health: queue depth, blockers, utilization','Detects trends &amp; anomalies across runs','Alerts: blocked > 5, failures > 10%, queue > 20'],
+   trigger:'Daily 9am · weekly Mondays · on-demand',
+   tools:['BEADS CLI','GitHub API','PostHog','Stripe','CloudWatch'] },
+];
+
+/* ---------------- render persona slides ---------------- */
+const accentVar = a => ACCENT[a] || ACCENT.amber;
+
+const personaSlide = p => {
+  const does = p.does.map(d=>`<li>${d}</li>`).join('');
+  const chips = p.tools.map(t=>`<span class="chip">${t}</span>`).join('');
+  return `
+  <section data-background-color="#0c0b08">
+    <div class="dossier" style="--accent:${accentVar(p.acc)}">
+      <div class="left">
+        <div class="persona-idx">${p.n}</div>
+        <div class="persona-cat"><span class="tag">ACT ${p.act} · ${p.cat}</span></div>
+        <div class="persona-name">${p.name}<span class="accentdot">.</span></div>
+        <div class="persona-role">${p.role}</div>
+        <div class="voice">${p.voice}</div>
+      </div>
+      <div class="right">
+        <div class="field fragment fade-in">
+          <div class="field-k">Mandate</div>
+          <div class="field-v">${p.purpose}</div>
+        </div>
+        <div class="field fragment fade-in">
+          <div class="field-k">What it does</div>
+          <ul class="does-list">${does}</ul>
+        </div>
+        <div class="field fragment fade-in">
+          <div class="field-k">Triggered by</div>
+          <div class="trigger">${p.trigger}</div>
+        </div>
+        <div class="field fragment fade-in" style="margin-bottom:0">
+          <div class="field-k">Tools</div>
+          <div class="chip-row">${chips}</div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+};
+
+document.getElementById('persona-mount').outerHTML =
+  PERSONAS.map(personaSlide).join('\n');
+
+/* ---------------- render cast grid ---------------- */
+document.getElementById('cast-mount').innerHTML =
+  '<div class="cast-grid">' + PERSONAS.map(p=>`
+    <div class="cast-cell">
+      <div class="cn">${p.n} · ACT ${p.act}</div>
+      <div class="nm">${p.name}</div>
+    </div>`).join('') + '</div>';
+
+/* ---------------- render 9-phase list ---------------- */
+const PHASES = [
+  ['1','Research','Explore patterns, prior art, dependencies, risks.','Researcher'],
+  ['2','Planning','Component decomposition, service layering, patterns.','Architect'],
+  ['3','Design Review Gate','Five reviewers in parallel — all must approve.','PM · Architect · Designer · Security · CTO'],
+  ['4','Work-Unit Decomposition','Split the plan into units with DoD &amp; file scopes.','Issue Orchestrator'],
+  ['5','Orchestrated Execution','Per unit: Implement → Validate → Review → Commit.','Coder · Orchestrator · Fresh Reviewer'],
+  ['6','Final Comprehensive Review','Cross-unit integration — no conflicts, no TODOs.','Issue Orchestrator'],
+  ['7','PR Creation & Shepherding','Open PR; ride CI and review threads to merge-ready.','PR Shepherd'],
+  ['8','Release Engineering','Merge, freeze, deploy, soak, decide on rollback.','Release Engineer'],
+  ['9','Knowledge Capture','Extract learnings into the knowledge base.','Knowledge Curator'],
+];
+document.getElementById('phase-mount').innerHTML = PHASES.map(([n,t,d,w])=>`
+  <div class="phase fragment fade-in">
+    <div class="pn">P${n}</div>
+    <div>
+      <span class="pt">${t}</span>
+      <div class="pd">${d}</div>
+      <div class="who">▸ ${w}</div>
+    </div>
+  </div>`).join('');
+
+/* ---------------- title swarm dots ---------------- */
+(function(){
+  const svg = document.querySelector('.swarm-dots'); if(!svg) return;
+  let pts=[]; const N=26;
+  // deterministic pseudo-random so it's stable
+  let seed=7; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+  for(let i=0;i<N;i++) pts.push([rnd()*100, rnd()*100]);
+  let g='';
+  pts.forEach((a,i)=>{ pts.forEach((b,j)=>{ if(j>i){ const dx=a[0]-b[0],dy=a[1]-b[1]; if(Math.hypot(dx,dy)<22){ g+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="rgba(240,168,24,0.14)" stroke-width="0.12"/>`; } } }); });
+  pts.forEach(a=>{ g+=`<circle cx="${a[0]}" cy="${a[1]}" r="0.45" fill="rgba(240,168,24,0.55)"/>`; });
+  svg.innerHTML=g;
+})();
+
+/* ---------------- init ---------------- */
+Reveal.initialize({
+  width: 1440,
+  height: 810,
+  margin: 0,
+  minScale: 0.2,
+  maxScale: 1.6,
+  hash: true,
+  transition: 'fade',
+  transitionSpeed: 'slow',
+  backgroundTransition: 'fade',
+  slideNumber: 'c/t',
+  controlsTutorial: false,
+});
+</script>
+</body>
+</html>
