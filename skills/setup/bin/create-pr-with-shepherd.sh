@@ -122,7 +122,12 @@ if [[ "$current_branch" == "$repo_default_branch" ]]; then
   die "refusing to create a PR from the default branch '$repo_default_branch'"
 fi
 
-gh_command=(gh pr create --title "$title" --body "$body" --base "$base")
+# Pin the target repository to origin. On a fork, bare `gh pr create` targets the
+# PARENT repository — a cross-repo PR nobody asked for. Deriving --repo from the
+# origin remote guarantees the PR lands on the repo this branch was pushed to.
+origin_slug="$(git remote get-url origin | sed -E 's#(git@github\.com:|https://github\.com/)##; s#\.git$##')"
+[ -n "$origin_slug" ] || die 'cannot derive origin repository slug'
+gh_command=(gh pr create --repo "$origin_slug" --title "$title" --body "$body" --base "$base")
 if [[ "$draft" == true ]]; then
   gh_command+=(--draft)
 fi

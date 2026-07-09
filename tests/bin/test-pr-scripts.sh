@@ -32,6 +32,8 @@ git -C "$named_branch_repo" -c user.name='PR Helper Test' -c user.email='pr-help
 (
   cd "$named_branch_repo"
   git checkout -q -b pr-helper-tests
+  # the script derives --repo from origin; give the fixture a fake one
+  git remote add origin 'git@github.com:fixture-owner/fixture-repo.git'
 )
 
 run_create_pr_dry_run() {
@@ -48,7 +50,7 @@ dry_run_output="$(run_create_pr_dry_run --dry-run --title "Dry run title" --body
 if [[ -n "$dry_run_output" ]]; then
   pass "create-pr dry run succeeds"
 fi
-if grep -Fq -- 'gh pr create --title Dry\ run\ title --body Dry\ run\ body --base release' <<<"$dry_run_output"; then
+if grep -Fq -- 'gh pr create --repo fixture-owner/fixture-repo --title Dry\ run\ title --body Dry\ run\ body --base release' <<<"$dry_run_output"; then
   pass "dry run prints the exact gh title, body, and base command"
 else
   fail "dry run prints the exact gh title, body, and base command"
