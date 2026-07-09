@@ -60,6 +60,7 @@ Coverage thresholds are defined in `.coverage-thresholds.json` — this is the *
 If a GitHub Issue specifies different coverage requirements, update `.coverage-thresholds.json` to match before implementation begins. Do not silently use a different threshold.
 
 The validation phase of orchestrated execution reads `.coverage-thresholds.json` and runs the enforcement command. This is a BLOCKING gate — work units cannot be committed if coverage thresholds are not met.
+In this repository, the enforcement command is the Bash test suite (a pass/fail gate), and percentage thresholds apply to future JavaScript tooling.
 
 ## Quality Gates
 

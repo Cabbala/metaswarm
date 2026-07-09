@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Coverage thresholds for orchestrator agents and CI. Portable across projects — adjust values per-repo.",
+  "$comment": "Percentage thresholds apply to future JS coverage tooling; this repository's Bash suites gate on pass/fail.",
   "thresholds": {
     "lines": 100,
     "branches": 100,
@@ -8,9 +8,9 @@
     "statements": 100
   },
   "enforcement": {
-    "command": "pnpm test:coverage",
+    "command": "bash -c 'for t in tests/*/test-*.sh; do bash \"$t\" || exit 1; done && node lib/sync-resources.js --check'",
     "blockPRCreation": true,
     "blockTaskCompletion": true,
-    "description": "Orchestrator agents MUST check coverage against these thresholds before marking any task complete or creating a PR. If coverage drops below any threshold, the task fails."
+    "description": "Orchestrator agents MUST run this Bash suite pass/fail gate before marking any task complete or creating a PR. Percentage thresholds apply to future JS coverage tooling."
   }
 }

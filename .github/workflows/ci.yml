@@ -29,8 +29,20 @@ jobs:
       - name: Run session-start.sh tests
         run: bash tests/hooks/test-session-start.sh
 
+      - name: Run installer tests
+        run: bash tests/cli/test-installer.sh
+
+      - name: Run Codex skills tests
+        run: bash tests/codex/test-codex-skills.sh
+
+      - name: Run Gemini extension tests
+        run: bash tests/gemini/test-gemini-extension.sh
+
       - name: Run CI template security tests
         run: bash tests/templates/test-ci-template.sh
+
+      - name: Run Beads cleanup tests
+        run: bash tests/templates/test-beads-cleanup.sh
 
       - name: Run sync-resources tests
         run: bash tests/lib/test-sync-resources.sh
