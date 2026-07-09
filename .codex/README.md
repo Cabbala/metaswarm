@@ -79,7 +79,7 @@ Codex supports skills and subagents, but the exact orchestration surface is not 
 
 - Use `$setup`, `$start`, `$status`, and `$pr-shepherd` in Codex.
 - Do not use Claude slash-command shims in Codex.
-- Plugin hooks are optional in Codex and require the `plugin_hooks` feature. Core metaswarm workflows do not depend on hooks.
+- Historical note: the Codex `plugin_hooks` feature was removed in codex-cli 0.144; metaswarm workflows must not (and do not) depend on it.
 
 The quality gates and rubric criteria are identical across platforms. The difference is invocation and tool mapping, not review standards.
 

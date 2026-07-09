@@ -4,7 +4,7 @@ set -euo pipefail
 # --- Defaults ---
 input_tokens=0
 output_tokens=0
-model=""
+model="gpt-5.6-terra"
 
 # --- Argument Parsing ---
 while [[ "$#" -gt 0 ]]; do
@@ -39,8 +39,16 @@ input_cost_rate=""
 output_cost_rate=""
 
 case "$model" in
-    "gpt-5.3-codex")
-        input_cost_rate="1.50"
+    "gpt-5.6-terra")
+        input_cost_rate="2.50"
+        output_cost_rate="15.00"
+        ;;
+    "gpt-5.6-sol")
+        input_cost_rate="5.00"
+        output_cost_rate="30.00"
+        ;;
+    "gpt-5.6-luna")
+        input_cost_rate="1.00"
         output_cost_rate="6.00"
         ;;
     "gemini-pro")

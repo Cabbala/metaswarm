@@ -167,7 +167,7 @@ Edit `.metaswarm/external-tools.yaml` to customize:
 adapters:
   codex:
     enabled: true                # Set to false to disable Codex
-    model: "gpt-5.3-codex"      # Model for Codex CLI invocations
+    model: "gpt-5.6-terra"      # Model for Codex CLI invocations
     timeout_seconds: 300         # Max seconds per invocation (5 min default)
     sandbox: none                # docker | platform | none
     auth_env_var: "OPENAI_API_KEY"
@@ -217,7 +217,7 @@ skills/external-tools/adapters/gemini.sh health | jq .
   "status": "ready",
   "version": "0.101.0",
   "auth_valid": true,
-  "model": "gpt-5.3-codex"
+  "model": "gpt-5.6-terra"
 }
 ```
 

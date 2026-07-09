@@ -36,18 +36,22 @@ Per-project config at `.metaswarm/external-tools.yaml` (optional -- if absent, e
 adapters:
   codex:
     enabled: true
-    model: "gpt-5.3-codex"
+    model: "gpt-5.6-terra"          # Model to use for Codex CLI invocations
+    # Tiers: gpt-5.6-terra = implement default (effort xhigh) | gpt-5.6-sol = review/hard (xhigh; "ultra" experimental: Sol-only, requires XT_ULTRA_OPTIN=1, ~2-3x tokens) | gpt-5.6-luna = small tasks (high) | gpt-5.3-codex-spark = 1000+ tok/s latency loops
     timeout_seconds: 300
-    sandbox: docker          # docker | platform | none
+    sandbox: none                    # docker | platform | none
+    auth_env_var: "OPENAI_API_KEY"   # Environment variable holding the API key
   gemini:
-    enabled: true
+    enabled: false
+    # Consumer Gemini CLI discontinued 2026-06-18; enterprise/API-key access only — explicit opt-in
     model: "pro"
     timeout_seconds: 300
-    sandbox: docker
+    sandbox: none
+    auth_env_var: "GEMINI_API_KEY"   # Or use Google login (no key needed)
 
 routing:
   default_implementer: "cheapest-available"
-  escalation_order: ["codex", "gemini", "claude"]
+  escalation_order: ["codex", "claude"]
 
 budget:
   per_task_usd: 2.00        # circuit breaker per task
@@ -59,6 +63,19 @@ budget:
 - **Both tools available**: Full cross-model delegation and review
 - **One tool available**: Reduced chain with mutual review between the tool and Claude
 - **No tools available**: Existing metaswarm behavior unchanged; skill is a no-op
+
+### Model tiers & availability
+
+- Implement default: `gpt-5.6-terra` (xhigh; $2.50 input / $15 output per 1M tokens)
+- Review/hard: `gpt-5.6-sol` (xhigh; $5 input / $30 output per 1M tokens)
+- Small tasks: `gpt-5.6-luna` (high; $1 input / $6 output per 1M tokens)
+- Latency loops: `gpt-5.3-codex-spark` (1000+ tok/s)
+- Bare `gpt-5.6` aliases to Sol; no `gpt-5.6-codex` variant exists.
+- Health checks report the model actually used. A `model_unavailable` error escalates down the chain.
+- `ultra` effort is EXPERIMENTAL (undocumented in the official ladder `minimal|low|medium|high|xhigh`), Sol-only, and requires `XT_ULTRA_OPTIN=1`; it is hard-bounded by `XT_TIMEOUT`.
+- The official budget keys are `features.rollout_budget.enabled` and `features.rollout_budget.limit_tokens`. Verify with a clean `CODEX_HOME` probe using `codex exec --strict-config` and the key; do not use `--strict-config` against real user configs because they legitimately carry unknown fields.
+
+Sandbox policy: implement uses `--sandbox workspace-write` with `network_access=false` by default (`--allow-network` opts in); review uses `--sandbox read-only`.
 
 ---
 

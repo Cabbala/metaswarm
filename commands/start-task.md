@@ -177,11 +177,13 @@ For complex tasks requiring multiple phases, consider spawning sub-agents:
 
 **Model specialization guidance:**
 
-| Model  | Best For                                                  |
-| ------ | --------------------------------------------------------- |
-| Opus   | Orchestration, architecture, security analysis, synthesis |
-| Sonnet | Code analysis, implementation, code review, feature work  |
-| Haiku  | Metrics collection, simple analysis, data processing      |
+| Model                 | Best For                                                               |
+| --------------------- | ---------------------------------------------------------------------- |
+| haiku                 | Mechanical legs: scans, extraction, formatting, high-fan-out sweeps   |
+| sonnet                | Standard legs: code reading, single-dimension review, small implementation |
+| inherit (omit model)  | Judgment legs: final synthesis, adversarial verdicts, architecture, security |
+
+Fork-local policy: genericize before any upstream contribution.
 
 **Pattern**: Spawn parallel sub-agents for independent work (e.g., code review + security audit), sequential agents for dependent phases (research -> planning -> implementation).
 

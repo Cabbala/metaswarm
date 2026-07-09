@@ -5,12 +5,14 @@
 adapters:
   codex:
     enabled: true
-    model: "gpt-5.3-codex"          # Model to use for Codex CLI invocations
+    model: "gpt-5.6-terra"          # Model to use for Codex CLI invocations
+    # Tiers: gpt-5.6-terra = implement default (effort xhigh) | gpt-5.6-sol = review/hard (xhigh; "ultra" experimental: Sol-only, requires XT_ULTRA_OPTIN=1, ~2-3x tokens) | gpt-5.6-luna = small tasks (high) | gpt-5.3-codex-spark = 1000+ tok/s latency loops
     timeout_seconds: 300             # Max seconds per invocation before kill
     sandbox: none                    # docker | platform | none
     auth_env_var: "OPENAI_API_KEY"   # Environment variable holding the API key
   gemini:
-    enabled: true
+    enabled: false
+    # Consumer Gemini CLI discontinued 2026-06-18; enterprise/API-key access only — explicit opt-in
     model: "pro"                     # Model alias: pro | flash | flash-lite
     timeout_seconds: 300
     sandbox: none
@@ -24,7 +26,7 @@ routing:
   default_implementer: "cheapest-available"
 
   # Order for escalation when a tool fails after max retries
-  escalation_order: ["codex", "gemini", "claude"]
+  escalation_order: ["codex", "claude"]
 
 budget:
   per_task_usd: 2.00               # Circuit breaker: max spend per task before user alert
