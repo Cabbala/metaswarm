@@ -236,8 +236,11 @@ bd ready
 For a more complex feature, trigger the parallel review manually:
 
 ```text
-> /review-design docs/specs/my-feature.md
+> /review-design docs/superpowers/specs/YYYY-MM-DD-my-feature-design.md
 ```
+
+This is the primary superpowers v6.1.1 design-spec location. The gate also
+accepts `docs/plans/*-design.md` as an explicit legacy fallback.
 
 Six agents review in parallel:
 - **PM**: Validates use cases and scope

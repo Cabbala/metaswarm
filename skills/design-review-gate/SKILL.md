@@ -4,7 +4,8 @@ description: Automatic review gate that runs after brainstorming completes - spa
 auto_activate: true
 triggers:
   - "design document created"
-  - "docs/plans/*-design.md committed"
+  - "docs/superpowers/specs/*-design.md committed (primary)"
+  - "docs/plans/*-design.md committed (legacy fallback)"
   - after:superpowers:brainstorming
 ---
 
@@ -39,9 +40,10 @@ In either mode, the review criteria, iteration protocol, and escalation rules ar
 
 This skill auto-activates when:
 
-1. A design document is committed to `docs/plans/*-design.md`
-2. The `superpowers:brainstorming` skill completes
-3. User explicitly requests: `/review-design <path-to-design.md>`
+1. A design document is committed to `docs/superpowers/specs/*-design.md` (primary superpowers v6.1.1 location)
+2. A design document is committed to `docs/plans/*-design.md` (legacy fallback)
+3. The `superpowers:brainstorming` skill completes
+4. User explicitly requests: `/review-design <path-to-design.md>`
 
 ---
 

@@ -15,6 +15,15 @@ This skill bridges `superpowers:brainstorming` into the metaswarm quality pipeli
 
 **This is a critical workflow enforcement point, not a passive extension.**
 
+## Upstream File Contract
+
+For superpowers v6.1.1, `superpowers:brainstorming` writes design specifications to
+`docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`. Its subsequent
+`superpowers:writing-plans` step writes implementation plans to
+`docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`. In this skill, “design
+document” refers to the former path; the review gate must run before the latter
+plan is created.
+
 ---
 
 ## The Problem This Solves
@@ -25,7 +34,7 @@ This skill bridges `superpowers:brainstorming` into the metaswarm quality pipeli
 WITHOUT this extension (broken flow):
 
 superpowers:brainstorming
-    └── Commits design doc
+    └── Commits design spec to docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
           └── writing-plans (DIRECTLY — no review!)
                 └── executing-plans
                       └── Implementation begins on UNREVIEWED design
@@ -35,7 +44,7 @@ superpowers:brainstorming
 WITH this extension (correct flow):
 
 superpowers:brainstorming
-    └── Commits design doc
+    └── Commits design spec to docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
           │
           ▼
     ┌─────────────────────────────────────────┐
@@ -87,7 +96,8 @@ When this skill is loaded (either by name or auto-activation), it provides the d
 
 ## Procedure: After Brainstorming Completes
 
-When `superpowers:brainstorming` commits a design document:
+When `superpowers:brainstorming` commits a design specification to
+`docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`:
 
 ### Step 1: Announce the Gate
 

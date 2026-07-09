@@ -37,6 +37,8 @@ jobs:
       - name: Run Codex manifest guard tests
         run: bash tests/codex/test-codex-manifest.sh
 
+      - name: Run superpowers upstream reference guard
+        run: bash tests/superpowers/test-upstream-refs.sh
 
       - name: Run Gemini extension tests
         run: bash tests/gemini/test-gemini-extension.sh
