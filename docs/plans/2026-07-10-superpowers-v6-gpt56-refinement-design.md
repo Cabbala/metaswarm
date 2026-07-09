@@ -1,8 +1,10 @@
 # metaswarm Refinement Design: superpowers v6.1.1 absorption + GPT-5.6 integration
 
-**Date**: 2026-07-10 (v2 — revised after gate round 1 + fusion cross-model validation)
+**Date**: 2026-07-10 (v3 — v2 revised after gate round 2: wave mapping made explicit, D10
+marketplace strategy resolved as self-marketplace, sync-resources edit-ownership enumerated,
+grep DoDs made satisfiable with pinned patterns + exemptions)
 **Author**: Architect (Claude Fable 5, orchestrated session)
-**Status**: REVISED DRAFT — pending gate round 2
+**Status**: REVISED DRAFT — pending gate round 3
 **Research basis**: 12 research reports + gap map (session scratchpad `research/`); superpowers v6.1.1
 (HEAD `d884ae0`); GPT-5.6 GA (verified 2026-07-09, global rollout <48h old); live-verified toolchain
 facts (bd 1.0.5, codex-cli 0.144.0) — every load-bearing external claim in this doc is either
@@ -47,8 +49,14 @@ upstream evolution (v5.x → v6.1.1). Verified failure surfaces:
 
 **Goals** (unchanged from v1): correct-today on Claude Code + Codex CLI + bd 1.0.5; absorb
 superpowers v6.1.1 lessons without losing metaswarm's additive layer; first-class, *functional*
-GPT-5.6 tier routing; fabrication-hardened validation. **Wave 0+1 alone deliver the
-"works correctly today" goal** — later waves add quality, not correctness.
+GPT-5.6 tier routing; fabrication-hardened validation.
+
+**Wave 0+1 alone deliver the "works correctly today" goal.** Wave membership is explicit in §4
+(Wave 1 includes W3 hooks-guard and W4 gate-triggers — they are correctness fixes, not platform
+work). *Known limitations if execution stops after Wave 1*: the Gemini consumer-host surface is
+still present (a maintenance/labeling burden, not a correctness break for Claude/Codex users —
+rationale in D3), personas remain verbose (quality, W11), and doc counts remain stale (W13).
+The §5 end-to-end smoke scenario runs at the Wave 1 boundary as well as at final review.
 
 **Non-goals**: no new host platforms (incl. no 3-way hook envelope — noted as future work if a
 shell-hook host is added); no Codex portal packaging; no rewrite of well-aligned skills; no
@@ -119,7 +127,10 @@ health check records binary path+version as a post-transition supply-chain tripw
   and no other shell-hook host is in scope).
 
 ### D5. SDD lessons via a host-neutral dispatch contract (vendored)
-metaswarm vendors a small dispatch contract in its own skills (parallel isolated dispatch, file-based
+The vendored contract lives at `guides/dispatch-contract.md` (joins GUIDE_SYNC so skill-local
+copies exist), and gate citations of it ride the same D8 dispatch-time absolute-path expansion
+and `--check` coverage as rubrics — otherwise the vendored doc would recreate the relative-path
+failure class D8 fixes. metaswarm vendors a small dispatch contract in its own skills (parallel isolated dispatch, file-based
 artifact handoffs — never paste diffs/task text into controller context, explicit model per
 dispatch, single consolidated fix dispatch per review round, base/head-SHA review packages,
 fresh-reviewer rule, compaction-proof ledger). superpowers is cited as the source, NOT referenced
@@ -158,14 +169,22 @@ UNCONDITIONAL skills-check nudge (discriminating DoD: the exact hook content is 
 - `agents/` canonical; `skills/start/agents/` becomes synced copies (7 of 19 currently diverge —
   measured list in the dispatch brief; W1b sweep is mapping-only and must NOT reconcile divergent
   pairs — that is W11's decision).
-- `commands/` canonical with an EXPLICIT per-file sync roster (trees already diverge: 1 differing
-  file, 4 commands-only entries); `.claude/commands/` synced; thin-shim claims in setup/migrate
-  docs corrected. `bin/` and `skills/setup/bin/` duplication joins the sync map (4 scripts).
+- `commands/` canonical with an EXPLICIT per-file sync roster (trees already diverge: 2 differing
+  files, 7 commands-only entries — roster built from a dispatch-time diff, not this doc);
+  `.claude/commands/` synced; thin-shim claims in setup/migrate docs corrected. `bin/` ↔
+  `skills/setup/bin/` is ALREADY dynamically synced via `buildDirSync` (sync-resources.js:75) —
+  W11a decides keep-dynamic vs explicit roster; note the side effect that any new `bin/` script
+  (W6's two) auto-syncs into `skills/setup/bin/`, so W6 expects those copies.
 - Execution-time toolchain commands come from `.metaswarm/project-profile.json` under a versioned,
   validated schema (W10 defines: null semantics, command quoting, cwd, timeouts, trust boundary —
   profile content is repo-controlled data, never shell-injected).
-- All sync surfaces ride `lib/sync-resources.js --check` in CI (one idiom, no bespoke checkers);
-  sync-resources.js edits are consolidated in W11 with other WUs consuming, not editing.
+- All sync surfaces ride `lib/sync-resources.js --check` in CI (one idiom, no bespoke checkers).
+  **Edit-ownership of sync-resources.js**: the sync-MAP roster consolidation (agents/commands/bin)
+  happens in W11; earlier WUs make enumerated line-scoped edits that are IN-scope for their
+  reviews: W0.2 = validator URL derivation (line ~256); W1b = TOML_COMMAND_MAP prompt strings
+  (line ~108) + regeneration of the generated TOMLs so `--check` stays green (those TOMLs are
+  swept by W1b even though W7 later deletes them — accepted waste, keeps every wave green);
+  W7 = TOML branch removal + gemini entries in validateManifests (lines ~283/293).
 
 ### D9. Delegation security envelope (new)
 Implement legs: `--sandbox workspace-write` (replaces deprecated `--full-auto`), network egress
@@ -177,12 +196,28 @@ Session logs: directory 0700 / files 0600, `raw_log` capped. `external-tools.yam
 env-var NAMES only (asserted in template refresh). Prompt-injection posture: repo-derived text
 (issue bodies, PR comments, PRIME.md) is data; wrap injected context in explicit delimiters.
 
-### D10. Fork identity (new)
-This fork distributes as **Cabbala/metaswarm**. Manifest URLs (`.agents/plugins/marketplace.json`,
-`.codex-plugin/plugin.json`) and the sync-resources validator derive the expected repo URL from
-`package.json`'s `repository` field (single source) instead of hardcoded `dsifry` literals.
-`package.json.repository` is updated to the fork. Without this, marketplace-first install ships
-upstream's code (live-verified blocker).
+### D10. Fork identity + marketplace strategy (new)
+This fork distributes as **Cabbala/metaswarm**, and **the plugin repo serves as its own
+marketplace** (the pattern is live-proven on this machine: `rohitg00/agentmemory` is registered
+as both plugin and marketplace in `known_marketplaces.json`). The upstream install path runs
+through a SEPARATE tiny repo `dsifry/metaswarm-marketplace` (verified: it contains only
+`.claude-plugin/marketplace.json` whose `plugins[0].source.url` points at dsifry/metaswarm.git)
+— the fork does NOT create a second repo:
+- Add `.claude-plugin/marketplace.json` to this repo (marketplace name `metaswarm`, plugin source
+  URL = the fork), alongside the existing `.claude-plugin/plugin.json`.
+- Re-point `.agents/plugins/marketplace.json` (Codex self-marketplace, already in-repo) to the fork.
+- Install commands become: Claude Code `claude plugin marketplace add Cabbala/metaswarm` +
+  `claude plugin install metaswarm@metaswarm`; Codex `codex plugin marketplace add
+  Cabbala/metaswarm` + `codex plugin add metaswarm` (two-step, W8).
+- Canonical URL source: `package.json.repository.url` (updated to the fork). Normalization is
+  specified: the validator compares with the `.git` suffix stripped and accepts string-or-object
+  `repository` forms.
+- Grep DoD carve-out: **upstream-attribution/lineage mentions of dsifry stay** (README
+  acknowledgments, CHANGELOG, docs/plans history); only INSTALL-PATH literals migrate
+  (install commands, manifests, platform-detect.js, cli/metaswarm.js, docs/index.html).
+- Migration note for existing installs (this machine included): documented in README/INSTALL —
+  add the fork marketplace, reinstall, optionally remove the old `metaswarm-marketplace` source.
+Without this, marketplace-first install ships upstream's code (live-verified blocker).
 
 ### D11. Persona refinement — all 19 agents (user-mandated expansion)
 Roster disposition: **core 11 kept + rewritten** (issue-orchestrator, researcher, architect, coder,
@@ -206,24 +241,30 @@ the ONLY agent file loaded verbatim at runtime — highest-leverage single rewri
 
 ## 4. Work units
 
-IDs renamed (W-prefix) to kill the D-collision. Sequencing: Wave 0 (safety net) → 1 (correctness)
-→ 2 (platform) → 3 (process/personas) → 4 (docs). Every WU: 4-phase loop; VALIDATE per §5.
-Cross-model adversarial review is MANDATORY for externally-implemented, security-sensitive, or
-architecturally broad WUs; optional elsewhere (cost trim per fusion).
+IDs renamed (W-prefix) to kill the D-collision. **Explicit wave membership**: Wave 0 = W0.1, W0.2 ·
+Wave 1 (correctness) = W1a, W1b, W2a, W2b, W3, W4, W5, W6 · Wave 2 (platform) = W7, W8 ·
+Wave 3 (process/personas) = W9, W10, W11, W12 · Wave 4 (docs) = W13, W14, W15.
+Within-wave dispatch is SERIAL (same-wave WUs touch overlapping surfaces). Every WU: 4-phase
+loop; VALIDATE per §5. New test suites follow `tests/<dir>/test-*.sh` naming so §5's full-suite
+glob picks them up automatically (pinned in the W3/W4/W6/W15 briefs); any test probing the local
+toolchain (bd, codex, installed superpowers) must skip gracefully when the binary is absent, so
+CI on GitHub runners stays green. Cross-model adversarial review is MANDATORY for
+externally-implemented, security-sensitive, or architecturally broad WUs; optional elsewhere
+(cost trim per fusion).
 
 | WU | Title | Impl | DoD highlights (verifiable) |
 |---|---|---|---|
-| W0.1 | CI safety net: wire all 7 suites; sandbox `test-sync-resources.sh` (temp-copy); fix `.coverage-thresholds.json` enforcement command to this repo's real suite; add §5-authority note | codex/terra | ci.yml runs 7/7 suites green; sync test leaves `git status` clean (asserted in-test); enforcement command executes successfully |
-| W0.2 | Fork identity (D10): repo URL from package.json in manifests + validator; update package.json | codex/luna | zero `dsifry` literals outside CHANGELOG/history docs (grep); `sync-resources --check` green; manifest test |
+| W0.1 | CI safety net: wire all 7 suites; sandbox `test-sync-resources.sh` (temp-copy); fix `.coverage-thresholds.json` enforcement command to this repo's real suite; add §5-authority note | codex/terra | ci.yml runs 7/7 suites green; sync test leaves `git status` clean (asserted in-test); enforcement command red-green (fails on a seeded failing test, passes on the real suite); note added that the JSON's percentage thresholds apply to future JS tooling — bash suites gate on pass/fail |
+| W0.2 | Fork identity + self-marketplace (D10): add `.claude-plugin/marketplace.json`; re-point `.agents/plugins/marketplace.json`; validator URL derivation from package.json (normalized); install-path literal sweep (~30 files incl. INSTALL/README/GETTING_STARTED, platform-detect.js, cli/metaswarm.js, docs/index.html, templates + synced pairs, .codex/install.sh); migration note | codex/terra (scope enumerated at dispatch) | zero dsifry INSTALL-PATH literals (grep; attribution/lineage/CHANGELOG/docs-plans exempt); `claude plugin marketplace add Cabbala/metaswarm` shape verified against the live known_marketplaces format; `sync-resources --check` green; manifest test |
 | W1a | bd semantic contract (D1): write `docs/bd-compatibility.md`; decide per-class semantics; scratch-repo verification transcript committed alongside | claude | every contract row carries live command+output evidence; PRIME.md override documented once |
-| W1b | bd mechanical migration, batched by directory; excludes W7-doomed gemini files; adds permanent CI grep-guard test | codex/terra (batches) | pinned-pattern grep = zero hits outside contract doc (patterns enumerated in brief); new guard test red-green; full suite green |
+| W1b | bd mechanical migration, batched by directory (incl. docs/index.html and TOML_COMMAND_MAP strings + TOML regeneration per D8 edit-ownership); adds permanent CI grep-guard test | codex/terra (batches) | pinned-pattern grep = zero hits outside `docs/bd-compatibility.md`, CHANGELOG.md, and `docs/plans/` (history + this design quote the broken forms legitimately — same exemption in the CI guard test); new guard test red-green; full suite green |
 | W2a | external-tools adapter correctness (D2/D6/D9): `--model`/effort threading into both invocations; verify_scope against explicit base SHA BEFORE commit; sandbox envelope; availability fallback; review-leg read-only pin; fake-CLI argv tests; log hardening | codex/terra, **claude adversarial review (security-sensitive)** | fake-CLI test asserts exact argv (model, effort, sandbox, network flags); scope-violation test red-green; base/head review package test; no `--full-auto` remains |
-| W2b | GPT-5.6 config/docs surface: templates ×2, setup bin ×4 + root `bin/` dups, SKILL.md tier table, cost tables ($2.50/$15, $5/$30, $1/$6), ultra=experimental + `features.rollout_budget.*` probe procedure, start-task model tables → haiku/sonnet/inherit, drop stale plugin_hooks claims | codex/luna | zero `gpt-5.3-codex` outside CHANGELOG (grep); `sandbox:`/`auth_env_var:` dead keys reconciled (wired or removed); gemini `enabled: false` seeded |
+| W2b | GPT-5.6 config/docs surface: templates ×2, setup bin ×4 + root `bin/` dups, SKILL.md tier table, cost tables ($2.50/$15, $5/$30, $1/$6), ultra=experimental + `features.rollout_budget.*` probe procedure, start-task model tables → haiku/sonnet/inherit, drop stale plugin_hooks claims | codex/luna | grep pattern `gpt-5\.3-codex($\|[^-])` = zero hits outside CHANGELOG.md and `docs/plans/` (spark tier deliberately excluded from the pattern and KEPT in the tier table); `sandbox:`/`auth_env_var:` dead keys reconciled (wired or removed); gemini `enabled: false` seeded |
 | W3 | Codex hooks guard (D4): `"hooks": {}` + exact-literal manifest test (absent/`[]` fail) + unique-marker empirical test + AGENTS.md parity checklist | claude | manifest test red-green; marker test proves no Claude-hook execution under Codex; AGENTS.md template carries the enumerated parity items |
 | W4 | Gate trigger paths + upstream-drift guard: primary `docs/superpowers/specs/*-design.md`, legacy `docs/plans/*-design.md` fallback; GETTING_STARTED + brainstorming-extension aligned; new test checks referenced superpowers skill names + trigger path against installed plugin (skips gracefully if absent); tested-version recorded | codex/terra | trigger fires on a stock v6.1.1-path fixture (behavior test, not filename grep); drift test red-green |
 | W5 | Validation invariant (D6): rewrite VALIDATE definition + `external-tool-review-rubric.md` + adversarial rubric — once at the boundary; evidence format (command, exit status, rerun); tampering countermeasures (a)-(e) | claude | rubric mandates baseline re-run + red-green for new tests + out-of-scope test-diff block; RED/GREEN pressure-test of the rewritten prose |
-| W6 | Dangling refs: spec + implement `bin/create-pr-with-shepherd.sh`, `bin/pr-comments-out-of-scope.sh` with red-green bash tests (`tests/bin/`); remove `/auto-ram-cleanup`, `/curate-pr-learnings` refs | codex/terra | behavioral tests pass (PR-creation dry-run mode, out-of-scope classifier fixtures); zero dangling references by grep |
-| W7 | Gemini consumer-host retirement (D3): host surface removed (extension json, GEMINI.md ×3, 13 TOMLs + TOML branch of sync-resources, tests/gemini, detectGemini install path, platform tables); adapter hardened + relabeled; `.metaswarm/project-profile.json` test command updated | codex/terra (explicit list from case-insensitive grep ≈59 files minus adapter keeps) | case-insensitive grep clean outside adapter+CHANGELOG; `external-tools-verify.sh` still passes for adapter; full suite green with gemini suite removed from ci.yml |
+| W6 | Dangling refs: spec + implement `bin/create-pr-with-shepherd.sh`, `bin/pr-comments-out-of-scope.sh` with red-green bash tests (`tests/bin/test-*.sh`); remove `/auto-ram-cleanup`, `/curate-pr-learnings` refs; note: buildDirSync auto-copies the new scripts into `skills/setup/bin/` — copies expected and in-scope | codex/terra | behavioral tests pass (PR-creation dry-run mode, out-of-scope classifier fixtures); zero dangling references by grep; `--check` green with the auto-synced copies |
+| W7 | Gemini consumer-host retirement (D3): host surface removed (extension json, GEMINI.md ×3, 13 TOMLs + TOML branch of sync-resources + gemini entries in validateManifests lines ~283/293, tests/gemini, detectGemini install path, platform tables); adapter hardened + relabeled; `.metaswarm/project-profile.json` test command updated; CHANGELOG breaking-change note for existing Gemini-host users | codex/terra (explicit list from case-insensitive grep ≈59 files minus adapter keeps) | case-insensitive grep clean outside adapter+CHANGELOG+docs/plans; `external-tools-verify.sh` still passes for adapter; full suite green with gemini suite removed from ci.yml |
 | W8 | installCodex(): two-step (`codex plugin marketplace add <fork>` THEN `codex plugin add metaswarm`), install-completion verification, legacy clone+symlink fallback on failure; INSTALL.md corrected | codex/luna | mocked-CLI test asserts both commands + completion check; depends on W0.2 |
 | W9 | SDD dispatch contract (D5): vendored contract doc + orchestrated-execution rewrite (file handoffs, explicit model, single fix dispatch, compaction-proof ledger, base/head packages); gates reference the vendored contract; Team Mode boundary | claude (frontier quick) | contract doc exists + gates cite it; Team/Task dual-mode sections intact (grep); pilot metrics recorded for this refinement's own dispatches |
 | W10 | project-profile schema + multi-language execution: versioned schema, validation, trust boundary; orchestrated-execution / external-tools / pr-shepherd / create-issue consume profile commands with documented JS/TS fallback | codex/terra + claude review | schema doc + validator; the 4 skills reference profile commands (grep); hardcoded `pnpm/vitest/tsc/eslint` remain only as documented fallback |
@@ -251,7 +292,10 @@ knowledge-base seeding for the 7 empty JSONL files.
 - Cross-model rule: Codex-implemented WUs get Claude adversarial review; Claude-implemented
   security/architecture WUs (W5, W9, W11) get a Codex sol review leg. Fresh reviewer per re-review.
 - Final comprehensive review: cross-WU integration + full suite + doc link-check + an end-to-end
-  smoke scenario (create issue → start-task → dispatch → PR creation dry-run → shepherd handoff).
+  smoke scenario (create issue → start-task → dispatch → PR creation dry-run → shepherd handoff);
+  the smoke scenario ALSO runs once at the Wave 1 boundary (§2 early-stop risk).
+- Risk addendum: local-vs-CI toolchain divergence — every new guard test that probes local
+  binaries skips gracefully in CI (see §4 preamble).
 - bd: one issue per WU under epic `metaswarm-nnc` (gh-1); SESSION CLOSE protocol per bd prime.
 
 ## 6. Risks
