@@ -47,6 +47,9 @@ jobs:
       - name: Run bd vocabulary compatibility guard
         run: bash tests/beads/test-bd-vocabulary.sh
 
+      - name: Run Codex external-tools adapter tests
+        run: bash tests/external-tools/test-codex-adapter.sh
+
       - name: Run sync-resources tests
         run: bash tests/lib/test-sync-resources.sh
 
