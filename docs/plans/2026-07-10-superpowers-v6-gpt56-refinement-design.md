@@ -1,170 +1,269 @@
 # metaswarm Refinement Design: superpowers v6.1.1 absorption + GPT-5.6 integration
 
-**Date**: 2026-07-10
+**Date**: 2026-07-10 (v2 — revised after gate round 1 + fusion cross-model validation)
 **Author**: Architect (Claude Fable 5, orchestrated session)
-**Status**: DRAFT — pending plan-review-gate + design-review-gate
-**Research basis**: 12 research reports + gap map (session scratchpad `research/`), synthesized from
-code-level analysis of obra/superpowers v6.1.1 (HEAD `d884ae0`, 2026-07-02), this fork (v0.12.0),
-and primary-source GPT-5.6 research (GA 2026-07-09).
+**Status**: REVISED DRAFT — pending gate round 2
+**Research basis**: 12 research reports + gap map (session scratchpad `research/`); superpowers v6.1.1
+(HEAD `d884ae0`); GPT-5.6 GA (verified 2026-07-09, global rollout <48h old); live-verified toolchain
+facts (bd 1.0.5, codex-cli 0.144.0) — every load-bearing external claim in this doc is either
+live-probed on this machine or carries a primary-source citation in the research reports.
+**Review basis**: plan-review-gate (3 adversarial) + design-review-gate (5 reviewers) round 1
+(19 blocking findings, all addressed below) + fusion panel fable-gpt5.6 (provenance:
+`~/.claude/fusion-runs/2026-07-10_052346_fable-gpt5.6.md`).
 
 ---
 
 ## 1. Problem statement
 
 metaswarm v0.12.0 was derived from a pre-Fable superpowers and has not absorbed 6 months of
-upstream evolution (v5.x → v6.1.1, 397 commits in 2026). Four independent failure surfaces:
+upstream evolution (v5.x → v6.1.1). Verified failure surfaces:
 
-1. **bd CLI drift** — ~90 call sites across ~45 files invoke a beads interface that does not exist
-   in installed bd 1.0.5 (`bd prime --work-type/--files/--keywords`, `bd sync`, `bd stats`,
-   `bd start`, `bd decision`, `bd create --issue`, wrong `bd compact`). Every agent's mandatory
-   first-step priming and both context-recovery protocols are broken.
-2. **Un-absorbed post-Fable lessons** — superpowers spent June 2026 deleting scaffolding modern
-   models don't need and cutting SDD token cost ~50% (file-based artifact handoffs, one reviewer
-   per task, explicit model per dispatch, bootstrap compression). metaswarm still carries the
-   verbose pre-Fable style and reimplements parallel-dispatch/ledger machinery from scratch.
-3. **Platform wiring drift** — missing `"hooks": {}` guard in the Codex plugin manifest (a bug
-   class upstream already shipped a fix for), Claude-only hook JSON envelope, Gemini CLI (EOL'd
-   by Google 2026-06-18) still shipped as a first-class host platform, 4 of 7 test suites not in CI,
-   design-review-gate trigger paths that no longer match superpowers v6.1.1 output paths.
-4. **GPT-5.6 landed 2026-07-09** — the Codex adapter is pinned to deprecated `gpt-5.3-codex`
-   with no reasoning-effort tiering; the deprecation wave for older codex models hits 2026-07-23.
+1. **bd CLI drift** — legacy invocations across ~45-66 files (`bd prime --work-type/--files/
+   --keywords`, `bd sync`, `bd start`, `bd decision`, `bd create --issue`, mis-targeted
+   `bd compact`) do not exist in installed bd 1.0.5. (`bd stats` is a VALID alias of `bd status`
+   — earlier drafts wrongly listed it as broken; live-verified.)
+2. **Un-absorbed post-Fable lessons** — superpowers' June-2026 strict-cost SDD, process slimming,
+   and authoring discipline are missing; the 19 agent personas carry pre-Fable scaffolding,
+   SaaS-stack lock-in (12 files), orphans, and a 699-line runtime-loaded orchestrator.
+3. **Platform wiring drift** — missing `"hooks": {}` Codex manifest guard; Gemini CLI consumer
+   access discontinued 2026-06-18 (enterprise/API-key access continues) while metaswarm ships it
+   as a first-class host; 4 of 7 test suites not in CI; design-review-gate trigger paths that
+   never fire on stock superpowers v6.1.1 output.
+4. **External-tools adapter is partly non-functional** (live-verified this session):
+   `DEFAULT_MODEL` is never passed to either `codex exec` invocation (model routing is
+   decorative); `verify_scope` runs AFTER the worktree commit and inspects the then-empty
+   `git diff HEAD` (scope enforcement is dead code on the success path); the yaml config is
+   documentation, not a control plane; the implement leg uses deprecated `--full-auto` and
+   inherits the user's global codex config including network egress.
+5. **Fork identity** — `.agents/plugins/marketplace.json`, `.codex-plugin/plugin.json`, and the
+   `lib/sync-resources.js:256` validator all hardcode `dsifry/metaswarm`; marketplace-first
+   install would deliver upstream, not this fork.
+6. **GPT-5.6 GA'd 2026-07-09** — templates seed the picker-deprecated `gpt-5.3-codex` with no
+   tier routing or reasoning-effort threading. (NOT a hard deadline: `gpt-5.3-codex` is supported
+   through Feb 2027; the 2026-07-23 wave kills only 5.0/5.1/5.2-codex, which metaswarm never
+   pinned. The driver is quality/routing, not expiry.)
 
 ## 2. Goals / non-goals
 
-**Goals**
-- metaswarm works correctly TODAY on Claude Code and Codex CLI 0.144+ with bd 1.0.5.
-- Absorb superpowers v6.1.1 design lessons (token cost, process slimming, authoring discipline)
-  without losing metaswarm's additive layer (beads orchestration, gates, external-tools,
-  adversarial rubrics, PR lifecycle).
-- First-class GPT-5.6 integration: verified slugs, tier routing, reasoning-effort threading,
-  fabrication-hardened review.
-- Preserve and harden metaswarm's cross-model adversarial review — now validated by GPT-5.6
-  Sol's documented test-fabrication rate (METR/Apollo).
+**Goals** (unchanged from v1): correct-today on Claude Code + Codex CLI + bd 1.0.5; absorb
+superpowers v6.1.1 lessons without losing metaswarm's additive layer; first-class, *functional*
+GPT-5.6 tier routing; fabrication-hardened validation. **Wave 0+1 alone deliver the
+"works correctly today" goal** — later waves add quality, not correctness.
 
-**Non-goals**
-- No new host platforms (Cursor/OpenCode stubs stay stubs).
-- No Codex portal packaging in this pass (native marketplace discovery already works).
-- No rewrite of well-aligned skills (TDD, systematic-debugging, verification-before-completion,
-  finishing-a-development-branch, executing-plans compose cleanly with v6.1.1).
-- No upstream PR to dsifry/metaswarm in this pass (fork-first; upstreaming is a follow-up).
+**Non-goals**: no new host platforms (incl. no 3-way hook envelope — noted as future work if a
+shell-hook host is added); no Codex portal packaging; no rewrite of well-aligned skills; no
+upstream PR to dsifry/metaswarm (fork-first; git operations target Cabbala/metaswarm only).
 
 ## 3. Key design decisions
 
-### D1. bd 1.0.5 vocabulary (single reference: `.agents/skills/beads/SKILL.md`)
-| Legacy (broken) | Replacement |
+### D1. bd 1.0.5 semantic compatibility contract (tracked, not a blind sweep)
+A tracked doc `docs/bd-compatibility.md` records the contract; migration happens by semantic
+class, not one mechanical pass. Live-verified mappings:
+
+| Legacy intent | Treatment |
 |---|---|
-| `bd prime --work-type X --files Y --keywords Z` | `bd prime` (scoping via `.beads/PRIME.md` override, documented once in skills/start) |
-| `bd sync --status` / `bd sync --from-main` | drop; `bd status` for state, `bd export`/Dolt auto-commit for persistence |
-| `bd stats` | `bd status` |
-| `bd start <id>` | `bd update <id> --claim` |
-| `bd create ... --issue 123` | `bd create ... --external-ref "gh-123"` |
-| `bd decision "..."` | `bd remember "..."` (durable) or issue comment (`bd comment`) |
-| `bd compact` (semantic) | `bd admin compact` |
-Verification: every replacement command exercised against bd 1.0.5 in a scratch repo BEFORE the
-sweep; post-sweep `grep -rn` proves zero legacy invocations remain.
+| Prime session context (`bd prime --work-type/--files/--keywords`) | bare `bd prime`; scoping via tracked `.beads/PRIME.md` override, documented once |
+| Inspect status (`bd stats`) | valid alias — leave as-is (optional normalization, non-blocking) |
+| Claim work (`bd start <id>`) | `bd update <id> --claim` |
+| Link GitHub issue (`--issue N`) | `--external-ref "gh-N"` |
+| Durable decision (`bd decision`) | **`bd create --type decision`** (first-class issue type, live-verified) — keeps decisions in the exported issue graph; `bd remember`/`bd comment` only where memory/comment semantics are intended |
+| Semantic summarization (`bd compact`) | `bd admin compact` ONLY at call sites intending semantic decay; `bd compact` (Dolt history squash) is itself valid and stays where history cleanup was meant |
+| Persistence/sync (`bd sync --status/--from-main`) | drop the fiction; document an explicit Dolt policy (`bd dolt commit/push/pull` or auto-commit setting). `bd export` is NOT a backup substitute (its own help says so) |
 
-### D2. GPT-5.6 tier routing (verified slugs, GA 2026-07-09)
-- Default implementer: **`gpt-5.6-terra`** ($2.50/$15, `model_reasoning_effort="xhigh"`).
-- Review / adversarial / hard debugging: **`gpt-5.6-sol`** ($5/$30, `xhigh`; `ultra` is valid ONLY
-  through Codex CLI config, Sol-only, ~2-3x tokens — opt-in with `rollout_token_budget` cap).
-- Small fixes / config / docs legs: **`gpt-5.6-luna`** ($1/$6, `high`).
-- Ultra-low-latency loops: `gpt-5.3-codex-spark` (unchanged; only 1000+ tok/s option).
-- Bare `gpt-5.6` aliases to Sol; there is **no** `gpt-5.6-codex` variant.
-- Claude-side subagent tables align to haiku (mechanical) / sonnet (standard) / inherit (judgment);
-  Opus is not a routing target.
+The vocabulary was derived from live bd 1.0.5 probing (the locally-installed beads skill is
+untracked and will not ship with the fork — the tracked contract doc is the reference).
+A permanent CI grep-guard (pinned patterns for the 6 genuinely-broken forms) prevents re-drift.
 
-### D3. Gemini split: retire the HOST, keep the ADAPTER
-- **Retire** Gemini CLI as a host platform (Google EOL 2026-06-18): `gemini-extension.json`,
-  generated GEMINI.md/TOML command surface, `detectGemini()` install path, host-platform claims in
-  README/INSTALL, `tests/gemini/` extension suite. One clean pass — not upstream's partial state.
-- **Keep** the `external-tools` gemini adapter as a delegation target, marked
-  "upstream product EOL'd; best-effort, enabled only if binary present" — locally installed CLIs
-  (0.40.0 here) still function, and cross-model review value survives. Antigravity (`agy`)
-  evaluation is a separate follow-up issue, not this pass.
+### D2. GPT-5.6 tier routing — functional, availability-aware
+GA confirmed 2026-07-09 (preview 06-26 → GA; global rollout <48h old at design time).
+- **Functional wiring is part of the decision**: `parse_args` gains `--model`; both `codex exec`
+  invocations receive `-c model="..."` and `-c model_reasoning_effort="..."`. Without this,
+  model constants are reporting-only (live-verified defect).
+- Tiers: implement=`gpt-5.6-terra`/`xhigh`; review/adversarial=`gpt-5.6-sol`/`xhigh`;
+  small=`gpt-5.6-luna`/`high`; latency loops=`gpt-5.3-codex-spark` (unchanged). Bare `gpt-5.6`
+  aliases to Sol; no `gpt-5.6-codex` variant exists.
+- **Availability fallback**: health check verifies the configured model is usable; on
+  model-unavailable the adapter reports a distinct error and the escalation chain proceeds —
+  no silent substitution.
+- Documented effort ladder is `minimal|low|medium|high|xhigh` (official config reference).
+  **`ultra` is undocumented** (accepted by the local CLI; Sol-only semantics) → experimental
+  opt-in ONLY, guarded by the *real* budget keys `features.rollout_budget.enabled` /
+  `features.rollout_budget.limit_tokens` (config-reference-verified; empirical probe in W2 via
+  clean `CODEX_HOME`; note `--strict-config` cannot be a standing guard — real configs carry
+  unknown fields, live-verified). `rollout_token_budget` does not exist (probe-confirmed) and
+  appears nowhere in this design's outputs. `XT_TIMEOUT` remains the hard backstop.
+- Claude-side subagent tables: haiku (mechanical) / sonnet (standard) / inherit (judgment).
+  *Fork-local policy note*: these tables encode this fork owner's routing policy; genericize
+  before any future upstream PR.
 
-### D4. Codex-native posture (superpowers' conclusion, adopted)
-- `.codex-plugin/plugin.json` gets the exact literal `"hooks": {}` (absent field or `[]`
-  re-triggers Codex auto-discovery of the Claude hook — verified upstream bug class).
-- No Codex session-start content: native skill discovery suffices (superpowers v6.1.0 evidence).
-- `hooks/session-start.sh` JSON envelope branches by platform (Claude
-  `hookSpecificOutput.additionalContext` / else plain `additionalContext`).
-- New manifest-level test locks the wiring.
+### D3. Gemini split — consumer host retired, adapter kept as enterprise/API-key target
+Wording corrected per primary source: Google discontinued CONSUMER access 2026-06-18;
+Code Assist Standard/Enterprise and paid API-key access continue; the OSS repo still receives
+security fixes. metaswarm retires the Gemini *host platform* surface in one clean pass and keeps
+the delegation adapter labeled "enterprise/API-key compatibility target" with hardening:
+`enabled: false` in seeded templates (explicit opt-in), removed from default `escalation_order`,
+implement leg loses `--yolo` (sandboxed if 0.40.0 supports it, else the adapter is review-only),
+health check records binary path+version as a post-transition supply-chain tripwire.
 
-### D5. SDD cost lessons imported into orchestrated-execution
-From superpowers v6.0.0 "strict-cost SDD" (measured ~2x speed, ~50% tokens upstream):
-file-based artifact handoffs (diffs/task text passed as file paths, never pasted into controller
-context); mandatory explicit model per dispatch; ONE consolidated fix dispatch for all findings of
-a review round; compaction-proof ledger rules (re-dispatch after compaction was upstream's single
-most expensive failure). Gates reference `superpowers:dispatching-parallel-agents` for dispatch
-mechanics instead of restating them.
+### D4. Codex-native posture + explicit Codex enforcement story
+- `.codex-plugin/plugin.json` gets the exact literal `"hooks": {}`; manifest test asserts the
+  parsed field is exactly `{}` (absent field and `[]` must FAIL the test); a unique-marker
+  empirical test verifies Codex never executes the Claude hook (this also settles the open
+  question whether current Codex supplies `CLAUDE_PLUGIN_ROOT` compat vars — unverifiable from
+  docs at design time).
+- No Codex session-start content (superpowers' conclusion). **The Codex-side replacement story
+  is explicit**: static `AGENTS.md` (written by setup) must carry parity with what the Claude
+  hook injects (skills-check nudge, bd prime First-Step, gate triggers); documented limitation:
+  Codex has no post-compaction re-priming path — AGENTS.md persistence is the mitigation.
+- The hook envelope stays Claude-only (envelope branching dropped — Codex hooks are suppressed
+  and no other shell-hook host is in scope).
 
-### D6. Fabrication-hardened external review (GPT-5.6 Sol countermeasure)
-`external-tool-review-rubric.md` + `codex.sh` review flow encode: **no external tool's test-pass
-claim is ever accepted without an independent re-run by the orchestrator** (Phase 2 VALIDATE
-already owns this; the rubric makes it explicit for cross-model legs). Ultra-effort review legs
-carry a token-budget cap.
+### D5. SDD lessons via a host-neutral dispatch contract (vendored)
+metaswarm vendors a small dispatch contract in its own skills (parallel isolated dispatch, file-based
+artifact handoffs — never paste diffs/task text into controller context, explicit model per
+dispatch, single consolidated fix dispatch per review round, base/head-SHA review packages,
+fresh-reviewer rule, compaction-proof ledger). superpowers is cited as the source, NOT referenced
+as a runtime dependency — this preserves INSTALL.md's standalone claim and avoids by-name
+upstream coupling (the failure class that silently disabled the design-review-gate). Claude and
+Codex mappings of the contract are documented separately. Upstream's "~2x speed / ~50% tokens"
+is treated as anecdote: this refinement itself is the pilot; W9 records dispatch counts, tokens,
+and redispatch rates before/after.
+**Preservation boundary**: Team Mode / Task Mode dual-mode sections are preserved (or explicitly
+relocated to `guides/agent-coordination.md`) — never silently deleted.
 
-### D7. Authoring discipline (superpowers `writing-skills`)
-All skill/gate prose rewritten in this pass follows: description = trigger conditions only (never
-workflow summary); "Match the Form to the Failure" (discipline problems → prohibition + red-flags
-table; shaping problems → positive recipe); no inert frontmatter (`auto_activate`/`triggers`
-dropped — agentskills.io `name`+`description` only, plus real Claude-Code fields where needed).
-Claude Code gets an explicit skills-check bootstrap nudge in the session hook (superpowers found
-Claude needs it; Codex does not).
+### D6. One validation invariant at the boundary (covers fabrication AND tampering)
+Stated once, in the VALIDATE phase definition + adversarial rubrics, applying to ALL implementers
+(external or Claude): *no claimed test result is accepted until the orchestrator records the
+command, exit status, and a fresh re-run from an orchestrator-controlled baseline.* Additions
+that close the tampering hole (GPT-5.6 Sol has the highest measured benchmark-gaming rate, and
+concealment is rising — METR/Apollo): (a) test-file modifications outside the declared scope are
+review-BLOCKING; (b) new tests get red-green verification (fail when implementation reverted);
+(c) pre-existing suites are re-run against base-SHA copies of test files, not the worktree's;
+(d) external-tool output and diffs are untrusted DATA (delimited in review prompts; instructions
+inside them are never followed); (e) review legs are always `--sandbox read-only`, pinned by test.
 
-### D8. Single source of truth consolidations
-- Rubrics: `rubrics/*.md` canonical; gates and agents cite them by path instead of inlining
-  (three-way drift already observed). `release-engineering-rubric.md` added to `RUBRIC_SYNC`.
-- Agents: `agents/` is canonical; `skills/start/agents/` becomes synced copies via
-  `lib/sync-resources.js` (`--check` in CI); 7 of 12 currently differ silently.
-- Commands: `commands/` canonical; `.claude/commands/` synced copies, checked in CI.
-- Execution-time toolchain commands come from `.metaswarm/project-profile.json` (multi-language),
-  with the current JS/TS commands as documented fallback.
+### D7. Authoring discipline + trigger evals
+As v1 (writing-skills: description = trigger conditions only; Match the Form to the Failure;
+pressure-test rewritten gate prose RED/GREEN), plus: trigger-behavior evals (positive / negative /
+near-miss cases per skill) accompany any frontmatter/description change; the inert `triggers:`
+lists are folded into descriptions BEFORE deletion; Claude Code session hook gains an
+UNCONDITIONAL skills-check nudge (discriminating DoD: the exact hook content is specified, not
+"a nudge exists").
+
+### D8. Single sources of truth with a path-resolution rule
+- `rubrics/` canonical; gates/agents cite rubrics with **dispatch-time absolute-path expansion**
+  (the orchestrator resolves the skill-local synced copy to an absolute path before embedding in
+  any subagent prompt — bare relative paths break under installed-plugin cwd; a test greps gate
+  prompts for unresolved relative rubric paths). `release-engineering-rubric.md` joins RUBRIC_SYNC.
+- `agents/` canonical; `skills/start/agents/` becomes synced copies (7 of 19 currently diverge —
+  measured list in the dispatch brief; W1b sweep is mapping-only and must NOT reconcile divergent
+  pairs — that is W11's decision).
+- `commands/` canonical with an EXPLICIT per-file sync roster (trees already diverge: 1 differing
+  file, 4 commands-only entries); `.claude/commands/` synced; thin-shim claims in setup/migrate
+  docs corrected. `bin/` and `skills/setup/bin/` duplication joins the sync map (4 scripts).
+- Execution-time toolchain commands come from `.metaswarm/project-profile.json` under a versioned,
+  validated schema (W10 defines: null semantics, command quoting, cwd, timeouts, trust boundary —
+  profile content is repo-controlled data, never shell-injected).
+- All sync surfaces ride `lib/sync-resources.js --check` in CI (one idiom, no bespoke checkers);
+  sync-resources.js edits are consolidated in W11 with other WUs consuming, not editing.
+
+### D9. Delegation security envelope (new)
+Implement legs: `--sandbox workspace-write` (replaces deprecated `--full-auto`), network egress
+OFF by default (`-c sandbox_workspace_write.network_access=false` — key live-verified), explicit
+approval policy for non-interactive runs. Review legs: `--sandbox read-only`, pinned by test.
+Config inheritance (HOME preserved → user's global codex config, MCP servers, hooks apply) is
+documented and surfaced by the health check (effective sandbox/approval/network/model posture).
+Session logs: directory 0700 / files 0600, `raw_log` capped. `external-tools.yaml` carries
+env-var NAMES only (asserted in template refresh). Prompt-injection posture: repo-derived text
+(issue bodies, PR comments, PRIME.md) is data; wrap injected context in explicit delimiters.
+
+### D10. Fork identity (new)
+This fork distributes as **Cabbala/metaswarm**. Manifest URLs (`.agents/plugins/marketplace.json`,
+`.codex-plugin/plugin.json`) and the sync-resources validator derive the expected repo URL from
+`package.json`'s `repository` field (single source) instead of hardcoded `dsifry` literals.
+`package.json.repository` is updated to the fork. Without this, marketplace-first install ships
+upstream's code (live-verified blocker).
+
+### D11. Persona refinement — all 19 agents (user-mandated expansion)
+Roster disposition: **core 11 kept + rewritten** (issue-orchestrator, researcher, architect, coder,
+code-review, security-auditor, cto, product-manager, designer, security-design, pr-shepherd);
+**test-automator deleted** (never spawned; duplicates coder's TDD duties); **release-engineer →
+optional extension** (ghost "QA Agent" refs removed ×5); **peripheral 5 genericized + marked
+optional** (metrics, sre, slack-coordinator, customer-service, swarm-coordinator — swarm-coordinator
+gains the missing header template); **knowledge-curator kept** (live in the learning loop).
+Rewrite rules: adversarial-rubric contract style (role contract, binary verdicts, evidence
+requirements — no triple-restated checklists, no isomorphic worked examples, no literal bash
+sequences); descriptions = trigger conditions; SaaS stack references (Prisma/Zod/Hono/Clerk/
+Stripe/PostHog, 12 files) replaced by `.metaswarm/project-profile.json` references; superpowers'
+read-only-reviewer contract + anti-sycophancy discipline imported verbatim into reviewer personas;
+per-persona model-tier note (Claude haiku/sonnet/inherit; Codex terra/sol/luna); Type fields
+fixed; security-auditor's 4 "Your-Project" placeholders resolved; ghost UX Reviewer resolved as
+**gate = 5 reviewers, docs corrected** (UX flow checks fold into Designer's checklist);
+cto-vs-plan-review-gate reconciled: **the adversarial plan-review-gate is the live mechanism**;
+cto-agent's collaborative plan review is folded into it and `rubrics/plan-review-rubric.md` is
+marked historical/absorbed; issue-orchestrator trimmed from 699 lines to a lean contract (it is
+the ONLY agent file loaded verbatim at runtime — highest-leverage single rewrite).
 
 ## 4. Work units
 
-Sequencing: A (correctness) → B (platform) → C (process) → D (docs/hygiene).
-Every WU runs the 4-phase loop (IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT), with
-cross-model review whenever the implementer was an external tool, per D6.
+IDs renamed (W-prefix) to kill the D-collision. Sequencing: Wave 0 (safety net) → 1 (correctness)
+→ 2 (platform) → 3 (process/personas) → 4 (docs). Every WU: 4-phase loop; VALIDATE per §5.
+Cross-model adversarial review is MANDATORY for externally-implemented, security-sensitive, or
+architecturally broad WUs; optional elsewhere (cost trim per fusion).
 
-| WU | Title | Scope (files ~) | Implementer | DoD highlights |
-|---|---|---|---|---|
-| A1 | bd 1.0.5 migration sweep (D1) | ~45 | codex/terra (mapping table given verbatim) | zero legacy bd invocations by grep; every replacement verified against bd 1.0.5; `.beads/PRIME.md` override documented once |
-| A2 | GPT-5.6 external-tools migration (D2) | ~12 | codex/terra (exact tables given) | terra default everywhere incl. both templates + setup bin; effort threading in codex.sh; cost tables refreshed; plugin_hooks claims dropped; start-task model tables → haiku/sonnet/inherit |
-| A3 | Codex hooks guard + envelope branch + manifest test (D4) | 4 + 1 test | claude | `"hooks": {}` literal present; envelope branches; new test red-green demonstrated; existing hook tests still pass |
-| A4 | design-review-gate trigger paths | 4 | codex/terra | primary trigger `docs/superpowers/specs/*-design.md`; `docs/plans/*-design.md` legacy fallback kept; GETTING_STARTED + brainstorming-extension aligned |
-| A5 | Sol fabrication hardening (D6) | 3 | claude | rubric mandates independent re-run; codex.sh review flow updated; ultra budget cap documented + threaded |
-| B1 | Gemini host retirement, adapter kept (D3) | ~35 (mostly deletions) | codex/terra (explicit file list) | no host-platform gemini claims remain; adapter marked EOL-best-effort; sync-resources TOML branch removed; tests/gemini extension suite removed |
-| B2 | CI wiring: add surviving suites, sandbox sync test | 2 | codex/luna | all surviving suites in ci.yml; test-sync-resources runs against a temp copy; CI green locally via act-equivalent bash run |
-| B3 | installCodex(): marketplace-first, symlink fallback | 1 | codex/luna | documented command attempted first; fallback logged; installer test updated |
-| B4 | Dangling refs: write `bin/create-pr-with-shepherd.sh` + `bin/pr-comments-out-of-scope.sh`; remove `/auto-ram-cleanup`, `/curate-pr-learnings` refs | 6 | codex/terra | both scripts exist + are executable + referenced paths real; zero dangling references by grep |
-| C1 | SDD cost import into orchestrated-execution + gates reference dispatching-parallel-agents (D5) | 5 | claude | file-handoff protocol specified; explicit-model rule; single-fix-dispatch rule; compaction-proof ledger rules; duplicated dispatch prose replaced by references |
-| C2 | Multi-language execution via project-profile commands (D8) | 5 | codex/terra | orchestrated-execution/external-tools/pr-shepherd/create-issue read profile commands; JS/TS fallback documented |
-| C3 | Agent/rubric consolidation (D8) | ~25 | claude (codex/sol second-opinion review) | rubrics cited not inlined; agents/ canonical + sync check; ghost UX reviewer resolved (gate = 5 reviewers, docs agree); orphans resolved (test-automator deleted, release-engineer marked optional-extension + QA-agent refs removed); placeholders filled; Type fields fixed |
-| C4 | Frontmatter modernization + description audit (D7) | ~14 | codex/terra (audit table given) | no `auto_activate`/`triggers` keys remain; every description = trigger conditions; Claude bootstrap nudge in session hook |
-| D1 | Doc-truth sweep | ~15 | codex/terra (checklist given) | counts correct (19→ post-C3 actual), rosters complete, knowledge path unified to `.beads/knowledge/`, SERVICE-INVENTORY path unified, INSTALL dependency table = 9 skills, worktree guide native-tools-first, metaswarm-setup.md marked legacy |
-| D2 | Authoring discipline docs (D7) | 3 new | claude | guides/skill-authoring.md (writing-skills distilled); docs/testing.md-style tests-vs-evals split; CONTRIBUTING gate updated |
-| D3 | Hygiene: `.coverage-thresholds.json` enforcement command fixed for this repo (merge-edit, not regeneration); version-bump audit script; commands-dup sync check | 5 | codex/luna | enforcement command actually runs here; `--check` catches command/agent dup drift |
+| WU | Title | Impl | DoD highlights (verifiable) |
+|---|---|---|---|
+| W0.1 | CI safety net: wire all 7 suites; sandbox `test-sync-resources.sh` (temp-copy); fix `.coverage-thresholds.json` enforcement command to this repo's real suite; add §5-authority note | codex/terra | ci.yml runs 7/7 suites green; sync test leaves `git status` clean (asserted in-test); enforcement command executes successfully |
+| W0.2 | Fork identity (D10): repo URL from package.json in manifests + validator; update package.json | codex/luna | zero `dsifry` literals outside CHANGELOG/history docs (grep); `sync-resources --check` green; manifest test |
+| W1a | bd semantic contract (D1): write `docs/bd-compatibility.md`; decide per-class semantics; scratch-repo verification transcript committed alongside | claude | every contract row carries live command+output evidence; PRIME.md override documented once |
+| W1b | bd mechanical migration, batched by directory; excludes W7-doomed gemini files; adds permanent CI grep-guard test | codex/terra (batches) | pinned-pattern grep = zero hits outside contract doc (patterns enumerated in brief); new guard test red-green; full suite green |
+| W2a | external-tools adapter correctness (D2/D6/D9): `--model`/effort threading into both invocations; verify_scope against explicit base SHA BEFORE commit; sandbox envelope; availability fallback; review-leg read-only pin; fake-CLI argv tests; log hardening | codex/terra, **claude adversarial review (security-sensitive)** | fake-CLI test asserts exact argv (model, effort, sandbox, network flags); scope-violation test red-green; base/head review package test; no `--full-auto` remains |
+| W2b | GPT-5.6 config/docs surface: templates ×2, setup bin ×4 + root `bin/` dups, SKILL.md tier table, cost tables ($2.50/$15, $5/$30, $1/$6), ultra=experimental + `features.rollout_budget.*` probe procedure, start-task model tables → haiku/sonnet/inherit, drop stale plugin_hooks claims | codex/luna | zero `gpt-5.3-codex` outside CHANGELOG (grep); `sandbox:`/`auth_env_var:` dead keys reconciled (wired or removed); gemini `enabled: false` seeded |
+| W3 | Codex hooks guard (D4): `"hooks": {}` + exact-literal manifest test (absent/`[]` fail) + unique-marker empirical test + AGENTS.md parity checklist | claude | manifest test red-green; marker test proves no Claude-hook execution under Codex; AGENTS.md template carries the enumerated parity items |
+| W4 | Gate trigger paths + upstream-drift guard: primary `docs/superpowers/specs/*-design.md`, legacy `docs/plans/*-design.md` fallback; GETTING_STARTED + brainstorming-extension aligned; new test checks referenced superpowers skill names + trigger path against installed plugin (skips gracefully if absent); tested-version recorded | codex/terra | trigger fires on a stock v6.1.1-path fixture (behavior test, not filename grep); drift test red-green |
+| W5 | Validation invariant (D6): rewrite VALIDATE definition + `external-tool-review-rubric.md` + adversarial rubric — once at the boundary; evidence format (command, exit status, rerun); tampering countermeasures (a)-(e) | claude | rubric mandates baseline re-run + red-green for new tests + out-of-scope test-diff block; RED/GREEN pressure-test of the rewritten prose |
+| W6 | Dangling refs: spec + implement `bin/create-pr-with-shepherd.sh`, `bin/pr-comments-out-of-scope.sh` with red-green bash tests (`tests/bin/`); remove `/auto-ram-cleanup`, `/curate-pr-learnings` refs | codex/terra | behavioral tests pass (PR-creation dry-run mode, out-of-scope classifier fixtures); zero dangling references by grep |
+| W7 | Gemini consumer-host retirement (D3): host surface removed (extension json, GEMINI.md ×3, 13 TOMLs + TOML branch of sync-resources, tests/gemini, detectGemini install path, platform tables); adapter hardened + relabeled; `.metaswarm/project-profile.json` test command updated | codex/terra (explicit list from case-insensitive grep ≈59 files minus adapter keeps) | case-insensitive grep clean outside adapter+CHANGELOG; `external-tools-verify.sh` still passes for adapter; full suite green with gemini suite removed from ci.yml |
+| W8 | installCodex(): two-step (`codex plugin marketplace add <fork>` THEN `codex plugin add metaswarm`), install-completion verification, legacy clone+symlink fallback on failure; INSTALL.md corrected | codex/luna | mocked-CLI test asserts both commands + completion check; depends on W0.2 |
+| W9 | SDD dispatch contract (D5): vendored contract doc + orchestrated-execution rewrite (file handoffs, explicit model, single fix dispatch, compaction-proof ledger, base/head packages); gates reference the vendored contract; Team Mode boundary | claude (frontier quick) | contract doc exists + gates cite it; Team/Task dual-mode sections intact (grep); pilot metrics recorded for this refinement's own dispatches |
+| W10 | project-profile schema + multi-language execution: versioned schema, validation, trust boundary; orchestrated-execution / external-tools / pr-shepherd / create-issue consume profile commands with documented JS/TS fallback | codex/terra + claude review | schema doc + validator; the 4 skills reference profile commands (grep); hardcoded `pnpm/vitest/tsc/eslint` remain only as documented fallback |
+| W11 | Persona refinement (D11), 3 stages: (a) roster decisions + canonical template + agents/commands/bin sync-map consolidation in sync-resources.js; (b) 19-persona rewrite per D11 rules (issue-orchestrator deepest); (c) gate/rubric reference consolidation, ghost UX + cto-gate reconciliation | claude (frontier quick; issue-orchestrator full-depth), **codex/sol cross-review** | roster matches D11 disposition table; zero SaaS-stack tokens in agents/ (grep for Prisma/Clerk/PostHog/Stripe); issue-orchestrator ≤~200 lines with all runtime contracts intact; `--check` covers agents+commands+bin; docs state 5-reviewer gate |
+| W12 | Frontmatter modernization + trigger evals (D7): fold `triggers:` into descriptions, delete inert keys ×10 skills; eval cases (positive/negative/near-miss) per skill; unconditional skills-check nudge in Claude session hook (exact content specified) | codex/terra + claude evals | zero `auto_activate`/`triggers` keys (grep); eval file per changed skill; hook diff shows the specified nudge |
+| W13 | Doc-truth sweep (expanded): counts (post-W11 actuals), USAGE roster, ORCHESTRATION.md + CONTRIBUTING.md pointers, knowledge path AND schema/type-enum unification, phantom `skills/start/guides/` tree, SERVICE-INVENTORY path, INSTALL dependency table (recounted post-W9 vendoring), README acknowledgments (9 skills), beads repo links steveyegge→gastownhall, thin-shim claims, stub platform table, worktree guide native-tools-first, metaswarm-setup.md legacy status | codex/terra (checklist enumerated in brief) | every checklist item has a diff or an explicit "already true" note; no dead pointers by link-check |
+| W14 | Authoring discipline docs (D7): `guides/skill-authoring.md`, tests-vs-evals split doc, CONTRIBUTING gate | claude (frontier quick) | docs exist; CONTRIBUTING references them; rewritten-prose WUs cite the pressure-test procedure |
+| W15 | Hygiene: version-bump audit script (`--check` mode), remaining packaging notes | codex/luna | audit script red-green on a seeded drift fixture |
 
-**Explicitly deferred** (tracked as bd follow-ups, not silently dropped): Antigravity adapter
-evaluation; Codex portal packaging; npm CLI retirement decision; upstream PR to dsifry/metaswarm.
+**Explicitly deferred** (bd follow-up issues, not silently dropped): Antigravity (`agy`) adapter
+evaluation; Codex portal packaging; npm CLI retirement decision (W8 is deliberately minimal);
+upstream PR + policy genericization; Cursor 3-way hook envelope; `bd remember`-based
+knowledge-base seeding for the 7 empty JSONL files.
 
 ## 5. Verification strategy
 
-- Per-WU: 4-phase loop; VALIDATE = full bash test suite run (all suites, not CI's subset) +
-  `node lib/sync-resources.js --check` + WU-specific greps from DoD.
-- Cross-model rule (D6): Codex-implemented WUs get Claude adversarial review; Claude-implemented
-  WUs get a Codex (sol) review leg. Fresh reviewer on every re-review.
-- Final comprehensive review: cross-WU integration pass + full suite + doc-truth spot checks.
-- bd: one issue per WU under epic `metaswarm-nnc`; SESSION CLOSE protocol per bd prime.
+- Full-suite command (named): `for t in tests/*/test-*.sh; do bash "$t" || exit 1; done && node
+  lib/sync-resources.js --check` — run at each WAVE boundary and in the final review; per-WU
+  VALIDATE runs the WU's targeted tests + `--check` + DoD greps (cost trim per fusion; W0.1 makes
+  the full suite safe to run at all).
+- §5 is authoritative over the repo's JS-specific coverage gate until W0.1 lands the corrected
+  enforcement command (this sentence is the CTO-required carve-out).
+- Every DoD grep uses pinned patterns enumerated in the dispatch brief. Scratch-repo verification
+  transcripts (command + output) attach to the WU's bd issue.
+- Cross-model rule: Codex-implemented WUs get Claude adversarial review; Claude-implemented
+  security/architecture WUs (W5, W9, W11) get a Codex sol review leg. Fresh reviewer per re-review.
+- Final comprehensive review: cross-WU integration + full suite + doc link-check + an end-to-end
+  smoke scenario (create issue → start-task → dispatch → PR creation dry-run → shepherd handoff).
+- bd: one issue per WU under epic `metaswarm-nnc` (gh-1); SESSION CLOSE protocol per bd prime.
 
 ## 6. Risks
 
 | Risk | Mitigation |
 |---|---|
-| bd replacement semantics wrong (docs describe intent, not tested behavior) | D1 verification-first: run every replacement against bd 1.0.5 in a scratch repo before sweeping |
-| Gemini retirement deletes something the adapter needs | B1 DoD includes adapter smoke check (`external-tools-verify.sh`) post-deletion |
-| Codex hook `{}` behavior differs on 0.144.0 vs upstream's tested version | A3 runs the porting-guide unique-marker empirical test before relying on it |
-| GPT-5.6 facts are 1 day old (pricing/effort values may shift) | All slugs/config verified against live `codex doctor` on this machine, not only web sources; config keys quoted from 0.144.0 changelog |
-| Mass mechanical sweeps (A1, B1, D1) introduce collateral edits | scoped file lists in dispatch briefs; adversarial review diffs against the explicit scope; git per-WU commits allow surgical revert |
-| Session/context limits before all WUs land | bd tracks per-WU state; `handoff` skill produces resumption doc; waves ordered by user-visible impact |
+| bd replacement semantics wrong | W1a live-verifies EVERY contract row before W1b sweeps; transcripts committed |
+| Upstream superpowers drifts again under the fork (the class that silently killed the gate) | W4 drift-guard test (names + paths vs installed plugin, graceful skip); tested version recorded; D5 vendors the dispatch contract instead of runtime references |
+| GPT-5.6 rollout is <48h old; availability may vary per account | D2 availability detection + distinct model-unavailable error + escalation; templates keep terra default but document the fallback |
+| `ultra`/budget-key semantics undocumented | experimental opt-in only; empirical probe (clean CODEX_HOME) in W2; `XT_TIMEOUT` hard backstop |
+| Mass sweeps (W1b, W7, W13) collateral edits | scoped file lists generated by validated grep at dispatch time; adversarial review diffs against the list; per-WU commits enable surgical revert |
+| Validation loop self-contamination (repo tests mutate the repo being validated) | W0.1 sandboxes the mutating test BEFORE any sweep; wave-boundary full runs |
+| Sol test-fabrication/tampering in delegated legs | D6 invariant (baseline re-run, red-green, out-of-scope test-diff block, untrusted-data delimiters, read-only reviews pinned by test) |
+| Prompt injection via repo-derived text into delegated/hook contexts | D9 delimiters + network-off default + read-only reviews; hook self-heal made visible |
+| Session/context limits before all WUs land | bd tracks per-WU state; `handoff` skill; Wave 0+1 alone deliver the correctness goal |
