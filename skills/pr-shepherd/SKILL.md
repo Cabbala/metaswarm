@@ -364,28 +364,6 @@ Report:
 The PR is ready for final approval and merge.
 ```
 
-### Post-Completion RAM Cleanup
-
-After the PR is merged and knowledge extraction tasks are created, invoke automatic RAM cleanup to free resources:
-
-```text
-/auto-ram-cleanup
-```
-
-**Why**: Development processes (test runners, build watchers, language servers) accumulate during PR work. Cleaning up after merge frees memory for the next task.
-
-**What stays running**:
-
-- Docker containers (needed for database/services)
-- Essential IDE processes
-
-**What gets cleaned**:
-
-- Orphaned test runners (vitest, jest)
-- Build watchers no longer needed
-- Duplicate language server instances
-- Other development tool cruft
-
 ## Phase 7: Post-Merge Verification & Fallback Knowledge Extraction
 
 **Primary path**: Self-reflect should have already run pre-PR (see orchestrated-execution section 8.5), with knowledge base changes committed as part of the PR. This phase verifies that happened and handles the fallback case.
@@ -424,17 +402,7 @@ Created blocking task: [CURATION_TASK_ID]
 - Status: pending
 - Blocker for: [epic if applicable]
 
-To extract learnings, invoke:
-```
-/curate-pr-learnings [number]
-```
-
-The command will:
-1. Fetch PR comments (deterministic script)
-2. AI analyzes and extracts learnings (your job)
-3. Store validated learnings (deterministic script)
-
-Then close the task.
+Use the existing `/self-reflect` workflow to review PR feedback and capture validated learnings, then close the task.
 ````
 
 ### Why This Matters
@@ -547,7 +515,6 @@ After PR is merged (Phase 7):
 
 After all post-merge tasks complete:
 
-- [ ] Ran `/auto-ram-cleanup` to free development resources
 - [ ] Confirmed Docker containers still running (if needed)
 
 ## Common Mistakes

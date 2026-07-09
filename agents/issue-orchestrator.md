@@ -370,7 +370,7 @@ bd update <pr-task> --status blocked
 bd label add <pr-task> waiting:human
 ```
 
-**Note**: The `create-pr-with-shepherd.sh` script automatically invokes the pr-shepherd skill after creating the PR. Use `--no-shepherd` flag if you want to skip automatic shepherding.
+**Note**: The `create-pr-with-shepherd.sh` script prints a pr-shepherd handoff after creating the PR. Use `--no-shepherd` when monitoring will start later.
 
 ### Phase 5: Closure
 
