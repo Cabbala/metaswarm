@@ -48,7 +48,8 @@ Triggered when:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type review --keywords "pr" "review" "ci"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for PR handling patterns and gotchas.

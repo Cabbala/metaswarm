@@ -39,7 +39,8 @@ Triggered when:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type review --keywords "<feature-keywords>"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 ### Step 1: Gather Context

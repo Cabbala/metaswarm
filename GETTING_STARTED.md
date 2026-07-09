@@ -280,10 +280,10 @@ Before any task, prime your agent with relevant context:
 > /prime
 ```
 
-Or with specific filters:
+The project can tailor priming by maintaining the tracked `.beads/PRIME.md` override; run the same command for that project-defined context:
 
 ```bash
-bd prime --files "src/api/**/*.ts" --keywords "authentication" --work-type implementation
+bd prime
 ```
 
 This outputs prioritized knowledge:

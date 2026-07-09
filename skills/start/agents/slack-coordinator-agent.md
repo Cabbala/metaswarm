@@ -69,7 +69,8 @@ Triggered when:
 **BEFORE processing commands**, prime your context:
 
 ```bash
-bd prime --work-type research --keywords "slack" "notification" "communication"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for patterns about agent-human communication.

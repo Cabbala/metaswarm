@@ -40,7 +40,8 @@ Triggered when:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type review --keywords "security" "authentication" "validation"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for security patterns and known vulnerabilities in this codebase.

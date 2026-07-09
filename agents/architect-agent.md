@@ -40,11 +40,8 @@ Triggered when:
 **BEFORE any other work**, prime your context with relevant knowledge:
 
 ```bash
-# Prime with planning-specific context and file patterns
-bd prime --work-type planning --keywords "<feature-keywords>"
-
-# If you know which files will be affected:
-bd prime --work-type planning --files "src/lib/services/*.ts" --keywords "<keywords>"
+# Load project-defined context; customize it in tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output and note:

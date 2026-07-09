@@ -41,7 +41,8 @@ Triggered when:
 ### Step 0: Knowledge Priming (CRITICAL)
 
 ```bash
-bd prime --work-type review --keywords "security authentication authorization"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 ### Step 1: Gather Context

@@ -569,7 +569,7 @@ When the orchestrator detects it has lost context (after compaction or in a new 
    a. Read `.beads/plans/active-plan.md` — reload the approved plan
    b. Read `.beads/context/project-context.md` — reload completed work and patterns
    c. Read `.beads/context/execution-state.md` — find where execution stopped
-   d. Run `bd prime --work-type recovery` — reload relevant knowledge base facts
+   d. Run bare `bd prime` — load project-defined recovery context from the tracked `.beads/PRIME.md` override
    e. Resume from the current work unit and phase
 
 3. Announce recovery to user:
@@ -630,7 +630,7 @@ When reaching a checkpoint, present this report and **wait for explicit human ap
 - <decision-1>: <rationale>
 - <decision-2>: <rationale>
 
-Record significant decisions persistently with `bd decision "<decision>: <rationale>"` so they survive compaction and are available across sessions.
+Record significant decisions persistently with `bd create "Decision: <decision>: <rationale>" -t decision` so they survive compaction and are available across sessions.
 
 ### What Comes Next
 - WU-003: <description>

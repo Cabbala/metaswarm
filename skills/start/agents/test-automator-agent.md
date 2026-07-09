@@ -46,7 +46,8 @@ Triggered when:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type implementation --keywords "testing" "mock" "tdd"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for testing patterns, mock factory usage, and TDD requirements.

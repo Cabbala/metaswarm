@@ -33,31 +33,12 @@ For general context with automatic detection:
 bd prime
 ```
 
-### Prime for Specific Files
+### Project-Specific Priming
 
-When working on specific files:
-
-```bash
-bd prime --files "src/lib/services/**/*.ts" "src/api/routes/**/*.ts"
-```
-
-### Prime for Keywords
-
-When working on a specific topic:
+`bd prime` no longer accepts file, keyword, or work-type filters. Maintain the tracked `.beads/PRIME.md` override to define the repository's project-specific context, then run:
 
 ```bash
-bd prime --keywords "authentication" "jwt" "security"
-```
-
-### Prime for Work Type
-
-When doing a specific type of work:
-
-```bash
-bd prime --work-type planning
-bd prime --work-type implementation
-bd prime --work-type review
-bd prime --work-type debugging
+bd prime
 ```
 
 ### Prime for Context Recovery
@@ -65,19 +46,10 @@ bd prime --work-type debugging
 When resuming after context compaction or in a new session:
 
 ```bash
-bd prime --work-type recovery
+bd prime
 ```
 
-This loads active plan, project context, execution state, and relevant knowledge base facts. See "Context Recovery" section below.
-
-### Combined
-
-```bash
-bd prime \
-  --files "src/lib/services/ai-*.ts" \
-  --keywords "ai" "provider" "openai" \
-  --work-type implementation
-```
+This loads the context defined by the tracked `.beads/PRIME.md` override, including any recovery guidance the project needs. See "Context Recovery" section below.
 
 ## What Gets Loaded
 
@@ -128,26 +100,26 @@ The BEADS system should auto-prime in these scenarios:
 
 ### In Planning Phase
 
-Before writing a plan, run:
+Before writing a plan, run the project-defined priming command:
 
 ```bash
-bd prime --work-type planning --keywords "<task-keywords>"
+bd prime
 ```
 
 ### In Implementation Phase
 
-Before writing code, run:
+Before writing code, run the same project-defined priming command:
 
 ```bash
-bd prime --files "<files-to-touch>" --work-type implementation
+bd prime
 ```
 
 ### In Review Phase
 
-Before reviewing code, run:
+Before reviewing code, run the same project-defined priming command:
 
 ```bash
-bd prime --work-type review --files "<files-changed>"
+bd prime
 ```
 
 ## Manual Knowledge Check
@@ -194,7 +166,7 @@ Avoid these known issues:
 
 ## Context Recovery
 
-When `--work-type recovery` is used (or when an orchestrator detects it lost context), the prime command loads additional context beyond the standard knowledge base:
+When an orchestrator detects it lost context (post-compaction or session interruption), re-run bare `bd prime` — the recovery context below loads in addition to the standard knowledge base:
 
 ### What Gets Loaded
 

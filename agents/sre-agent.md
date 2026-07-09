@@ -61,7 +61,8 @@ Triggered by:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type debugging --keywords "production" "monitoring" "logs"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for production investigation patterns and known system behaviors.

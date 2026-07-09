@@ -90,8 +90,8 @@ Triggered when:
 **BEFORE any other work**, prime your context with relevant knowledge:
 
 ```bash
-# Prime with review-specific context and the files being reviewed
-bd prime --work-type review --files "<changed-files>" --keywords "testing" "quality"
+# Load project-defined context; customize it in tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output and note:

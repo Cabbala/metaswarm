@@ -3,5 +3,5 @@ prompt = """Invoke the metaswarm prime skill. The user wants to prime their cont
 
 Arguments provided by the user: {{args}}
 
-Run BEADS knowledge priming with any specified filters (--files, --keywords, --work-type).
+Run bare `bd prime`; the tracked `.beads/PRIME.md` override defines project-specific priming context.
 """

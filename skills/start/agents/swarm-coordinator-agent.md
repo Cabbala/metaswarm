@@ -111,7 +111,8 @@ When Team tools are available:
 **BEFORE coordinating work**, prime your context:
 
 ```bash
-bd prime --work-type planning --keywords "orchestration" "coordination" "worktree"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for patterns about multi-agent coordination and conflict resolution.

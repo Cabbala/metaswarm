@@ -41,7 +41,8 @@ Triggered when:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type research --keywords "knowledge" "learning" "coderabbit"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for patterns about what makes good knowledge base entries.

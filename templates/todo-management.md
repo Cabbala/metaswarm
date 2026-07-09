@@ -97,7 +97,9 @@ bd blocked                        # show all blocked issues
 4. # Complete the work
 5. bd close <id> --reason="Completed in commit <SHA>"
 6. bd ready              # Find next task
-7. bd sync               # Push BEADS changes to git
+7. bd dolt commit        # Record BEADS changes in Dolt
+8. bd dolt push          # Publish the Dolt commit
+9. bd dolt status        # Verify Dolt persistence status
 ```
 
 ## Creating New Tasks
@@ -118,4 +120,4 @@ bd dep add <tests-id> <feature-id>  # Tests depend on feature
 - Before context switches: Review and update all in_progress items
 - During long tasks: Periodically update progress with `bd update <id> --notes="..."`
 - After completing features: Close all related issues: `bd close <id1> <id2> ...`
-- At session end: Always run `bd sync`
+- At session end: run `bd dolt commit`, `bd dolt push`, and `bd dolt status`

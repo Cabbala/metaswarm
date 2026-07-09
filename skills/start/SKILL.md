@@ -24,7 +24,7 @@ This skill coordinates a swarm of specialized AI agents to autonomously handle G
 ```bash
 # User triggers via any of:
 @beads start #123
-bd start 123
+bd update 123 --claim
 /beads-start 123
 ```
 
@@ -411,8 +411,8 @@ For manually-created PRs, invoke `/pr-shepherd <pr-number>` to start the monitor
 ### Issue Management
 
 ```bash
-# Create epic for GitHub Issue
-bd create "Feature: User Auth" --type epic --issue 123
+# Create epic linked to GitHub Issue 123
+bd create "Feature: User Auth" --type epic --external-ref "gh-123"
 
 # Create task under epic
 bd create "Research auth patterns" --type task --parent bd-abc123
@@ -459,14 +459,15 @@ bd label add <task-id> agent:failed
 bd label add <task-id> review:iteration-1
 ```
 
-### Sync Operations
+### Dolt Persistence Operations
 
 ```bash
-# Check sync status
-bd sync --status
+# Check Dolt persistence status
+bd dolt status
 
-# Pull updates from main
-bd sync --from-main
+# Commit and publish pending BEADS changes
+bd dolt commit
+bd dolt push
 
 # Export to JSONL
 bd export
@@ -489,8 +490,8 @@ gh issue view 123 --json labels | jq '.labels[].name' | grep agent-ready
 # Get Issue details
 ISSUE=$(gh issue view 123 --json title,body,number)
 
-# Create epic linked to Issue
-bd create "$(echo $ISSUE | jq -r .title)" --type epic --issue 123 --json
+# Create epic linked to the GitHub Issue
+bd create "$(echo $ISSUE | jq -r .title)" --type epic --external-ref "gh-$(echo $ISSUE | jq -r .number)" --json
 ```
 
 ### Step 3: Post Acknowledgment
@@ -625,24 +626,11 @@ const [reviewResult, securityResult] = await Promise.all([
 **ALL agents MUST prime their context before starting ANY work.** This prevents bad assumptions and ensures alignment with established patterns.
 
 ```bash
-# General prime (loads critical rules + gotchas)
+# Project-defined priming for every task phase
 bd prime
-
-# Prime for specific files you'll modify
-bd prime --files "src/lib/services/*.ts" "src/api/routes/*.ts"
-
-# Prime for specific topic
-bd prime --keywords "authentication" "jwt"
-
-# Prime for work type
-bd prime --work-type planning     # Before planning
-bd prime --work-type implementation  # Before coding
-bd prime --work-type review       # Before reviewing
-bd prime --work-type research     # Before exploring
-
-# Combined (most thorough)
-bd prime --files "<files>" --keywords "<topic>" --work-type <type>
 ```
+
+`bd prime` does not accept file, keyword, or work-type filters. Define project-specific priming context in the tracked `.beads/PRIME.md` override.
 
 The prime command outputs relevant facts categorized as:
 
@@ -663,7 +651,7 @@ GITHUB_TOKEN=$(gh auth token) npx tsx scripts/beads-fetch-pr-comments.ts --days 
 /self-reflect
 
 # Compact closed issues (semantic summarization via beads plugin)
-bd compact
+bd admin compact
 ```
 
 Or spawn Knowledge Curator agent:
@@ -674,7 +662,7 @@ Task({
   description: "Extract learnings from epic",
   prompt: `Review completed epic <epic-id> and extract learnings.
 
-FIRST: Run \`bd prime --work-type review\` to load context.
+FIRST: Run bare \`bd prime\` to load the project-defined context from \`.beads/PRIME.md\`.
 
 Then analyze:
 - What patterns were used?
@@ -768,17 +756,13 @@ bd doctor
 bd dep remove <task1> <task2>
 ```
 
-### BEADS Sync Issues
+### BEADS Dolt Persistence Issues
 
 ```bash
-# Check sync status
-bd sync --status
-
-# Force export
-bd export
-
-# Pull from main
-bd sync --from-main
+# Check persistence status, then commit and publish pending changes
+bd dolt status
+bd dolt commit
+bd dolt push
 ```
 
 ---

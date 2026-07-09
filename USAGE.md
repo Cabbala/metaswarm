@@ -245,13 +245,13 @@ bd ready                       # Show unblocked tasks
 bd blocked                     # Show blocked tasks
 
 # Knowledge
-bd prime                       # Load all relevant knowledge
-bd prime --keywords "auth"     # Filter by keyword
-bd prime --work-type impl      # Filter by work type
+bd prime                       # Load project context (customize via tracked .beads/PRIME.md)
 
-# Sync
-bd sync                        # Sync with git
-bd export                      # Export to JSONL
+# Persistence (Dolt-backed)
+bd dolt status                 # Show Dolt server status
+bd dolt commit                 # Commit pending changes
+bd dolt push                   # Push commits to Dolt remote
+bd export                      # Export issues to JSONL (NOT a full backup)
 ```
 
 ## Knowledge Base

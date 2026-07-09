@@ -42,7 +42,8 @@ Triggered when:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type research --keywords "metrics" "reporting"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 ### Step 1: Collect Agent Metrics

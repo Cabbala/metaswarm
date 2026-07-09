@@ -27,7 +27,7 @@ exempt: this file, `CHANGELOG.md`, `docs/plans/`):
 bd prime --(work-type|files|keywords)
 bd sync( |$)
 bd start [0-9a-z]
-bd create[^\n]*--issue[ =]
+bd create.*--issue[ =]
 bd decision( |$)
 (^|[^a-z-])bd compact( |$)   # flag for MANUAL classification (intent: semantic vs history)
 ```

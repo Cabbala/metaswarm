@@ -48,7 +48,8 @@ Triggered when:
 **BEFORE any other work**, prime your context with relevant knowledge:
 
 ```bash
-bd prime --work-type release --keywords "deploy" "rollback" "merge" "production"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output and note:

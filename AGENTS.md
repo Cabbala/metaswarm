@@ -28,7 +28,9 @@ bd ready              # Find available work
 bd show <id>          # View issue details
 bd update <id> --status in_progress  # Claim work
 bd close <id>         # Complete work
-bd sync               # Sync with git
+bd dolt commit        # Record BEADS changes in the Dolt store
+bd dolt push          # Publish the Dolt commit
+bd dolt status        # Verify Dolt persistence status
 ```
 
 ## Landing the Plane (Session Completion)
@@ -43,7 +45,9 @@ bd sync               # Sync with git
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
+   bd dolt commit
+   bd dolt push
+   bd dolt status
    git push
    git status  # MUST show "up to date with origin"
    ```

@@ -61,7 +61,8 @@ Triggered by:
 **BEFORE any other work**, prime your context:
 
 ```bash
-bd prime --work-type research --keywords "customer" "support" "stripe" "posthog"
+# Project-specific context comes from tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for relevant patterns and gotchas about user data handling.

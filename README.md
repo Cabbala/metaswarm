@@ -180,16 +180,15 @@ The reflection system also introspects into the Claude Code session itself, look
 
 These signals feed back into the knowledge base and can generate proposals for new skills, updated rubrics, or revised agent behaviors.
 
-### Selective Knowledge Priming
+### Project-Defined Knowledge Priming
 
-The knowledge base grows continuously, but agents don't load all of it. The `bd prime` command uses **selective retrieval** — filtering by affected files, keywords, and work type to load only the relevant subset:
+The bare `bd prime` command loads the project's priming context. To tailor that context for the repository, create the tracked `.beads/PRIME.md` override documented by `bd prime --help`; the former file, keyword, and work-type flags are not supported.
 
 ```bash
-# Only loads knowledge relevant to auth files and implementation work
-bd prime --files "src/api/auth/**" --keywords "authentication" --work-type implementation
+bd prime
 ```
 
-This means the knowledge base can grow to hundreds or thousands of entries without consuming context window. Agents get precisely the facts they need — the 5 critical gotchas for the files they're about to touch, not the entire institutional memory.
+This keeps the project-specific context explicit and versioned alongside the work it governs.
 
 ## Design Principles
 

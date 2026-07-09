@@ -26,8 +26,10 @@ bd show <issue-id>
 bd update <issue-id> --status in_progress
 bd update <issue-id> --status done
 
-# Sync with git remote
-bd sync
+# Persist BEADS changes to the Dolt remote
+bd dolt commit
+bd dolt push
+bd dolt status
 ```
 
 ### Working with Issues
@@ -68,7 +70,7 @@ Issues in Beads are:
 /plugin install beads    # from steveyegge/beads marketplace
 ```
 
-The beads plugin (v0.63.3+) automatically handles context priming on SessionStart and PreCompact, provides `bd compact` for semantic summarization, `bd decision` for architectural decision tracking, and ships a `@task-agent` that autonomously finds and completes ready tasks.
+The beads plugin (v0.63.3+) automatically handles context priming on SessionStart and PreCompact, uses `bd admin compact` for semantic summarization, records architectural decisions with `bd create "Decision: ..." -t decision`, and ships a `@task-agent` that autonomously finds and completes ready tasks.
 
 ### Or install the CLI directly
 

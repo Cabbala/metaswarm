@@ -84,11 +84,8 @@ When the linter or type checker fails, FIX THE ROOT CAUSE. Never suppress with `
 **BEFORE any other work**, prime your context with relevant knowledge:
 
 ```bash
-# Prime with implementation-specific context for files you'll modify
-bd prime --work-type implementation --files "<affected-files>" --keywords "<feature-keywords>"
-
-# Example:
-bd prime --work-type implementation --files "src/lib/services/*.ts" --keywords "testing" "service"
+# Load project-defined context; customize it in tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output and note:

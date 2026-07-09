@@ -87,8 +87,8 @@ When Team tools are available:
 **BEFORE starting work**, prime your context:
 
 ```bash
-# Prime with general context - will be refined by specialist agents
-bd prime --work-type planning --keywords "<issue-keywords>"
+# Load project-defined context; customize it in tracked .beads/PRIME.md
+bd prime
 ```
 
 Review the output for critical rules and patterns that affect orchestration.
@@ -99,8 +99,8 @@ Review the output for critical rules and patterns that affect orchestration.
 # 1. Read the GitHub Issue
 gh issue view <number> --json title,body,labels,comments
 
-# 2. Create BEADS epic linked to Issue
-bd create "<issue-title>" --type epic --issue <number> --json
+# 2. Create BEADS epic linked to the GitHub Issue
+bd create "<issue-title>" --type epic --external-ref "gh-<number>" --json
 
 # 3. Post acknowledgment comment
 gh issue comment <number> --body "Agent claiming this issue. Epic: <epic-id>"
@@ -642,7 +642,7 @@ bd doctor
 
 ```bash
 # Create epic linked to GitHub Issue
-bd create "<title>" --type epic --issue <number> --json
+bd create "<title>" --type epic --external-ref "gh-<number>" --json
 
 # Create task under epic
 bd create "<title>" --type task --parent <epic-id> --json
@@ -696,4 +696,3 @@ The Issue Orchestrator reports progress via GitHub comments:
 
 <What happens next>
 ```
-

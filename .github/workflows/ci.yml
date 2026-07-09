@@ -44,6 +44,9 @@ jobs:
       - name: Run Beads cleanup tests
         run: bash tests/templates/test-beads-cleanup.sh
 
+      - name: Run bd vocabulary compatibility guard
+        run: bash tests/beads/test-bd-vocabulary.sh
+
       - name: Run sync-resources tests
         run: bash tests/lib/test-sync-resources.sh
 
