@@ -35,7 +35,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dsifry/metaswarm"
+    "url": "https://github.com/Cabbala/metaswarm"
   },
   "engines": {
     "node": ">=18"

@@ -5,11 +5,9 @@ metaswarm supports Codex as a first-class plugin.
 ## Install from Marketplace
 
 ```bash
-codex plugin marketplace add dsifry/metaswarm-marketplace
-codex
+codex plugin marketplace add Cabbala/metaswarm
+codex plugin add metaswarm@metaswarm
 ```
-
-Then open `/plugins`, select the metaswarm marketplace, and install metaswarm.
 
 ## Local Development Install
 

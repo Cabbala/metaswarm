@@ -5,8 +5,8 @@ metaswarm works with Claude Code, Gemini CLI, and Codex CLI. Install for one pla
 ## Claude Code (Plugin Marketplace)
 
 ```bash
-claude plugin marketplace add dsifry/metaswarm-marketplace
-claude plugin install metaswarm
+claude plugin marketplace add Cabbala/metaswarm
+claude plugin install metaswarm@metaswarm
 ```
 
 Then in Claude Code:
@@ -18,7 +18,7 @@ Then in Claude Code:
 ## Gemini CLI (Extension)
 
 ```bash
-gemini extensions install https://github.com/dsifry/metaswarm.git
+gemini extensions install https://github.com/Cabbala/metaswarm.git
 ```
 
 Then in Gemini CLI:
@@ -30,9 +30,8 @@ Then in Gemini CLI:
 ## Codex CLI (Plugin Marketplace)
 
 ```bash
-codex plugin marketplace add dsifry/metaswarm-marketplace
-codex
-# Then open /plugins, select the metaswarm marketplace, and install metaswarm.
+codex plugin marketplace add Cabbala/metaswarm
+codex plugin add metaswarm@metaswarm
 ```
 
 Then in Codex CLI:
@@ -144,8 +143,8 @@ This is the most common upgrade path. Your project has metaswarm files in `.clau
 
 1. **Install the plugin:**
    ```bash
-   claude plugin marketplace add dsifry/metaswarm-marketplace
-   claude plugin install metaswarm
+   claude plugin marketplace add Cabbala/metaswarm
+   claude plugin install metaswarm@metaswarm
    ```
 
 2. **Run the migration** in Claude Code:

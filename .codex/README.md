@@ -7,9 +7,8 @@ Install metaswarm's orchestration skills as a [Codex CLI](https://github.com/ope
 ### Plugin marketplace install
 
 ```bash
-codex plugin marketplace add dsifry/metaswarm-marketplace
-codex
-# In Codex, open /plugins, select the metaswarm marketplace, and install metaswarm.
+codex plugin marketplace add Cabbala/metaswarm
+codex plugin add metaswarm@metaswarm
 ```
 
 ### Local checkout install
@@ -29,7 +28,7 @@ The repo-local marketplace points at the public metaswarm repository root. For t
 Use this only if your Codex build does not support plugins:
 
 ```bash
-git clone https://github.com/dsifry/metaswarm.git ~/.codex/metaswarm
+git clone https://github.com/Cabbala/metaswarm.git ~/.codex/metaswarm
 mkdir -p ~/.agents/skills
 for d in ~/.codex/metaswarm/skills/*/; do
   ln -sf "$d" ~/.agents/skills/metaswarm-$(basename "$d")

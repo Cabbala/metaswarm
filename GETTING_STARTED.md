@@ -8,18 +8,18 @@ Choose your platform:
 
 **Claude Code:**
 ```bash
-claude plugin marketplace add dsifry/metaswarm-marketplace
-claude plugin install metaswarm
+claude plugin marketplace add Cabbala/metaswarm
+claude plugin install metaswarm@metaswarm
 ```
 
 **Gemini CLI:**
 ```bash
-gemini extensions install https://github.com/dsifry/metaswarm.git
+gemini extensions install https://github.com/Cabbala/metaswarm.git
 ```
 
 **Codex CLI:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/dsifry/metaswarm/main/.codex/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Cabbala/metaswarm/main/.codex/install.sh | bash
 ```
 
 **All platforms at once:**
@@ -69,10 +69,10 @@ npm init -y        # or whatever your stack needs
 Then open Claude Code and tell it to install metaswarm:
 
 ```text
-> Read through https://github.com/dsifry/metaswarm and install it for my project.
+> Read through https://github.com/Cabbala/metaswarm and install it for my project.
 ```
 
-Or install directly: `claude plugin marketplace add dsifry/metaswarm-marketplace` then `claude plugin install metaswarm`, then run `/setup`.
+Or install directly: `claude plugin marketplace add Cabbala/metaswarm` then `claude plugin install metaswarm@metaswarm`, then run `/setup`.
 
 ### 2. Tell Claude what to build
 

@@ -109,19 +109,23 @@ metaswarm/
 
 ## Install
 
+> **Upgrading from the upstream marketplace?** If you previously registered `dsifry/metaswarm-marketplace`, add this fork's marketplace (`claude plugin marketplace add Cabbala/metaswarm`), reinstall with `claude plugin install metaswarm@metaswarm`, then optionally remove the old source with `claude plugin marketplace remove metaswarm-marketplace` (the remove subcommand takes the registered marketplace NAME, not the repo slug).
+
 ### Claude Code (recommended)
 
 ```bash
-claude plugin marketplace add dsifry/metaswarm-marketplace
-claude plugin install metaswarm
+claude plugin marketplace add Cabbala/metaswarm
+claude plugin install metaswarm@metaswarm
 ```
+
+*(The plugin and its marketplace intentionally share the name `metaswarm`, hence the qualified `metaswarm@metaswarm` form.)*
 
 Then run `/setup` in Claude Code.
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/dsifry/metaswarm.git
+gemini extensions install https://github.com/Cabbala/metaswarm.git
 ```
 
 Then run `/metaswarm:setup` in your project.
@@ -129,9 +133,8 @@ Then run `/metaswarm:setup` in your project.
 ### Codex CLI
 
 ```bash
-codex plugin marketplace add dsifry/metaswarm-marketplace
-codex
-# Open /plugins, select the metaswarm marketplace, and install metaswarm.
+codex plugin marketplace add Cabbala/metaswarm
+codex plugin add metaswarm@metaswarm
 ```
 
 Then run `$setup` in your project.

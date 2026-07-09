@@ -1,0 +1,22 @@
+{
+  "name": "metaswarm",
+  "owner": {
+    "name": "Cabbala"
+  },
+  "metadata": {
+    "description": "Metaswarm multi-agent orchestration framework for Claude Code and Codex CLI",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "metaswarm",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Cabbala/metaswarm.git"
+      },
+      "description": "Multi-agent orchestration framework for Claude Code and Codex CLI — agents, skills, commands, TDD enforcement",
+      "version": "0.12.0",
+      "strict": true
+    }
+  ]
+}
