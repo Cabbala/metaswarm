@@ -34,6 +34,9 @@ jobs:
 
       - name: Run Codex skills tests
         run: bash tests/codex/test-codex-skills.sh
+      - name: Run Codex manifest guard tests
+        run: bash tests/codex/test-codex-manifest.sh
+
 
       - name: Run Gemini extension tests
         run: bash tests/gemini/test-gemini-extension.sh

@@ -4,6 +4,15 @@ This project uses [metaswarm](https://github.com/Cabbala/metaswarm), a multi-age
 
 ## How to Work in This Project
 
+### Session start (Codex has no session hook — do this yourself)
+
+1. **First step of EVERY session**: run `bd prime` to load project context (customize via the
+   tracked `.beads/PRIME.md` override).
+2. **After context compaction or interruption**: re-run `bd prime` — Codex has no automatic
+   re-priming path.
+3. **Skills check**: before starting any task, if there is even a small chance a metaswarm
+   skill applies, invoke it — do not proceed on instinct alone.
+
 ### Starting work
 
 ```text

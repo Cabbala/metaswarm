@@ -3,6 +3,19 @@
 
 This project uses [metaswarm](https://github.com/Cabbala/metaswarm) for multi-agent orchestration. It provides 18 specialized agents, a 9-phase development workflow, and quality gates that enforce TDD, coverage thresholds, and spec-driven development.
 
+### Session start (Codex has no session hook — do this yourself)
+
+Codex installs metaswarm without any session-start hook (native skill discovery covers
+skill triggering). The context the Claude Code hook would inject must be loaded manually:
+
+1. **First step of EVERY session**: run `bd prime` to load project context (customize via the
+   tracked `.beads/PRIME.md` override).
+2. **After context compaction or interruption**: re-run `bd prime` — Codex has no automatic
+   re-priming path.
+3. **Skills check**: before starting any task, if there is even a small chance a metaswarm
+   skill applies (`$start`, `$design-review-gate`, `$plan-review-gate`, ...), invoke it —
+   do not proceed on instinct alone.
+
 ### Workflow
 
 - **Most tasks**: `$start` -- primes context, guides scoping, picks the right level of process

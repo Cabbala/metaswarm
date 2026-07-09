@@ -8,6 +8,7 @@
   },
   "homepage": "https://github.com/Cabbala/metaswarm",
   "repository": "https://github.com/Cabbala/metaswarm",
+  "hooks": {},
   "license": "MIT",
   "keywords": [
     "orchestration",
