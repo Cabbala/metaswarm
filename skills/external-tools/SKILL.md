@@ -1,12 +1,6 @@
 ---
 name: external-tools
-description: Delegate implementation and review tasks to Codex and an optional enterprise/API-key Gemini adapter with cross-model adversarial review
-auto_activate: false
-triggers:
-  - "use external tools"
-  - "delegate to codex"
-  - "delegate to gemini"
-  - "cross-model review"
+description: Use when asked to use external tools, delegate implementation or review to Codex or the enterprise/API-key Gemini adapter, or run cross-model adversarial review
 ---
 
 # External Tools Skill

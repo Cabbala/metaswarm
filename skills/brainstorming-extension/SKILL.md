@@ -1,10 +1,6 @@
 ---
 name: brainstorming-extension
-description: Enforces design review gate after brainstorming — bridges superpowers:brainstorming into the metaswarm quality pipeline
-auto_activate: true
-triggers:
-  - after:superpowers:brainstorming
-  - "design document committed"
+description: Use immediately after superpowers:brainstorming completes or a design document is committed, to enforce the Design Review Gate before the metaswarm quality pipeline continues
 ---
 
 # Brainstorming Extension - Mandatory Review Gate Bridge
@@ -74,7 +70,7 @@ superpowers:brainstorming
 
 ## How Enforcement Works
 
-YAML frontmatter triggers (`auto_activate`, `triggers`) are metadata hints — Claude Code does not enforce them automatically. Instead, this enforcement works through three redundant mechanisms:
+Skill frontmatter carries only `name` and `description` (the description encodes the trigger conditions — the legacy `auto_activate`/`triggers` keys were inert metadata no host enforced, and were removed). Enforcement works through three redundant mechanisms:
 
 ### 1. CLAUDE.md Template (Primary)
 

@@ -1,11 +1,6 @@
 ---
 name: orchestrated-execution
-description: 4-phase execution loop for work units - IMPLEMENT, VALIDATE, ADVERSARIAL REVIEW, COMMIT
-auto_activate: false
-triggers:
-  - "orchestrated execution"
-  - "4-phase loop"
-  - "adversarial review"
+description: Use when orchestrated execution, a 4-phase work-unit loop, or adversarial review is requested; run IMPLEMENT, VALIDATE, ADVERSARIAL REVIEW, and COMMIT
 ---
 
 # Orchestrated Execution Skill

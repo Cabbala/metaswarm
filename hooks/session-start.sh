@@ -122,6 +122,10 @@ if [ "$new_project" = true ]; then
   context_parts+=("Metaswarm is installed but this project hasn't been set up yet. Run \`${setup_cmd}\` to configure it, or \`${start_cmd}\` to begin working.")
 fi
 
+if [ "$new_project" = false ]; then
+  context_parts+=("Before starting any task, check whether a metaswarm skill applies (for example, start, brainstorming-extension, design-review-gate, plan-review-gate, orchestrated-execution, visual-review, or external-tools). If there is even a small chance one applies, invoke it; do not proceed on instinct.")
+fi
+
 if [ "$legacy_install" = true ]; then
   context_parts+=("This project has metaswarm installed via the old npm method. The marketplace plugin is now active and provides all the same skills and commands. Run \`${migrate_cmd}\` to clean up the redundant copies — this is a safe, reversible operation that only removes duplicate framework files (your project files are never touched).")
 fi

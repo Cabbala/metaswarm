@@ -1,12 +1,6 @@
 ---
 name: design-review-gate
-description: Automatic review gate that runs after brainstorming completes - spawns PM, Architect, Designer, Security, and CTO agents in parallel, iterates until all approve
-auto_activate: true
-triggers:
-  - "design document created"
-  - "docs/superpowers/specs/*-design.md committed (primary)"
-  - "docs/plans/*-design.md committed (legacy fallback)"
-  - after:superpowers:brainstorming
+description: Use after superpowers:brainstorming completes or a design document is created or committed, especially docs/superpowers/specs/*-design.md or legacy docs/plans/*-design.md, to run parallel PM, Architect, Designer, Security, and CTO review until all approve
 ---
 
 # Design Review Gate
