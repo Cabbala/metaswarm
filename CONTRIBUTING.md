@@ -32,6 +32,23 @@ When contributing a new agent:
 
 Skills are orchestration behaviors in `skills/<name>/SKILL.md`. A skill coordinates multiple agents or provides a reusable workflow pattern.
 
+### Changing Skill or Agent Prose
+
+Editing existing prose in `skills/`, `agents/`, or a gate — not just adding a new file — is a
+discipline change, not a wording tweak. It requires:
+
+1. Follow `guides/skill-authoring.md`: classify the failure (discipline vs. shaping) before
+   choosing a prohibition table or a positive recipe, and keep `description` fields to
+   trigger conditions only.
+2. Attach evidence: a RED/GREEN pressure-test walkthrough for behavior/discipline changes,
+   or a trigger-eval entry in `evals/trigger-evals.md` for routing/description changes. See
+   `docs/testing.md` for which kind applies and where the evidence goes.
+3. Doc-truth: any count, path, or roster claim in the changed prose must be verified against
+   the actual tree before merge — grep it, don't recall it.
+
+Skip step 2 only for changes with no behavioral or routing surface (typos, link fixes,
+formatting).
+
 ### Improving Rubrics
 
 Rubrics in `rubrics/` define quality standards for reviews. Contributions should:
