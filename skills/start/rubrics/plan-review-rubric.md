@@ -1,8 +1,15 @@
-# Plan Review Rubric
+# Plan Review Rubric (historical / collaborative)
 
-**Used By**: CTO Agent
-**Purpose**: Evaluate implementation plans before coding begins
-**Version**: 1.0
+> **Status**: Historical collaborative criteria. The **binding** plan review is the
+> adversarial **plan-review-gate** (`rubrics/plan-review-rubric-adversarial.md`, 3
+> independent reviewers, binary PASS/FAIL). This rubric is retained as the
+> collaborative criteria checklist the CTO Agent draws on for its TDD-readiness /
+> architecture-fit lens inside the design-review gate — not as a second competing
+> gate. Do not treat it as the gatekeeper before decomposition.
+
+**Used By**: CTO Agent (collaborative criteria within the design-review gate)
+**Purpose**: TDD-readiness / architecture-fit criteria checklist
+**Version**: 1.1 (marked historical/collaborative)
 
 ---
 

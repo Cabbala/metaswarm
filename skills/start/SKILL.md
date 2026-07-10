@@ -53,7 +53,7 @@ bd doctor         # Check system health
 | **Coder Agent**           | TDD implementation             | Design review gate approved        |
 | **Code Review Agent**     | Internal code review           | Implementation complete            |
 | **Security Auditor**      | Security review (code)         | Implementation complete            |
-| **Release Engineer Agent** | Safe delivery from merge through production | QA approves PR, PR reaches merge readiness |
+| **Release Engineer Agent** (optional) | Safe delivery from merge through production | PR reaches merge readiness (human-approved) |
 | **PR Shepherd**           | PR lifecycle management        | PR created                         |
 
 See `./agents/` directory for detailed agent definitions.
@@ -71,10 +71,11 @@ Design Document Created
 ┌─────────────────────────────────────────────────┐
 │           DESIGN REVIEW GATE                     │
 │                                                  │
-│  Spawns in PARALLEL:                            │
+│  Spawns 5 reviewers in PARALLEL:                │
+│  • Product Manager (use case, user benefit)     │
 │  • Architect Agent (technical architecture)     │
-│  • Designer Agent (UX/API design)               │
-│  • UX Reviewer (user flows, integration WUs)    │
+│  • Designer Agent (UX/API design + UX flows)    │
+│  • Security Design (threat modeling)            │
 │  • CTO Agent (TDD readiness)                    │
 │                                                  │
 │  ALL must approve to proceed                    │
@@ -101,9 +102,8 @@ The gate is automatically triggered when:
 | --------------- | ---------------------------------------------------------- |
 | Product Manager | Use case clarity, user benefits, scope, success metrics    |
 | Architect       | Service architecture, dependencies, patterns, integration  |
-| Designer        | API design, UX flows, developer experience, consistency    |
+| Designer        | API design, developer experience, consistency, AND (when UI exists) user flows, text wireframes, integration WUs, empty/loading/error states |
 | Security Design | Threat modeling, auth/authz, data protection, OWASP Top 10 |
-| UX Reviewer     | User flows, text wireframes, integration WUs, empty/error states |
 | CTO             | TDD readiness, codebase alignment, completeness, risks     |
 
 ### Iteration Protocol
@@ -302,16 +302,16 @@ GitHub Issue #123 (agent-ready label)
 └─────────────────────────────────────┘
         │
         ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│                    DESIGN REVIEW GATE (PARALLEL)                          │
-│                                                                           │
-│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐ ┌───────┐ │
-│  │   PM    │ │ Architect│ │ Designer │ │ Security │ │UX Revw.│ │  CTO  │ │
-│  │(users)  │ │  (tech)  │ │ (UX/API) │ │ (threats)│ │(flows) │ │ (TDD) │ │
-│  └─────────┘ └──────────┘ └──────────┘ └──────────┘ └────────┘ └───────┘ │
-│                                                                           │
-│  ALL SIX must approve (max 3 iterations)                                  │
-└──────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                    DESIGN REVIEW GATE (PARALLEL)                 │
+│                                                                  │
+│  ┌─────────┐ ┌──────────┐ ┌──────────────┐ ┌──────────┐ ┌─────┐ │
+│  │   PM    │ │ Architect│ │   Designer   │ │ Security │ │ CTO │ │
+│  │(users)  │ │  (tech)  │ │(UX/API+flows)│ │ (threats)│ │(TDD)│ │
+│  └─────────┘ └──────────┘ └──────────────┘ └──────────┘ └─────┘ │
+│                                                                  │
+│  ALL FIVE must approve (max 3 iterations)                        │
+└────────────────────────────────────────────────────────────────┘
         │
         ▼
 ┌─────────────────────────────────────┐

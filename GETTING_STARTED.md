@@ -109,7 +109,7 @@ That's it. The orchestrator takes over:
 2. **Plan** — Architect agent creates an implementation plan with work units
 3. **Plan Review Gate** — 3 adversarial reviewers (Feasibility, Completeness, Scope & Alignment) validate the plan before it reaches the Design Review Gate
 4. **Plan Validation** — Pre-flight checklist catches structural issues (missing service layer, wrong dependencies, oversized WUs) before spending agent cycles
-5. **Design Review** — 6 agents review the plan in parallel (PM, Architect, Designer, Security, UX Reviewer, CTO)
+5. **Design Review** — 5 agents review the plan in parallel (PM, Architect, Designer, Security, CTO); the Designer covers UX flows when a UI exists
 6. **Decompose** — Breaks the plan into work units with DoD items and dependencies
 7. **External Dependency Check** — Identifies required API keys/credentials and prompts you to configure them
 8. **Execute** — For each work unit: implement with TDD, validate independently, adversarial review against DoD. Quality gates are blocking state transitions, not advisory.
@@ -189,7 +189,7 @@ This triggers the full pipeline:
 2. **Research** — Explores your codebase for related patterns
 3. **Plan** — Creates an implementation plan
 4. **Plan Review Gate** — 3 adversarial reviewers validate the plan (Feasibility, Completeness, Scope & Alignment)
-5. **Design Review** (if complex) — Runs the 6-agent Design Review Gate
+5. **Design Review** (if complex) — Runs the 5-agent Design Review Gate
 6. **Implement** — TDD implementation
 7. **Review** — Code review + security audit
 8. **PR** — Creates PR with auto-shepherd
@@ -235,15 +235,14 @@ For a more complex feature, trigger the parallel review manually:
 This is the primary superpowers v6.1.1 design-spec location. The gate also
 accepts `docs/plans/*-design.md` as an explicit legacy fallback.
 
-Six agents review in parallel:
+Five agents review in parallel:
 - **PM**: Validates use cases and scope
 - **Architect**: Checks service design and patterns
 - **Designer**: Reviews API/UX design
 - **Security**: Threat modeling (STRIDE)
-- **UX Reviewer**: Verifies user flows, integration work units, and component wiring
 - **CTO**: TDD readiness and alignment
 
-Each produces an APPROVE/REVISE verdict. All six must approve, or the plan iterates (max 3 rounds before human escalation).
+Each produces an APPROVE/REVISE verdict. All five must approve, or the plan iterates (max 3 rounds before human escalation).
 
 ## Step 4.5: Orchestrated Execution (for Complex Tasks)
 

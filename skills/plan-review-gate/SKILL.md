@@ -459,4 +459,4 @@ The plan review gate succeeds when:
 
 Reviewers follow: `./rubrics/plan-review-rubric-adversarial.md`
 
-This adversarial rubric is distinct from `./rubrics/plan-review-rubric.md` (used by the CTO Agent for collaborative plan review). See the rubric file for detailed scoring criteria and evidence requirements.
+This adversarial rubric is the BINDING plan review. `./rubrics/plan-review-rubric.md` is the historical collaborative criteria the CTO Agent draws on for its TDD-readiness lens inside the design-review gate — not a second competing plan gate. See the rubric file for detailed scoring criteria and evidence requirements.

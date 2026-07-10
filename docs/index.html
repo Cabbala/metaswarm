@@ -482,7 +482,7 @@ after the database schema and after the AI integration.
 When all work units pass, create a PR.</code></pre>
     </div>
 
-    <p>The orchestrator takes over. It researches your project, plans the implementation, runs a pre-flight validation checklist, then six agents review the plan in parallel. It identifies external dependencies and prompts you for API keys. It breaks the plan into work units, and executes each through the 4-phase loop: implement with TDD, validate independently (with blocking coverage enforcement), adversarial review against the spec, and commit only after PASS. Quality gates are blocking state transitions &mdash; there is no path from FAIL to COMMIT. It pauses for your review at the checkpoints you specified. When everything passes, it creates and shepherds the PR.</p>
+    <p>The orchestrator takes over. It researches your project, plans the implementation, runs a pre-flight validation checklist, then five agents review the plan in parallel. It identifies external dependencies and prompts you for API keys. It breaks the plan into work units, and executes each through the 4-phase loop: implement with TDD, validate independently (with blocking coverage enforcement), adversarial review against the spec, and commit only after PASS. Quality gates are blocking state transitions &mdash; there is no path from FAIL to COMMIT. It pauses for your review at the checkpoints you specified. When everything passes, it creates and shepherds the PR.</p>
     <p>You described what you wanted. The system figured out how to build it.</p>
   </section>
 
@@ -519,8 +519,8 @@ When all work units pass, create a PR.</code></pre>
       <div class="pipeline-step">
         <div class="step-num">4</div>
         <span class="step-label">Design Review Gate</span>
-        <span class="step-detail">PM, Architect, Designer, Security, UX Reviewer, CTO review in parallel</span>
-        <span class="parallel-badge">6 agents parallel</span>
+        <span class="step-detail">PM, Architect, Designer, Security, CTO review in parallel (5 reviewers)</span>
+        <span class="parallel-badge">5 agents parallel</span>
       </div>
       <div class="pipeline-step">
         <div class="step-num">5</div>
@@ -560,7 +560,7 @@ When all work units pass, create a PR.</code></pre>
       </div>
     </div>
 
-    <p>The Design Review Gate is the part that surprised me. Six agents review the plan simultaneously, each from a different perspective &mdash; including a UX Reviewer that verifies user flows and integration work units. All six have to approve before implementation starts. If they do not agree after three rounds, the system escalates to a human. This catches real problems. Not theoretical ones.</p>
+    <p>The Design Review Gate is the part that surprised me. Five agents review the plan simultaneously, each from a different perspective &mdash; the Designer also verifies user flows and integration work units when there is a UI. All five have to approve before implementation starts. If they do not agree after three rounds, the system escalates to a human. This catches real problems. Not theoretical ones.</p>
   </section>
 
   <!-- SELF-LEARNING -->
@@ -651,7 +651,7 @@ When all work units pass, create a PR.</code></pre>
     <div class="features">
       <div class="feature">
         <h4>18 Agent Personas</h4>
-        <p>Researcher, Architect, PM, Designer, Security, CTO, Coder, Code Reviewer, Security Auditor, PR Shepherd, Test Automator, Knowledge Curator, and more. Each has a defined role, process, and output format.</p>
+        <p>Researcher, Architect, PM, Designer, Security, CTO, Coder, Code Reviewer, Security Auditor, PR Shepherd, Knowledge Curator, and more. Each has a defined role, process, and output format.</p>
       </div>
       <div class="feature">
         <h4>13 Orchestration Skills</h4>
@@ -717,6 +717,7 @@ When all work units pass, create a PR.</code></pre>
         <tr><th>Agent</th><th>Phase</th><th>What It Does</th></tr>
       </thead>
       <tbody>
+        <tr><td>Release Engineer (optional)</td><td>Deliver</td><td>Merge through production: deploy, verify, changelog/release notes</td></tr>
         <tr><td>Swarm Coordinator</td><td>Meta</td><td>Assigns work to worktrees, manages parallel execution</td></tr>
         <tr><td>Issue Orchestrator</td><td>Meta</td><td>Decomposes issues into tasks, manages phase handoffs</td></tr>
         <tr><td>Researcher</td><td>Research</td><td>Explores codebase, discovers patterns and dependencies</td></tr>
@@ -730,8 +731,7 @@ When all work units pass, create a PR.</code></pre>
         <tr><td>Security Auditor</td><td>Review</td><td>Vulnerability scanning, OWASP checks</td></tr>
         <tr><td>PR Shepherd</td><td>Delivery</td><td>CI monitoring, comment handling, thread resolution</td></tr>
         <tr><td>Knowledge Curator</td><td>Learning</td><td>Extracts learnings, updates knowledge base</td></tr>
-        <tr><td>Test Automator</td><td>Implement</td><td>Test generation and coverage enforcement</td></tr>
-        <tr><td>Metrics</td><td>Support</td><td>Analytics and weekly reports</td></tr>
+                <tr><td>Metrics</td><td>Support</td><td>Analytics and weekly reports</td></tr>
         <tr><td>SRE</td><td>Support</td><td>Infrastructure and performance</td></tr>
         <tr><td>Slack Coordinator</td><td>Support</td><td>Notifications and human communication</td></tr>
         <tr><td>Customer Service</td><td>Support</td><td>User support and triage</td></tr>

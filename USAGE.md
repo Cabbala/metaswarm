@@ -27,7 +27,6 @@ metaswarm provides 18 specialized agents, each with a defined role in the softwa
 | Agent | File | Role |
 |---|---|---|
 | **Coder** | `agents/coder-agent.md` | TDD implementation (RED-GREEN-REFACTOR). 100% coverage required. |
-| **Test Automator** | `agents/test-automator-agent.md` | Test generation and coverage enforcement. |
 
 ### Review Agents
 
@@ -37,6 +36,8 @@ metaswarm provides 18 specialized agents, each with a defined role in the softwa
 | **Security Auditor** | `agents/security-auditor-agent.md` | Security code review, vulnerability scanning. |
 
 ### PR & Delivery Agents
+
+| **Release Engineer** (optional) | `agents/release-engineer-agent.md` | Safe delivery from merge through production; changelog/release notes. |
 
 | Agent | File | Role |
 |---|---|---|
@@ -123,14 +124,14 @@ Uses the `adversarial-review-rubric.md` for reviews (distinct from the collabora
 
 **Path**: `skills/design-review-gate/SKILL.md`
 
-Spawns 6 agents in parallel to review a design document:
+Spawns 5 agents in parallel to review a design document:
 
 ```text
 /review-design <path-to-spec>
 ```
 
-- PM, Architect, Designer, Security, UX Reviewer, CTO review simultaneously
-- All 6 must APPROVE
+- PM, Architect, Designer, Security, CTO review simultaneously (5 reviewers; the Designer covers UX flows when a UI exists)
+- All 5 must APPROVE
 - Max 3 iterations before human escalation
 - Catches architectural issues before implementation begins
 
@@ -216,7 +217,7 @@ Prerequisites: `npx playwright install chromium`
 | `/update` | Update metaswarm plugin to latest version |
 | `/status` | Run 9 diagnostic checks on your installation |
 | `/prime` | Load relevant knowledge before starting work |
-| `/review-design <path>` | Run the 6-agent Design Review Gate |
+| `/review-design <path>` | Run the 5-agent Design Review Gate |
 | `/brainstorm` | Refine an idea before implementation |
 | `/self-reflect` | Extract learnings from recent PR reviews |
 | `/handoff` | Write a self-contained handoff doc so a fresh agent can resume the work |
@@ -380,7 +381,7 @@ Quality standards used by review agents:
 | `architecture-rubric.md` | Architect Agent | Service design, coupling, scalability |
 | `security-review-rubric.md` | Security Auditor | OWASP Top 10, auth, data handling |
 | `plan-review-rubric.md` | CTO Agent | TDD readiness, completeness, alignment |
-| `test-coverage-rubric.md` | Test Automator | Coverage, edge cases, mock quality |
+| `test-coverage-rubric.md` | Coder Agent (TDD) | Coverage, edge cases, mock quality |
 | `external-tool-review-rubric.md` | Cross-model adversarial reviewers | Binary PASS/FAIL for cross-model review, file:line evidence |
 
 ## Scripts
@@ -403,7 +404,7 @@ The full orchestration lifecycle:
 | 2. Planning | Architect | Implementation plan with tasks |
 | 2a. External Dependency Detection | Issue Orchestrator | Identifies API keys/credentials, prompts user |
 | 2b. Plan Validation | Issue Orchestrator | Pre-flight checklist (architecture, deps, API contracts, security, UI/UX) |
-| 3. Design Review | PM + Architect + Designer + Security + UX Reviewer + CTO (parallel) | APPROVE/REVISE verdicts |
+| 3. Design Review | PM + Architect + Designer + Security + CTO (parallel, 5 reviewers) | APPROVE/REVISE verdicts |
 | 4. Work Unit Decomposition | Issue Orchestrator | Work units with DoD items, file scopes, dependency graph |
 | 5. Orchestrated Execution | Coder (or External Tool) + Orchestrator + Adversarial Reviewer (per unit) | IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT loop (optionally delegates to Codex or the enterprise/API-key Gemini adapter) |
 | 6. Final Comprehensive Review | Issue Orchestrator | Cross-unit integration check, full test suite |
