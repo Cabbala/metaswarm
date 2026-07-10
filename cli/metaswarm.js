@@ -52,10 +52,28 @@ function installClaude() {
   }
 }
 
-function installCodex() {
-  console.log('\n  Installing for Codex CLI...\n');
-  const installDir = path.join(process.env.CODEX_HOME || path.join(os.homedir(), '.codex'), 'metaswarm');
-  const skillsDir = path.join(os.homedir(), '.agents', 'skills');
+function codexCommandExists() {
+  const probe = process.platform === 'win32' ? 'where codex' : 'command -v codex';
+  try {
+    execSync(probe, { stdio: 'ignore' });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function hasMetaswarmPluginCache(cacheDir) {
+  if (!fs.existsSync(cacheDir)) return false;
+
+  for (const entry of fs.readdirSync(cacheDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    if (entry.name.toLowerCase().includes('metaswarm')) return true;
+    if (hasMetaswarmPluginCache(path.join(cacheDir, entry.name))) return true;
+  }
+  return false;
+}
+
+function installCodexFallback(installDir, skillsDir) {
 
   if (fs.existsSync(installDir)) {
     console.log(`  Updating existing installation at ${installDir}...`);
@@ -106,6 +124,41 @@ function installCodex() {
     info(`Linked ${linked} skills into ${skillsDir}`);
   }
   console.log('  Next: In your project, run $setup');
+}
+
+function installCodex() {
+  console.log('\n  Installing for Codex CLI...\n');
+  const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
+  const installDir = path.join(codexHome, 'metaswarm');
+  const skillsDir = path.join(os.homedir(), '.agents', 'skills');
+  const cacheDir = path.join(codexHome, 'plugins', 'cache');
+
+  const fallback = (reason) => {
+    warn(reason);
+    console.log('  Falling back to clone + symlink installation...');
+    installCodexFallback(installDir, skillsDir);
+  };
+
+  if (!codexCommandExists()) {
+    fallback('Codex CLI is not on PATH');
+    return;
+  }
+
+  try {
+    console.log('  Running: codex plugin marketplace add Cabbala/metaswarm');
+    execSync('codex plugin marketplace add Cabbala/metaswarm', { stdio: 'inherit' });
+    console.log('  Running: codex plugin add metaswarm@metaswarm');
+    execSync('codex plugin add metaswarm@metaswarm', { stdio: 'inherit' });
+
+    if (!hasMetaswarmPluginCache(cacheDir)) {
+      throw new Error(`metaswarm plugin cache was not created at ${cacheDir}`);
+    }
+
+    info('Codex CLI plugin installed');
+    console.log('  Next: In your project, run $setup');
+  } catch (e) {
+    fallback(`Codex plugin install failed: ${e.message || e}`);
+  }
 }
 
 // --- Project-level setup ---
