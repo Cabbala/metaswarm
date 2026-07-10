@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>metaswarm - Multi-Agent Orchestration for Claude Code</title>
-  <meta name="description" content="A self-improving multi-agent orchestration framework for Claude Code, Gemini CLI, and Codex CLI. 18 agents, 13 skills, 15 commands. TDD, cross-model adversarial review, spec-driven development. Production-proven.">
+  <meta name="description" content="A self-improving multi-agent orchestration framework for Claude Code and Codex CLI. 18 agents, 13 skills, 15 commands. TDD, cross-model adversarial review, spec-driven development. Production-proven.">
   <style>
     :root {
       --bg: #ffffff;
@@ -397,7 +397,7 @@
 
   <header>
     <h1><a href="https://github.com/Cabbala/metaswarm" style="color: inherit; text-decoration: none;"><span>meta</span>swarm</a></h1>
-    <p class="tagline">A self-improving multi-agent orchestration framework for Claude Code, Gemini CLI, and Codex CLI. 18 specialized agents coordinate through the full development lifecycle, from GitHub issue to merged PR, with TDD, cross-model adversarial review, and spec-driven development.</p>
+    <p class="tagline">A self-improving multi-agent orchestration framework for Claude Code and Codex CLI. 18 specialized agents coordinate through the full development lifecycle, from GitHub issue to merged PR, with TDD, cross-model adversarial review, and spec-driven development.</p>
   </header>
 
   <!-- QUICK INSTALL -->
@@ -412,7 +412,7 @@
       <span id="copy-tooltip" style="position: absolute; top: -32px; right: 12px; left: auto; transform: translateX(0) translateY(4px); background: var(--text); color: var(--bg); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; white-space: nowrap; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none;">Copied!</span>
     </div>
     <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px;">Claude reads the documentation, understands your project structure, installs the plugin, and configures everything for your stack. Supports TypeScript, Python, Go, Rust, Java, Ruby, and JavaScript.</p>
-    <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px;"><strong style="color: var(--text);">Have Gemini CLI or Codex CLI installed?</strong> metaswarm can delegate implementation and review tasks to them automatically &mdash; the writer is always reviewed by a different model. Setup detects them and offers to enable cross-model orchestration.</p>
+    <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px;"><strong style="color: var(--text);">Need cross-model review?</strong> metaswarm can use Codex and the optional enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18); the adapter remains disabled until explicitly configured.</p>
     <p style="color: var(--text-muted); font-size: 13px; margin-top: 16px;">Or install directly:</p>
     <div style="position: relative;">
       <pre style="font-size: 14px; padding: 14px 18px; margin: 8px 0 0 0;"><code><span class="cmd">claude</span> plugin marketplace add Cabbala/metaswarm
@@ -535,7 +535,7 @@ When all work units pass, create a PR.</code></pre>
       <div class="pipeline-step">
         <div class="step-num">7</div>
         <span class="step-label">Orchestrated Execution</span>
-        <span class="step-detail">Per work unit: Implement &rarr; Validate &rarr; Adversarial Review &rarr; Commit. Can delegate to Codex/Gemini CLIs.</span>
+        <span class="step-detail">Per work unit: Implement &rarr; Validate &rarr; Adversarial Review &rarr; Commit. Can delegate to Codex or the enterprise/API-key Gemini adapter.</span>
         <span class="parallel-badge">4-phase loop</span>
       </div>
       <div class="pipeline-step">
@@ -608,16 +608,16 @@ When all work units pass, create a PR.</code></pre>
   <!-- EXTERNAL AI TOOLS -->
   <section>
     <h2>Cross-Model Adversarial Review</h2>
-    <p>A coding agent reviewing its own output has an inherent bias. metaswarm can delegate implementation and review tasks to external AI tools &mdash; OpenAI Codex CLI and Google Gemini CLI &mdash; with one rule: <strong>the writer is always reviewed by a different model.</strong></p>
+    <p>A coding agent reviewing its own output has an inherent bias. metaswarm can delegate to OpenAI Codex CLI and the optional enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18) with one rule: <strong>the writer is always reviewed by a different model.</strong></p>
 
     <div class="features">
       <div class="feature">
         <h4>Cross-Model Review</h4>
-        <p>If Claude writes the code, Codex or Gemini reviews it. If Codex writes it, Claude or Gemini reviews. The reviewer never shares the writer's biases.</p>
+        <p>If Claude writes the code, Codex or the enterprise/API-key Gemini adapter reviews it. If Codex writes it, Claude or the adapter reviews it. The reviewer never shares the writer's biases.</p>
       </div>
       <div class="feature">
         <h4>Availability-Aware Escalation</h4>
-        <p>Model A (2 tries) &rarr; Model B (2 tries) &rarr; Claude (1 try) &rarr; user alert. If Codex is down, Gemini takes over automatically.</p>
+        <p>Model A (2 tries) &rarr; Model B (2 tries) &rarr; Claude (1 try) &rarr; user alert. The enterprise/API-key Gemini adapter is explicit opt-in and never a host-platform fallback.</p>
       </div>
       <div class="feature">
         <h4>Shell Adapters</h4>
@@ -786,22 +786,18 @@ When all work units pass, create a PR.</code></pre>
 <span class="cmd">claude</span> plugin install metaswarm@metaswarm</code></pre>
     <p>Then: <code>/metaswarm:setup</code></p>
 
-    <h3>Gemini CLI</h3>
-    <pre><code><span class="cmd">gemini</span> extensions install https://github.com/Cabbala/metaswarm.git</code></pre>
-    <p>Then: <code>/metaswarm:setup</code></p>
-
     <h3>Codex CLI</h3>
     <pre><code>curl -sSL https://raw.githubusercontent.com/Cabbala/metaswarm/main/.codex/install.sh | bash</code></pre>
     <p>Then: <code>$setup</code></p>
 
-    <h3>Cross-Platform (auto-detect)</h3>
+    <h3>Supported Platform Auto-detection</h3>
     <pre><code>npx metaswarm init</code></pre>
     <p>Detects which CLIs you have installed and sets up metaswarm for each.</p>
 
-    <p>Setup detects your project's language, framework, test runner, linter, formatter, type checker, package manager, CI system, and git hooks. It creates the appropriate instruction file (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, or <code>AGENTS.md</code>), configures coverage thresholds, and sets up <code>.gitignore</code>. Supports: TypeScript, Python, Go, Rust, Java, Ruby, JavaScript.</p>
+    <p>Setup detects your project's language, framework, test runner, linter, formatter, type checker, package manager, CI system, and git hooks. It creates the appropriate instruction file (<code>CLAUDE.md</code> or <code>AGENTS.md</code>), configures coverage thresholds, and sets up <code>.gitignore</code>. Supports: TypeScript, Python, Go, Rust, Java, Ruby, JavaScript.</p>
 
     <h3>Updating</h3>
-    <p>Claude Code: <code>/metaswarm:update</code> &bull; Gemini CLI: <code>/metaswarm:update</code> &bull; Codex CLI: <code>cd ~/.codex/metaswarm && git pull</code></p>
+    <p>Claude Code: <code>/metaswarm:update</code> &bull; Codex CLI: <code>cd ~/.codex/metaswarm && git pull</code></p>
 
     <h3>Upgrading from an Older Version</h3>
     <p>If you installed metaswarm via <code>npx metaswarm init</code> (v0.6&ndash;v0.8), upgrade to the plugin:</p>

@@ -59,7 +59,7 @@ claude plugin add /path/to/metaswarm
 # Run /status to verify all 9 diagnostic checks pass
 ```
 
-If you're also contributing external tool adapters (Codex, Gemini), run the verification script:
+If you're also contributing external tool adapters (Codex or the enterprise/API-key Gemini adapter), run the verification script:
 
 ```bash
 bin/external-tools-verify.sh

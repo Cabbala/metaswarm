@@ -1,6 +1,6 @@
 # metaswarm
 
-A self-improving multi-agent orchestration framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), Gemini CLI, and Codex CLI. Coordinate 18 specialized AI agents and 13 orchestration skills through a complete software development lifecycle, from issue to merged PR, with recursive orchestration, parallel review gates, and a git-native knowledge base.
+A self-improving multi-agent orchestration framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and Codex CLI. Coordinate 18 specialized AI agents and 13 orchestration skills through a complete software development lifecycle, from issue to merged PR, with recursive orchestration, parallel review gates, and a git-native knowledge base.
 
 ## What Is This?
 
@@ -14,7 +14,7 @@ metaswarm is an extraction of a production-tested agentic orchestration system. 
 - **Git-native task tracking**: Uses [BEADS](https://github.com/steveyegge/beads) (`bd` CLI) for issue/task management, dependencies, and knowledge priming
 - **Knowledge base**: JSONL-based fact store for patterns, gotchas, decisions, and anti-patterns — agents prime from this before every task
 - **Quality rubrics**: Standardized review criteria for code, architecture, security, testing, planning, and adversarial spec compliance
-- **External AI tool delegation**: Optionally delegate implementation and review tasks to OpenAI Codex CLI and Google Gemini CLI for cost savings and cross-model adversarial review
+- **External AI tool delegation**: Optionally delegate implementation and review tasks to OpenAI Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review
 - **Visual review**: Playwright-based screenshot capture for reviewing web UIs, presentations, and rendered pages
 - **PR lifecycle automation**: Autonomous CI monitoring, review comment handling, and thread resolution
 - **Workflow enforcement**: Mandatory quality gate intercepts at every handoff point — agents cannot skip design review, plan review, or knowledge capture
@@ -48,7 +48,7 @@ Your prompt (spec with DoD items) or GitHub Issue
         ▼
   Orchestrated Execution Loop (per work unit):
     IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT
-    (Optionally delegates IMPLEMENT to Codex/Gemini CLI)
+    (Optionally delegates to Codex or the enterprise/API-key Gemini adapter)
     (Cross-model REVIEW: writer always reviewed by different model)
         │
         ▼
@@ -67,7 +67,6 @@ Your prompt (spec with DoD items) or GitHub Issue
 metaswarm/
 ├── .claude-plugin/
 │   └── plugin.json           # Claude Code plugin manifest
-├── gemini-extension.json      # Gemini CLI extension manifest
 ├── .codex/
 │   ├── install.sh            # Codex CLI install script
 │   └── README.md             # Codex CLI usage guide
@@ -86,21 +85,19 @@ metaswarm/
 │   ├── handling-pr-comments/ # Review comment workflow
 │   ├── brainstorming-extension/
 │   ├── create-issue/
-│   ├── external-tools/       # Cross-model AI delegation (Codex, Gemini CLI)
+│   ├── external-tools/       # Cross-model AI delegation adapters (Codex, enterprise/API-key Gemini)
 │   └── visual-review/        # Playwright-based screenshot review
-├── commands/                  # Slash commands
-│   ├── *.md                  # Claude Code commands (15 files)
-│   └── metaswarm/*.toml      # Gemini CLI commands (12 files)
+├── commands/                  # Claude Code commands
+│   └── *.md                  # Claude Code command definitions
 ├── agents/                    # 18 agent persona definitions
 ├── rubrics/                   # Quality review standards
 ├── guides/                    # Development patterns
 ├── knowledge/                 # Knowledge base schema + templates
-├── templates/                 # Setup templates (CLAUDE.md, AGENTS.md, GEMINI.md + append variants)
+├── templates/                 # Setup templates (CLAUDE.md and AGENTS.md + append variants)
 ├── lib/                       # Platform detection, sync, setup scripts
-├── cli/                       # Cross-platform installer (npx metaswarm)
+├── cli/                       # Claude/Codex installer (npx metaswarm)
 ├── CLAUDE.md                  # Claude Code project instructions
 ├── AGENTS.md                  # Codex CLI project instructions
-├── GEMINI.md                  # Gemini CLI extension context
 ├── INSTALL.md
 ├── GETTING_STARTED.md
 ├── USAGE.md
@@ -122,14 +119,6 @@ claude plugin install metaswarm@metaswarm
 
 Then run `/setup` in Claude Code.
 
-### Gemini CLI
-
-```bash
-gemini extensions install https://github.com/Cabbala/metaswarm.git
-```
-
-Then run `/metaswarm:setup` in your project.
-
 ### Codex CLI
 
 ```bash
@@ -139,9 +128,9 @@ codex plugin add metaswarm@metaswarm
 
 Then run `$setup` in your project.
 
-### Cross-platform installer
+### Platform installer
 
-Detect installed CLIs and install metaswarm for all of them:
+Detect supported host CLIs and install metaswarm for them:
 
 ```bash
 npx metaswarm init
@@ -149,7 +138,7 @@ npx metaswarm init
 
 ### Start building
 
-Run `/start-task` (Claude/Gemini) or `$start` (Codex) and describe what you want in plain English. No issue required.
+Run `/start-task` (Claude) or `$start` (Codex) and describe what you want in plain English. No issue required.
 
 ```text
 /start-task Add a webhook system with retry logic, signature verification,
@@ -207,12 +196,11 @@ This keeps the project-specific context explicit and versioned alongside the wor
 | Platform | Install Method | Commands |
 |---|---|---|
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Plugin marketplace | `/start-task`, `/setup`, etc. |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | Extension (`gemini extensions install`) | `/metaswarm:start-task`, etc. |
 | [Codex CLI](https://github.com/openai/codex) | Plugin marketplace | `$start`, `$setup`, etc. |
 
 ## Requirements
 
-- One of: Claude Code, Gemini CLI, or Codex CLI
+- One of: Claude Code or Codex CLI
 - Node.js 18+ (for automation scripts)
 - [BEADS](https://github.com/steveyegge/beads) CLI (`bd`) v0.40+ — for task tracking (recommended)
 - GitHub CLI (`gh`) — for PR automation (recommended)

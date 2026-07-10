@@ -1,23 +1,22 @@
 #!/usr/bin/env bash
 # lib/setup-mandatory-files.sh
-# Writes the 3 mandatory setup files that the agent keeps skipping.
+# Writes the mandatory setup files that the agent keeps skipping.
 # Called by the setup skill after detection and user questions.
 #
-# Usage: setup-mandatory-files.sh <project-dir> <coverage-threshold> <coverage-command> [--platform claude|codex|gemini|all]
+# Usage: setup-mandatory-files.sh <project-dir> <coverage-threshold> <coverage-command> [--platform claude|codex|all]
 #
 # Arguments:
 #   project-dir       - Project root directory
 #   coverage-threshold - Coverage percentage (e.g., 100)
 #   coverage-command   - Coverage enforcement command (e.g., "pytest --cov --cov-fail-under=100")
-#   --platform        - Target platform(s): claude (default), codex, gemini, or all
+#   --platform        - Target platform(s): claude (default), codex, or all
 #
 # Environment:
 #   CLAUDE_PLUGIN_ROOT - Plugin root directory (set by Claude Code)
-#   extensionPath      - Extension root directory (set by Gemini CLI)
 
 set -euo pipefail
 
-PROJECT_DIR="${1:?Usage: setup-mandatory-files.sh <project-dir> <coverage-threshold> <coverage-command> [--platform claude|codex|gemini|all]}"
+PROJECT_DIR="${1:?Usage: setup-mandatory-files.sh <project-dir> <coverage-threshold> <coverage-command> [--platform claude|codex|all]}"
 COVERAGE_THRESHOLD="${2:?Missing coverage threshold}"
 COVERAGE_COMMAND="${3:?Missing coverage command}"
 
@@ -28,7 +27,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --platform)
       if [ $# -lt 2 ]; then
-        echo "Error: --platform requires a value (claude, codex, gemini, or all)" >&2
+        echo "Error: --platform requires a value (claude, codex, or all)" >&2
         exit 1
       fi
       PLATFORM="$2"; shift 2 ;;
@@ -83,16 +82,12 @@ case "$PLATFORM" in
   codex)
     write_instruction_file "codex" "AGENTS.md" "$TEMPLATE_DIR/AGENTS-append.md" "$TEMPLATE_DIR/AGENTS.md"
     ;;
-  gemini)
-    write_instruction_file "gemini" "GEMINI.md" "$TEMPLATE_DIR/GEMINI-append.md" "$TEMPLATE_DIR/GEMINI.md"
-    ;;
   all)
     write_instruction_file "claude" "CLAUDE.md" "$TEMPLATE_DIR/CLAUDE-append.md" "$TEMPLATE_DIR/CLAUDE.md"
     write_instruction_file "codex" "AGENTS.md" "$TEMPLATE_DIR/AGENTS-append.md" "$TEMPLATE_DIR/AGENTS.md"
-    write_instruction_file "gemini" "GEMINI.md" "$TEMPLATE_DIR/GEMINI-append.md" "$TEMPLATE_DIR/GEMINI.md"
     ;;
   *)
-    errors+=("Unknown platform: $PLATFORM (expected: claude, codex, gemini, or all)")
+    errors+=("Unknown platform: $PLATFORM (expected: claude, codex, or all)")
     ;;
 esac
 

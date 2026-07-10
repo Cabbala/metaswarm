@@ -65,6 +65,11 @@ while IFS= read -r -d '' filepath; do
   if is_exempt "$filepath"; then
     continue
   fi
+  # During a removal work unit, git still lists staged-deletion paths until a
+  # commit updates the index; only scan files present in this checkout.
+  if [ ! -f "$filepath" ]; then
+    continue
+  fi
 
   assert_no_matches "unsupported scoped priming" 'bd prime --(work-type|files|keywords)' "$filepath"
   assert_no_matches "unsupported sync command" 'bd sync( |$)' "$filepath"

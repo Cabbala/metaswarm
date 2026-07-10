@@ -36,7 +36,7 @@ This triggers the full pipeline: Research → Plan → Design Review Gate → Wo
 | `/handle-pr-comments` | Handle PR review comments |
 | `/brainstorm` | Refine an idea before implementation |
 | `/create-issue` | Create a well-structured GitHub Issue |
-| `/external-tools-health` | Check status of external AI tools (Codex, Gemini) |
+| `/external-tools-health` | Check Codex and enterprise/API-key Gemini adapter status |
 | `/setup` | Interactive guided setup — detects project, configures metaswarm |
 | `/update` | Update metaswarm to latest version |
 | `/status` | Run diagnostic checks on your installation |
@@ -172,8 +172,9 @@ Approved plans, project context, and execution state are persisted to `.beads/` 
 ## External Tools (Optional)
 
 If external AI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator
-can delegate implementation and review tasks to Codex CLI and Gemini CLI for cost savings
-and cross-model adversarial review. See `templates/external-tools-setup.md` for setup.
+can delegate implementation and review tasks to Codex CLI and the enterprise/API-key-only
+Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review.
+See `templates/external-tools-setup.md` for setup.
 
 ## Team Mode
 

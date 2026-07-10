@@ -12,11 +12,11 @@ adapters:
     auth_env_var: "OPENAI_API_KEY"   # Environment variable holding the API key
   gemini:
     enabled: false
-    # Consumer Gemini CLI discontinued 2026-06-18; enterprise/API-key access only — explicit opt-in
+    # Enterprise/API-key compatibility target only; consumer Gemini CLI discontinued 2026-06-18 — explicit opt-in
     model: "pro"                     # Model alias: pro | flash | flash-lite
     timeout_seconds: 300
     sandbox: none
-    auth_env_var: "GEMINI_API_KEY"   # Or use Google login (no key needed)
+    auth_env_var: "GEMINI_API_KEY"   # Enterprise/API-key credentials required
 
 routing:
   # How to pick the implementer for a task:

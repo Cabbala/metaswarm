@@ -1,8 +1,8 @@
 #!/bin/bash
-# gemini.sh — Google Gemini CLI adapter for external-tools
+# Enterprise/API-key Gemini compatibility target. Consumer Gemini CLI discontinued by Google 2026-06-18; best-effort, enabled only if a working binary is present.
 #
 # Implements: health, implement, review
-# Requires:  gemini CLI (https://github.com/google-gemini/gemini-cli)
+# Requires:  an enterprise/API-key-compatible gemini binary
 #
 # Usage:
 #   gemini.sh health
@@ -29,19 +29,22 @@ DEFAULT_MODEL="pro"
 cmd_health() {
   local status="ready"
   local version="unknown"
+  local version_output="unknown"
+  local binary_path="not_installed"
   local auth_valid=false
 
   # Check if gemini binary exists
-  if ! command -v "$TOOL_CMD" >/dev/null 2>&1; then
-    printf '{"tool":"%s","status":"unavailable","version":"not_installed","auth_valid":false,"model":"%s"}\n' \
+  if ! binary_path="$(command -v "$TOOL_CMD")"; then
+    printf '{"tool":"%s","status":"unavailable","version":"not_installed","version_output":"not_installed","binary_path":"not_installed","auth_valid":false,"model":"%s"}\n' \
       "$TOOL_NAME" "$DEFAULT_MODEL"
     return 0
   fi
 
-  # Get version
-  version="$("$TOOL_CMD" --version 2>/dev/null || printf 'unknown')"
+  # Record the resolved binary and its complete version output as a post-EOL
+  # supply-chain tripwire.
+  version_output="$("$binary_path" --version 2>&1 || printf 'unknown')"
   # Clean up version string — take first line, strip whitespace
-  version="$(printf '%s' "$version" | head -1 | tr -d '\n\r')"
+  version="$(printf '%s' "$version_output" | head -1 | tr -d '\n\r')"
 
   # Check authentication
   # Method 1: GEMINI_API_KEY environment variable
@@ -49,12 +52,7 @@ cmd_health() {
     auth_valid=true
   fi
 
-  # Method 2: Google login credentials in ~/.gemini/
-  if [[ -d "${HOME}/.gemini" ]]; then
-    auth_valid=true
-  fi
-
-  # Method 3: Google Application Default Credentials
+  # Method 2: Google Application Default Credentials
   if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" && -f "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
     auth_valid=true
   fi
@@ -70,13 +68,27 @@ cmd_health() {
       --arg tool "$TOOL_NAME" \
       --arg status "$status" \
       --arg version "$version" \
+      --arg version_output "$version_output" \
+      --arg binary_path "$binary_path" \
       --argjson auth_valid "$auth_valid" \
       --arg model "$DEFAULT_MODEL" \
-      '{tool: $tool, status: $status, version: $version, auth_valid: $auth_valid, model: $model}'
+      '{tool: $tool, status: $status, version: $version, version_output: $version_output, binary_path: $binary_path, auth_valid: $auth_valid, model: $model}'
   else
-    printf '{"tool":"%s","status":"%s","version":"%s","auth_valid":%s,"model":"%s"}\n' \
-      "$TOOL_NAME" "$status" "$version" "$auth_valid" "$DEFAULT_MODEL"
+    version_output="$(printf '%s' "$version_output" | tr '\n\r' ' ')"
+    printf '{"tool":"%s","status":"%s","version":"%s","version_output":"%s","binary_path":"%s","auth_valid":%s,"model":"%s"}\n' \
+      "$TOOL_NAME" "$status" "$version" "$version_output" "$binary_path" "$auth_valid" "$DEFAULT_MODEL"
   fi
+}
+
+gemini_supports_sandbox() {
+  local help_output
+
+  if ! command -v "$TOOL_CMD" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  help_output="$("$TOOL_CMD" --help 2>&1 || true)"
+  [[ "$help_output" == *"--sandbox"* ]]
 }
 
 # =========================================================================
@@ -84,6 +96,11 @@ cmd_health() {
 # =========================================================================
 cmd_implement() {
   parse_args "$@"
+
+  if ! gemini_supports_sandbox; then
+    printf 'Error: gemini adapter is review-only post-EOL; implement requires a working Gemini binary with --sandbox support.\n' >&2
+    return 1
+  fi
 
   # Validate required arguments
   if [[ -z "$XT_WORKTREE" ]]; then
@@ -126,7 +143,7 @@ cmd_implement() {
       GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
       GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}" \
     "$TOOL_CMD" \
-      --yolo \
+      --sandbox \
       --output-format json \
       --model "$DEFAULT_MODEL" \
       --include-directories "$XT_WORKTREE" \
@@ -324,19 +341,24 @@ PROMPT_EOF
   local start_time
   start_time="$(date +%s)"
 
-  # Invoke gemini in sandbox mode
+  # Keep the post-EOL adapter review-only when --sandbox is unavailable. Review
+  # receives the diff in its prompt and never receives a writable worktree path.
   local exit_code=0
+  local -a gemini_args=(
+    --output-format json
+    --model "$DEFAULT_MODEL"
+    "$review_prompt"
+  )
+  if gemini_supports_sandbox; then
+    gemini_args=(--sandbox "${gemini_args[@]}")
+  fi
   safe_invoke "$XT_TIMEOUT" "$stdout_file" "$stderr_file" \
     env -i \
       HOME="$HOME" \
       PATH="$PATH" \
       GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
       GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}" \
-    "$TOOL_CMD" \
-      --sandbox \
-      --output-format json \
-      --model "$DEFAULT_MODEL" \
-      "$review_prompt" \
+    "$TOOL_CMD" "${gemini_args[@]}" \
     || exit_code=$?
 
   # Calculate duration
@@ -428,8 +450,8 @@ case "$command" in
 Usage: $(basename "$0") <command> [options]
 
 Commands:
-  health      Check if Gemini CLI is installed and authenticated
-  implement   Run Gemini to implement code in a worktree
+  health      Check the enterprise/API-key Gemini compatibility target
+  implement   Run Gemini in a sandboxed worktree (requires --sandbox support)
   review      Run Gemini to review code changes (sandboxed)
 
 Options (implement):

@@ -1,6 +1,6 @@
 # External Tool Cross-Model Review Rubric
 
-**Used By**: External tool adapters (Codex CLI, Gemini CLI, Claude) acting as adversarial reviewers
+**Used By**: External tool adapters (Codex CLI, enterprise/API-key Gemini adapter, Claude) acting as adversarial reviewers
 **Purpose**: Evaluate code changes produced by a different AI model against the task spec
 **Version**: 1.1
 

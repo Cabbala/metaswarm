@@ -55,7 +55,7 @@ for path in .claude-plugin .codex-plugin; do
 done
 mkdir -p "$TEMP_REPO/.agents"
 cp -a "$REPO_ROOT/.agents/plugins" "$TEMP_REPO/.agents/plugins"
-for file in package.json gemini-extension.json AGENTS.md GEMINI.md; do
+for file in package.json AGENTS.md; do
   cp -a "$REPO_ROOT/$file" "$TEMP_REPO/$file"
 done
 

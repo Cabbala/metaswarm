@@ -5,7 +5,7 @@ description: Diagnostic status report — shows metaswarm installation state, pr
 
 # Status Skill
 
-Generate a diagnostic report of the metaswarm installation, project configuration, and potential issues across Claude Code, Codex, and Gemini. Useful for troubleshooting and verifying setup or migration.
+Generate a diagnostic report of the metaswarm installation, project configuration, and potential issues across Claude Code and Codex. The enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18) is reported only as an optional external tool.
 
 ---
 
@@ -15,13 +15,11 @@ Run each check below and present results in a single formatted report. Detect th
 
 - Codex: `PLUGIN_ROOT` or `CODEX_HOME` is present, `.codex-plugin/plugin.json` is the active manifest, or the user invoked `$status`
 - Claude Code: `CLAUDE_PLUGIN_ROOT` is present, `.claude-plugin/plugin.json` is the active manifest, or the user invoked `$status`
-- Gemini: `extensionPath` is present, `gemini-extension.json` is the active manifest, or the user invoked `$status`
 
 ### 1. Plugin Version
 
 - Codex: read `.codex-plugin/plugin.json` from the plugin root and report `version`
 - Claude Code: read `.claude-plugin/plugin.json` from the plugin root and report `version`
-- Gemini: read `gemini-extension.json` from the plugin root and report `version`
 - Fallback: read `package.json` at plugin root for `version`
 - If neither found: `Plugin version: UNKNOWN`
 
@@ -32,7 +30,6 @@ Run each check below and present results in a single formatted report. Detect th
 - If absent, report the platform-specific setup command:
   - Codex: `Project setup: NOT CONFIGURED -- run $setup`
   - Claude Code: `Project setup: NOT CONFIGURED -- run $setup`
-  - Gemini: `Project setup: NOT CONFIGURED -- run $setup`
 
 ### 3. Platform Install State
 
@@ -46,10 +43,6 @@ Run each check below and present results in a single formatted report. Detect th
 - Check `.claude-plugin/plugin.json` exists in the plugin root
 - Scan `~/.claude/plugins/cache/` for `.claude-plugin/plugin.json` with `"name": "metaswarm"`
 - Report marketplace/plugin cache status when accessible
-
-**Gemini**
-- Check `gemini-extension.json` exists in the plugin root
-- Report extension status when discoverable from the local Gemini config
 
 ### 4. Claude Command Shims
 
@@ -105,7 +98,7 @@ command -v gtg && gtg --help >/dev/null 2>&1
 
 ```bash
 command -v codex    # Codex CLI
-command -v gemini   # Gemini CLI
+skills/external-tools/adapters/gemini.sh health   # enterprise/API-key Gemini adapter
 ```
 
 Report per-tool: enabled (yes/no), status (available/not installed).
@@ -142,7 +135,7 @@ node --version 2>/dev/null
 | BEADS plugin | Not separately installed |
 | bd CLI | Available (v0.5.2) |
 | gtg CLI | Available |
-| External tools | Codex: available, Gemini: not installed |
+| External tools | Codex: available, Gemini adapter: disabled (enterprise/API-key only) |
 | Coverage thresholds | 100% (all categories) |
 | Node.js | Available (v22.4.0) |
 

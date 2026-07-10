@@ -1,6 +1,6 @@
 # External Tools Health Check
 
-Check the status of external AI tools (Codex CLI, Gemini CLI) and their configuration.
+Check the status of external AI tools: Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18).
 
 ## Usage
 
@@ -10,10 +10,10 @@ Check the status of external AI tools (Codex CLI, Gemini CLI) and their configur
 
 ## Steps
 
-1. **Check CLI availability**:
+1. **Check adapter availability**:
    ```bash
    command -v codex >/dev/null 2>&1 && echo "codex: available" || echo "codex: not found"
-   command -v gemini >/dev/null 2>&1 && echo "gemini: available" || echo "gemini: not found"
+   skills/external-tools/adapters/gemini.sh health
    ```
 
 2. **Check configuration**: Read `.metaswarm/external-tools.yaml` if it exists. Report which adapters are enabled/disabled.

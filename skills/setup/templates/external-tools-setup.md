@@ -12,12 +12,11 @@ supported in v1:
 | Tool | Cost | Best For |
 |------|------|----------|
 | **OpenAI Codex CLI** | ChatGPT Plus ($20/mo), Pro ($200/mo), or API key (pay-per-token) | Fast implementation with structured JSON output, strong at single-file TypeScript/Python tasks |
-| **Google Gemini CLI** | Free with Google login (1,000 req/day, 60/min on Gemini 2.5 Pro) or API key (free tier: 250 req/day, Flash only) | Cost-effective review and implementation, large context window, zero-cost entry point |
+| **Enterprise/API-key Gemini adapter** | Explicit opt-in; consumer CLI discontinued 2026-06-18 | Best-effort compatibility review; implementation requires a working binary with `--sandbox` |
 
-You can install **one or both**. metaswarm adapts automatically based on what is
-available:
+You can install Codex or explicitly enable the enterprise/API-key Gemini adapter. metaswarm adapts based on what is available:
 
-- **Both installed**: Full escalation chain (Model A -> Model B -> Claude -> You). Cross-model adversarial review with three different models.
+- **Both configured**: Full escalation chain (Model A -> Model B -> Claude -> You). Cross-model adversarial review with three different models.
 - **One installed**: Reduced chain (Model A -> Claude -> You). Cross-model review with two models.
 - **Neither installed**: Pure metaswarm behavior, unchanged. No external tools are invoked.
 
@@ -82,68 +81,22 @@ codex exec "print hello world in python" --ephemeral
 | Codex hangs indefinitely | Known issue with some rate-limit responses; CLI waits instead of erroring | Press Ctrl+C, then update to the latest version: `npm update -g @openai/codex`. The metaswarm adapter wraps all invocations with a timeout to prevent hangs. |
 | `OPENAI_API_KEY` is set but auth fails | Key may be revoked, expired, or from a different org | Verify at https://platform.openai.com/api-keys. Generate a new key if needed. |
 
----
+## 2. Enterprise/API-key Gemini Adapter Compatibility
 
-## 2. Install Google Gemini CLI
+Google discontinued consumer Gemini CLI access on 2026-06-18. metaswarm does not install, host, or authenticate Gemini as a platform. The optional adapter remains for enterprise/API-key users who already have a working compatible binary.
 
-### Install
+- It is disabled by default and removed from the default escalation order.
+- Use API-key or enterprise credentials only; consumer Google-login credentials are not accepted by the adapter health check.
+- Health output records the resolved binary path and complete `--version` output as a supply-chain tripwire.
+- The implement leg runs only when the binary advertises `--sandbox`; otherwise it fails clearly as review-only post-EOL.
 
-```bash
-npm install -g @google/gemini-cli
-```
-
-### Verify installation
-
-```bash
-gemini --version
-# Expected: 0.28.2 (or higher)
-```
-
-### Authentication (choose one)
-
-**Option A: Google Account Login (recommended -- free, high limits)**
+Verify an explicitly enabled adapter through metaswarm:
 
 ```bash
-gemini
-# On first run, select "Login with Google" and complete the browser OAuth flow.
-# This gives you access to Gemini 2.5 Pro with:
-#   - 1,000 requests/day
-#   - 60 requests/minute
-# No API key needed. No credit card needed.
+skills/external-tools/adapters/gemini.sh health | jq .
 ```
-
-**Option B: API Key**
-
-```bash
-# Add to your shell profile (~/.zshrc or ~/.bashrc):
-export GEMINI_API_KEY="AIza-your-key-here"
-
-# Get a key at: https://aistudio.google.com/app/apikey
-# Note: The free API key tier is more limited than Google login:
-#   - 250 requests/day (vs 1,000 with login)
-#   - Flash model only (vs Pro with login)
-# For most users, Option A (Google login) is the better choice.
-```
-
-### Smoke test
-
-```bash
-gemini "print hello world in python" --output-format json | jq .response
-# Expected: A JSON response containing Python code that prints hello world.
-# If jq is not installed: gemini "print hello world in python" --output-format json
-```
-
-### Troubleshooting
-
-| Problem | Cause | Solution |
-|---------|-------|----------|
-| `command not found: gemini` | npm global bin directory is not in PATH | Run `npm bin -g` to find the path, then add it to your shell profile: `export PATH="$(npm bin -g):$PATH"` |
-| Rate limit loop (CLI freezes or retries endlessly) | Exceeded daily or per-minute quota | Press Ctrl+C, wait a few minutes, and try again. Check your quota at https://aistudio.google.com/. The metaswarm adapter wraps invocations with a timeout to prevent infinite loops. |
-| Node.js version error | Gemini CLI requires Node.js 20 or higher | Check your version: `node --version`. Upgrade if below v20. Use `nvm install 20` if you use nvm. |
-| Google login credentials not found | OAuth tokens may have expired or `~/.gemini/` was deleted | Run `gemini` interactively and re-authenticate with "Login with Google". |
 
 ---
-
 ## 3. Configure metaswarm
 
 ### Copy the config template
@@ -172,21 +125,21 @@ adapters:
     sandbox: none                # docker | platform | none
     auth_env_var: "OPENAI_API_KEY"
   gemini:
-    enabled: true                # Set to false to disable Gemini
+    enabled: false               # Enterprise/API-key only; consumer CLI discontinued 2026-06-18
     model: "pro"                 # Model alias: pro | flash | flash-lite
     timeout_seconds: 300
     sandbox: none
-    auth_env_var: "GEMINI_API_KEY"
+    auth_env_var: "GEMINI_API_KEY" # Enterprise/API-key credentials required
 
 routing:
   # How to pick the implementer for a task:
   #   cheapest-available  — prefer the cheapest tool that passes health check
   #   round-robin         — alternate between tools
-  #   codex / gemini      — always use a specific tool
+  #   codex / gemini      — always use a specific configured adapter
   default_implementer: "cheapest-available"
 
   # Order for escalation when a tool fails after max retries
-  escalation_order: ["codex", "gemini", "claude"]
+  escalation_order: ["codex", "claude"]
 
 budget:
   per_task_usd: 2.00             # Max spend per task before alerting the user
@@ -225,14 +178,15 @@ skills/external-tools/adapters/gemini.sh health | jq .
 {
   "tool": "gemini",
   "status": "ready",
-  "version": "0.28.2",
+  "version": "enterprise-compatible-version",
+  "version_output": "complete --version output",
+  "binary_path": "/resolved/path/to/gemini",
   "auth_valid": true,
   "model": "pro"
 }
 ```
 
-Both should show `"status": "ready"`. If a tool shows `"status": "unavailable"`,
-check the `auth_valid` field and revisit the authentication steps above.
+Codex should show `"status": "ready"`. The Gemini adapter is ready only after explicit enterprise/API-key configuration and a successful binary/version health check; otherwise leave it disabled.
 
 You can also run the full verification script:
 
@@ -267,9 +221,9 @@ After implementation, the output is reviewed by **different** models:
 
 | Writer | Reviewer 1 | Reviewer 2 |
 |--------|------------|------------|
-| Codex | Gemini | Claude |
-| Gemini | Codex | Claude |
-| Claude | Codex | Gemini |
+| Codex | Enterprise/API-key Gemini adapter | Claude |
+| Enterprise/API-key Gemini adapter | Codex | Claude |
+| Claude | Codex | Enterprise/API-key Gemini adapter |
 
 The writer never reviews its own output. This catches model-specific blind spots
 that same-model review would miss.

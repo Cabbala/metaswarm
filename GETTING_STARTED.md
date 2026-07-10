@@ -12,24 +12,18 @@ claude plugin marketplace add Cabbala/metaswarm
 claude plugin install metaswarm@metaswarm
 ```
 
-**Gemini CLI:**
-```bash
-gemini extensions install https://github.com/Cabbala/metaswarm.git
-```
-
 **Codex CLI:**
 ```bash
 curl -sSL https://raw.githubusercontent.com/Cabbala/metaswarm/main/.codex/install.sh | bash
 ```
 
-**All platforms at once:**
+**Supported platforms at once:**
 ```bash
 npx metaswarm init
 ```
 
 Then run setup in your project:
 - Claude Code: `/setup`
-- Gemini CLI: `/metaswarm:setup`
 - Codex CLI: `$setup`
 
 The setup skill detects your project's language, framework, test runner, and tools, then configures everything interactively.
@@ -38,7 +32,6 @@ The setup skill detects your project's language, framework, test runner, and too
 
 Start your first task:
 - Claude Code: `/start-task`
-- Gemini CLI: `/metaswarm:start-task`
 - Codex CLI: `$start`
 
 Verify it worked:
@@ -366,16 +359,16 @@ Append JSONL entries to the appropriate file in `knowledge/`:
 
 ## Optional: Set Up External Tools
 
-metaswarm can delegate work to Codex (OpenAI) and Gemini (Google) for cost savings and cross-model adversarial review. This is optional — skip this section if you only want to use Claude.
+metaswarm can delegate work to Codex (OpenAI) and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review. This is optional — skip this section if you only want to use Claude.
 
 1. **Install** the CLIs:
    ```bash
-   npm i -g @openai/codex @google/gemini-cli
+   npm i -g @openai/codex
    ```
 
 2. **Authenticate** each tool:
    - Codex: set `OPENAI_API_KEY` in your `.env`
-   - Gemini: run `gemini` once to log in with Google, or set `GEMINI_API_KEY`
+   - Gemini adapter: configure enterprise/API-key credentials (`GEMINI_API_KEY`) and a working binary
    - See [`templates/external-tools-setup.md`](templates/external-tools-setup.md) for full details
 
 3. **Copy the config** into your project:

@@ -202,15 +202,15 @@ See `orchestrated-execution` skill for the complete pattern, including work unit
 
 ## External AI Tools (Optional)
 
-When external AI CLI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator can delegate implementation and review tasks to OpenAI Codex CLI and Google Gemini CLI. This enables cost savings through cheaper models and cross-model adversarial review that eliminates single-model blind spots.
+When external AI CLI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator can delegate work to OpenAI Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18). This enables opt-in cross-model adversarial review without making Gemini a host platform.
 
 ### How It Integrates
 
 External tools slot directly into the existing 4-phase execution loop:
 
-- **Phase 1 (IMPLEMENT)**: The orchestrator may delegate to an external tool instead of spawning a Claude subagent. The tool works in an isolated git worktree.
+- **Phase 1 (IMPLEMENT)**: The orchestrator may delegate to an external tool instead of spawning a Claude subagent. The Gemini adapter only implements when its installed binary supports `--sandbox`; otherwise it is review-only post-EOL.
 - **Phase 2 (VALIDATE)**: Unchanged — the orchestrator independently runs all quality gates regardless of who implemented.
-- **Phase 3 (ADVERSARIAL REVIEW)**: Cross-model review — the writer is always reviewed by a different model (e.g., Codex writes, Gemini + Claude review).
+- **Phase 3 (ADVERSARIAL REVIEW)**: Cross-model review — the writer is always reviewed by a different model (e.g., Codex writes, the enterprise/API-key Gemini adapter + Claude review).
 - **Phase 4 (COMMIT)**: Unchanged — merge worktree branch after all phases pass.
 
 ### Escalation Chain
@@ -219,7 +219,7 @@ The orchestrator adapts based on tool availability:
 
 | Available Tools | Escalation Chain | Max Attempts |
 |---|---|---|
-| Both Codex + Gemini | A(2) → B(2) → Claude(1) → user | 5 |
+| Codex + enterprise/API-key Gemini adapter | A(2) → B(2) → Claude(1) → user | 5 |
 | One tool only | Tool(2) → Claude(1) → user | 3 |
 | No tools | Claude → user (existing behavior) | unchanged |
 
@@ -820,7 +820,7 @@ skills/external-tools/          # External AI tool delegation
 ├── adapters/
 │   ├── _common.sh              # Shared adapter helpers (14 functions)
 │   ├── codex.sh                # OpenAI Codex CLI adapter
-│   └── gemini.sh               # Google Gemini CLI adapter
+│   └── gemini.sh               # Enterprise/API-key Gemini compatibility adapter
 └── rubrics/
     └── external-tool-review-rubric.md  # Used by cross-model adversarial review
 

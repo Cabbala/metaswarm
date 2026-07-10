@@ -43,9 +43,6 @@ jobs:
       - name: Run PR helper script tests
         run: bash tests/bin/test-pr-scripts.sh
 
-      - name: Run Gemini extension tests
-        run: bash tests/gemini/test-gemini-extension.sh
-
       - name: Run CI template security tests
         run: bash tests/templates/test-ci-template.sh
 

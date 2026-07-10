@@ -234,7 +234,7 @@ ${projectContext}
 
 ### Phase 2: VALIDATE
 
-The **orchestrator independently** runs quality gates. Never trust implementer self-reports — "implementer" means every delegated producer of code: Claude subagents and external tools (Codex, Gemini) alike.
+The **orchestrator independently** runs quality gates. Never trust implementer self-reports — "implementer" means every delegated producer of code: Claude subagents and external tools (Codex and the enterprise/API-key Gemini adapter) alike.
 
 #### Test-Result Acceptance Invariant
 

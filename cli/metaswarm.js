@@ -108,20 +108,6 @@ function installCodex() {
   console.log('  Next: In your project, run $setup');
 }
 
-function installGemini() {
-  console.log('\n  Installing for Gemini CLI...\n');
-  try {
-    console.log('  Running: gemini extensions install https://github.com/Cabbala/metaswarm.git');
-    execSync('gemini extensions install https://github.com/Cabbala/metaswarm.git', { stdio: 'inherit' });
-    info('Gemini CLI extension installed');
-    console.log('  Next: In your project, run /metaswarm:setup');
-  } catch (e) {
-    warn(`Gemini CLI install failed: ${e.message}`);
-    console.log('  Try manually:');
-    console.log('    gemini extensions install https://github.com/Cabbala/metaswarm.git');
-  }
-}
-
 // --- Project-level setup ---
 
 function setupProject(platformFlag) {
@@ -132,7 +118,7 @@ function setupProject(platformFlag) {
 
   if (platformFlag === 'all') {
     // Explicit --all: target all platforms regardless of install status
-    targetPlatforms.push('claude', 'codex', 'gemini');
+    targetPlatforms.push('claude', 'codex');
   } else if (!platformFlag) {
     // No flag: auto-detect which are installed
     for (const [key, p] of Object.entries(platforms)) {
@@ -207,13 +193,11 @@ Usage:
 Init flags:
   --claude            Install for Claude Code only
   --codex             Install for Codex CLI only
-  --gemini            Install for Gemini CLI only
   (no flag)           Auto-detect installed CLIs and install for all
 
 Setup flags:
   --claude            Write CLAUDE.md only
   --codex             Write AGENTS.md only
-  --gemini            Write GEMINI.md only
   --all               Write instruction files for all platforms
   (no flag)           Auto-detect installed CLIs
 
@@ -235,7 +219,7 @@ async function initCommand(args) {
   console.log('');
 
   // Determine which platforms to install for
-  const explicit = flags.has('--claude') || flags.has('--codex') || flags.has('--gemini');
+  const explicit = flags.has('--claude') || flags.has('--codex');
 
   if (flags.has('--claude') || (!explicit && platforms.claude.installed)) {
     installClaude();
@@ -245,15 +229,11 @@ async function initCommand(args) {
     installCodex();
   }
 
-  if (flags.has('--gemini') || (!explicit && platforms.gemini.installed)) {
-    installGemini();
-  }
-
   if (!explicit) {
     const installed = Object.values(platforms).filter(p => p.installed);
     if (installed.length === 0) {
       console.log('\n  No supported CLI tools detected.');
-      console.log('  Install one of: claude, codex, gemini');
+      console.log('  Install one of: claude, codex');
       console.log('  Then re-run: npx metaswarm init\n');
     }
   }
@@ -289,7 +269,6 @@ if (cmd === 'init') {
   let platformFlag = null;
   if (flags.has('--claude')) platformFlag = 'claude';
   else if (flags.has('--codex')) platformFlag = 'codex';
-  else if (flags.has('--gemini')) platformFlag = 'gemini';
   else if (flags.has('--all')) platformFlag = 'all';
   setupProject(platformFlag);
 } else if (cmd === 'detect') {

@@ -1,6 +1,6 @@
 ---
 name: external-tools
-description: Delegate implementation and review tasks to external AI CLI tools (Codex, Gemini) with cross-model adversarial review
+description: Delegate implementation and review tasks to Codex and an optional enterprise/API-key Gemini adapter with cross-model adversarial review
 auto_activate: false
 triggers:
   - "use external tools"
@@ -13,7 +13,7 @@ triggers:
 
 ## Purpose
 
-This skill delegates implementation and review tasks to external AI CLI tools (OpenAI Codex CLI, Google Gemini CLI), enabling cost savings through cheaper models and cross-model adversarial review that eliminates single-model blind spots. Three core principles govern every interaction: **one job per invocation** (an external tool implements OR reviews, never self-validates), **minimal permissions** (sandboxed execution scoped to the task's working directory with only the tool's own API key), and **the orchestrator verifies independently** (external tools report facts only, the orchestrator judges pass/fail).
+This skill delegates implementation and review tasks to OpenAI Codex CLI and an optional enterprise/API-key Gemini adapter (consumer Gemini CLI discontinued 2026-06-18). Three core principles govern every interaction: **one job per invocation** (an external tool implements OR reviews, never self-validates), **minimal permissions** (sandboxed execution scoped to the task's working directory with only the tool's own API key), and **the orchestrator verifies independently** (external tools report facts only, the orchestrator judges pass/fail).
 
 ---
 
@@ -24,7 +24,7 @@ This skill delegates implementation and review tasks to external AI CLI tools (O
 | Tool | Install | Auth |
 |------|---------|------|
 | OpenAI Codex CLI | `npm i -g @openai/codex` | API key or ChatGPT subscription |
-| Google Gemini CLI | `npm i -g @google/gemini-cli` | Google login (free 1K req/day) or API key |
+| Enterprise/API-key Gemini adapter | Explicit opt-in; requires a working compatible binary | Enterprise/API-key credentials only; consumer CLI discontinued 2026-06-18 |
 
 Neither tool is strictly required. The skill adapts based on what is available (see Escalation Model below).
 
@@ -47,7 +47,7 @@ adapters:
     model: "pro"
     timeout_seconds: 300
     sandbox: none
-    auth_env_var: "GEMINI_API_KEY"   # Or use Google login (no key needed)
+    auth_env_var: "GEMINI_API_KEY"   # Enterprise/API-key adapter credentials
 
 routing:
   default_implementer: "cheapest-available"
@@ -87,7 +87,7 @@ Sandbox policy: implement uses `--sandbox workspace-write` with `network_access=
 # Check if Codex is installed, authenticated, and reachable
 adapters/codex.sh health
 
-# Check Gemini
+# Check the enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18)
 adapters/gemini.sh health
 ```
 
@@ -169,9 +169,9 @@ The key advantage of external tools: the writer is always reviewed by a **differ
 
 | Implementer | Reviewer 1 | Reviewer 2 |
 |-------------|-----------|-----------|
-| Codex | Gemini (via adapter) | Claude (via Task) |
-| Gemini | Codex (via adapter) | Claude (via Task) |
-| Claude | Codex (via adapter) | Gemini (via adapter) |
+| Codex | Enterprise/API-key Gemini adapter | Claude (via Task) |
+| Enterprise/API-key Gemini adapter | Codex (via adapter) | Claude (via Task) |
+| Claude | Codex (via adapter) | Enterprise/API-key Gemini adapter |
 
 Review is invoked via the adapter's `review` command. The orchestrator reads the reviewer's raw log and evaluates it independently -- the adapter never returns a pass/fail verdict.
 
@@ -272,7 +272,7 @@ else:
 
 1. Pick the tool with lower estimated cost per invocation (based on model pricing and average token usage from session logs)
 2. On tie, prefer the tool with higher historical success rate for this task type
-3. If no historical data, prefer Gemini (free tier) over Codex
+3. If no historical data, prefer the configured tool with the lower documented cost; the Gemini adapter is enterprise/API-key only and disabled by default
 
 ---
 
@@ -411,7 +411,7 @@ Session log entry:
 These logs feed the existing `/self-reflect` pipeline. Over time, the knowledge base accumulates routing intelligence:
 
 - **Patterns**: "Codex excels at single-file TypeScript implementations"
-- **Gotchas**: "Gemini tends to skip error handling in async functions"
+- **Gotchas**: "The enterprise/API-key Gemini adapter may be review-only when its binary lacks `--sandbox`"
 - **Routing decisions**: "Route database migration tasks directly to Claude (external tools fail 80%)"
 
 Future routing decisions improve automatically as the knowledge base grows from session log analysis.

@@ -51,7 +51,7 @@ case "$model" in
         input_cost_rate="1.00"
         output_cost_rate="6.00"
         ;;
-    "gemini-pro")
+    "gemini-pro") # Enterprise/API-key Gemini adapter model; not a host platform
         input_cost_rate="1.25"
         output_cost_rate="5.00"
         ;;

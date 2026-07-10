@@ -1,6 +1,6 @@
 # Installation
 
-metaswarm works with Claude Code, Gemini CLI, and Codex CLI. Install for one platform or all three.
+metaswarm works with Claude Code and Codex CLI. Install for either supported host platform.
 
 ## Claude Code (Plugin Marketplace)
 
@@ -13,18 +13,6 @@ Then in Claude Code:
 
 ```text
 /setup
-```
-
-## Gemini CLI (Extension)
-
-```bash
-gemini extensions install https://github.com/Cabbala/metaswarm.git
-```
-
-Then in Gemini CLI:
-
-```text
-/metaswarm:setup
 ```
 
 ## Codex CLI (Plugin Marketplace)
@@ -44,7 +32,7 @@ Legacy fallback: if plugin marketplaces are unavailable in your Codex build, use
 
 ## Cross-Platform Installer
 
-Detect all installed CLIs and install metaswarm for each:
+Detect supported installed CLIs and install metaswarm for each:
 
 ```bash
 npx metaswarm init
@@ -55,7 +43,6 @@ Or target a specific platform:
 ```bash
 npx metaswarm init --claude
 npx metaswarm init --codex
-npx metaswarm init --gemini
 ```
 
 After installing, set up your project:
@@ -66,17 +53,17 @@ npx metaswarm setup
 
 ## Platform Comparison
 
-| Feature | Claude Code | Gemini CLI | Codex CLI |
-|---|---|---|---|
-| Install method | Plugin marketplace | `gemini extensions install` | Plugin marketplace |
-| Commands | `/start-task` | `/metaswarm:start-task` | `$start` |
-| Instruction file | `CLAUDE.md` | `GEMINI.md` | `AGENTS.md` |
-| Parallel agents | Full (`Task()`) | Experimental | Sequential only |
-| Setup command | `/setup` | `/metaswarm:setup` | `$setup` |
+| Feature | Claude Code | Codex CLI |
+|---|---|---|
+| Install method | Plugin marketplace | Plugin marketplace |
+| Commands | `/start-task` | `$start` |
+| Instruction file | `CLAUDE.md` | `AGENTS.md` |
+| Parallel agents | Full (`Task()`) | Sequential only |
+| Setup command | `/setup` | `$setup` |
 
 ## Prerequisites
 
-1. **One of**: Claude Code, Gemini CLI, or Codex CLI
+1. **One of**: Claude Code or Codex CLI
 2. **BEADS CLI** (`bd`) — Git-native issue tracking (recommended)
    ```bash
    curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
@@ -115,12 +102,12 @@ claude plugin add obra/superpowers
 
 ## Optional: External AI Tools
 
-metaswarm can delegate implementation and review tasks to **Codex CLI** (OpenAI) and **Gemini CLI** (Google) for cost savings and cross-model adversarial review. This is entirely optional — metaswarm works fine without any external tools.
+metaswarm can delegate implementation and review tasks to **Codex CLI** (OpenAI) and the **enterprise/API-key-only Gemini adapter** (consumer CLI discontinued 2026-06-18) for cross-model adversarial review. This is entirely optional — metaswarm works fine without external tools.
 
 **Quick setup:**
 
 ```bash
-npm i -g @openai/codex @google/gemini-cli
+npm i -g @openai/codex
 ```
 
 After installing, see [`templates/external-tools-setup.md`](templates/external-tools-setup.md) for the full configuration guide (authentication, model selection, budget controls, and routing options).
@@ -194,9 +181,9 @@ If you skip the manual migration, the session-start hook will detect the old npm
 
 This runs platform-aware diagnostic checks: plugin version, project setup, platform install state, command shims where applicable, legacy install detection, BEADS plugin, bd CLI, gtg CLI, external tools, coverage thresholds, and Node.js.
 
-## npm Package (Cross-Platform Installer)
+## npm Package (Platform Installer)
 
-The npm package (`npx metaswarm`) is now the cross-platform installer. It detects your installed CLIs and installs metaswarm for each.
+The npm package (`npx metaswarm`) detects supported installed host CLIs and installs metaswarm for each.
 
 ```bash
 npx metaswarm init          # Auto-detect and install for all CLIs

@@ -39,7 +39,7 @@ fi
 
 # 4. Platform detection returns valid JSON-like output
 detect_output=$(node "$ROOT/lib/platform-detect.js" 2>&1)
-if echo "$detect_output" | grep -q "Claude Code\|Codex CLI\|Gemini CLI"; then
+if echo "$detect_output" | grep -q "Claude Code\|Codex CLI"; then
   pass "platform-detect.js detects known platforms"
 else
   fail "platform-detect.js output doesn't mention known platforms"
@@ -97,7 +97,7 @@ fi
 versions_match=true
 first_ver=""
 
-for manifest in "$ROOT/package.json" "$ROOT/.claude-plugin/plugin.json" "$ROOT/gemini-extension.json"; do
+for manifest in "$ROOT/package.json" "$ROOT/.claude-plugin/plugin.json" "$ROOT/.codex-plugin/plugin.json"; do
   if [ -f "$manifest" ]; then
     ver=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$manifest','utf-8')).version)")
     if [ -n "$first_ver" ] && [ "$ver" != "$first_ver" ]; then

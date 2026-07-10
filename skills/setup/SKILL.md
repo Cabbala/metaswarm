@@ -13,7 +13,7 @@ Setup MUST produce the mandatory outputs for the active platform. A shell script
 After Phase 2 (user questions), determine the correct coverage command from the detection results, then run this Bash command:
 
 ```bash
-PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${extensionPath:-}}}"
+  PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
 if [ -z "$PLUGIN_ROOT" ]; then
   setup_script="$(find "${CODEX_HOME:-$HOME/.codex}/plugins/cache" -path '*/metaswarm/*/lib/setup-mandatory-files.sh' -print -quit 2>/dev/null)"
   if [ -n "$setup_script" ]; then
@@ -34,14 +34,13 @@ Where:
   - jest/npm → `"npx jest --coverage"`
   - go → `"go test -coverprofile=coverage.out ./..."`
   - cargo → `"cargo tarpaulin --fail-under <threshold>"`
-- `<platform>` is `codex`, `claude`, `gemini`, or `all`. Prefer:
+- `<platform>` is `codex`, `claude`, or `all`. Prefer:
   - `codex` when running in Codex (`PLUGIN_ROOT` or `CODEX_HOME` is present, or the user invoked `$setup`)
   - `claude` when running in Claude Code (`CLAUDE_PLUGIN_ROOT` is present, or the setup skill was invoked there)
-  - `gemini` when running in Gemini (`extensionPath` is present, or the setup skill was invoked there)
   - `all` only when the user explicitly asks to configure every supported CLI
 
 The script handles:
-1. **Instruction file** — `AGENTS.md` for Codex, `CLAUDE.md` for Claude, `GEMINI.md` for Gemini; appends metaswarm section (or writes new), skips if already present
+1. **Instruction file** — `AGENTS.md` for Codex or `CLAUDE.md` for Claude; appends a metaswarm section (or writes a new file), and skips an existing section
 2. **`.coverage-thresholds.json`** — writes at project root with correct thresholds and command
 3. **Claude command shims** — for Claude/all only, writes `.claude/commands/start-task.md`, `prime.md`, `review-design.md`, `self-reflect.md`, `pr-shepherd.md`, `brainstorm.md`
 
@@ -210,7 +209,7 @@ Use AskUserQuestion to ask ONLY questions relevant based on detection. 3-5 quest
 
 **Ask only if relevant:**
 
-2. **External AI tools** — Ask only for non-trivial projects: "Set up external AI tools (Codex/Gemini) for cost savings on implementation?" Options: "Yes" / "No"
+2. **External AI tools** — Ask only for non-trivial projects: "Set up external AI tools (Codex and the enterprise/API-key Gemini adapter) for cross-model review?" The Gemini consumer CLI was discontinued 2026-06-18; its adapter is explicit opt-in. Options: "Yes" / "No"
 
 3. **Visual review** — Ask only if a web framework was detected (Next.js, Nuxt, React, Vue, Angular, SvelteKit, Django, Flask): "Enable visual screenshot review for UI changes?" Options: "Yes" / "No"
 
@@ -227,7 +226,7 @@ Use AskUserQuestion to ask ONLY questions relevant based on detection. 3-5 quest
 This is the FIRST thing to do after Phase 2. Determine the coverage command, then run:
 
 ```bash
-PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${extensionPath:-}}}"
+  PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
 if [ -z "$PLUGIN_ROOT" ]; then
   setup_script="$(find "${CODEX_HOME:-$HOME/.codex}/plugins/cache" -path '*/metaswarm/*/lib/setup-mandatory-files.sh' -print -quit 2>/dev/null)"
   if [ -n "$setup_script" ]; then
@@ -367,10 +366,10 @@ Command resolution reference:
 
 ### 5.1 External Tools (if enabled)
 
-1. Check if Codex and Gemini CLIs are installed via Bash (`command -v codex`, `command -v gemini`)
-2. For tools not installed, tell the user how to install them
-3. For installed tools, verify with `--version`
-4. Update `.metaswarm/external-tools.yaml` — set `enabled: true` for installed tools, `enabled: false` for missing ones
+1. Check Codex with `command -v codex`; check the enterprise/API-key Gemini adapter with `skills/external-tools/adapters/gemini.sh health`
+2. For a missing Codex CLI, tell the user how to install it; do not present Gemini as a host-platform install path
+3. For a working Gemini adapter, record the resolved binary path and version output from its health result
+4. Update `.metaswarm/external-tools.yaml` — enable Codex when installed; keep Gemini `enabled: false` unless the user explicitly opts in with enterprise/API-key access
 
 ### 5.2 Visual Review (if enabled)
 
@@ -446,13 +445,11 @@ Before saying "setup complete", run this Bash command to verify the 3 mandatory 
 
 ```bash
 platform="${METASWARM_PLATFORM:-${CLAUDE_PLUGIN_ROOT:+claude}}"
-platform="${platform:-${extensionPath:+gemini}}"
 platform="${platform:-${CODEX_HOME:+codex}}"
 platform="${platform:-${PLUGIN_ROOT:+codex}}"
 platform="${platform:-claude}"
 case "$platform" in
   claude) instruction_file="CLAUDE.md" ;;
-  gemini) instruction_file="GEMINI.md" ;;
   codex) instruction_file="AGENTS.md" ;;
   *) echo "UNKNOWN PLATFORM: $platform"; exit 1 ;;
 esac

@@ -1,7 +1,0 @@
-description = "Load relevant knowledge from the BEADS knowledge base before starting work"
-prompt = """Invoke the metaswarm prime skill. The user wants to prime their context with relevant knowledge.
-
-Arguments provided by the user: {{args}}
-
-Run bare `bd prime`; the tracked `.beads/PRIME.md` override defines project-specific priming context.
-"""
