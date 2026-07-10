@@ -76,7 +76,7 @@ Is the plan right-sized for what the user actually asked?
 
 ## Reviewer Isolation Rules
 
-These rules are **mandatory**. Violating any of them invalidates the review.
+These rules apply the dispatch contract's isolation (§a — no cross-reviewer visibility) and fresh-reviewer (§f) rules to this gate. They are **mandatory**; violating any of them invalidates the review.
 
 1. **Fresh instances only.** Each reviewer is a new `Task()` instance — never resumed, never given prior context.
 2. **No cross-reviewer visibility.** No reviewer sees another reviewer's output. Ever.
@@ -105,23 +105,31 @@ These rules are **mandatory**. Violating any of them invalidates the review.
 
 ### Phase 1: Spawn Reviewers (Parallel)
 
+Dispatch the three reviewers per the dispatch contract (`./guides/dispatch-contract.md`): one worker each, issued in a single turn so they run concurrently (§a), with no cross-reviewer visibility (§a) and an explicit model tier per reviewer (§c). The plan text, user request, and rubric reach each reviewer as file **paths** (§b), not pasted content.
+
+**Path resolution (D8, MANDATORY).** A path embedded in a subagent prompt is read from the *worker's* working directory — the user's project, not the plugin. Before embedding this skill's synced `./guides/dispatch-contract.md` or `./rubrics/plan-review-rubric-adversarial.md` in a reviewer prompt, resolve it to an absolute path against the host plugin root: `${CLAUDE_PLUGIN_ROOT}/skills/plan-review-gate/...` in Claude Code, `${PLUGIN_ROOT}/...` in Codex. A bare relative path (`./rubrics/...`) breaks under installed-plugin cwd.
+
 ```typescript
-// Spawn all three reviewers in parallel for efficiency
+// Spawn all three reviewers in parallel. Explicit model per reviewer (contract §c);
+// plan, request, and rubric passed as ABSOLUTE file paths (contract §b, D8 above).
 const [feasibilityResult, completenessResult, scopeResult] = await Promise.all([
   Task({
     subagent_type: "general-purpose",
     description: "Feasibility review",
-    prompt: feasibilityReviewPrompt(planText, userRequest),
+    model: "<reviewer tier — dispatch contract §c>",
+    prompt: feasibilityReviewPrompt(planPath, requestPath, rubricPath),
   }),
   Task({
     subagent_type: "general-purpose",
     description: "Completeness review",
-    prompt: completenessReviewPrompt(planText, userRequest),
+    model: "<reviewer tier — dispatch contract §c>",
+    prompt: completenessReviewPrompt(planPath, requestPath, rubricPath),
   }),
   Task({
     subagent_type: "general-purpose",
     description: "Scope & Alignment review",
-    prompt: scopeAlignmentReviewPrompt(planText, userRequest),
+    model: "<reviewer tier — dispatch contract §c>",
+    prompt: scopeAlignmentReviewPrompt(planPath, requestPath, rubricPath),
   }),
 ]);
 ```
@@ -199,13 +207,13 @@ You are the FEASIBILITY REVIEWER for a plan review gate.
 Adversarial — your job is to FIND FAILURES in plan feasibility, not to approve.
 
 ## Rubric
-Read and follow: ./rubrics/plan-review-rubric-adversarial.md (Feasibility section)
+Read and follow (absolute path, resolved per the D8 rule above): ${rubricPath} (Feasibility section)
 
 ## User's Original Request
-${userRequest}
+Read: ${requestPath}
 
 ## Plan Under Review
-${planText}
+Read: ${planPath}
 
 ## Your Task
 Determine whether this plan can actually be executed against the real codebase. Check:
@@ -235,13 +243,13 @@ You are the COMPLETENESS REVIEWER for a plan review gate.
 Adversarial — your job is to FIND GAPS in plan coverage, not to approve.
 
 ## Rubric
-Read and follow: ./rubrics/plan-review-rubric-adversarial.md (Completeness section)
+Read and follow (absolute path, resolved per the D8 rule above): ${rubricPath} (Completeness section)
 
 ## User's Original Request
-${userRequest}
+Read: ${requestPath}
 
 ## Plan Under Review
-${planText}
+Read: ${planPath}
 
 ## Your Task
 Determine whether this plan fully addresses every aspect of the user's request. Check:
@@ -272,13 +280,13 @@ You are the SCOPE & ALIGNMENT REVIEWER for a plan review gate.
 Adversarial — your job is to FIND MISALIGNMENT between the plan and user request, not to approve.
 
 ## Rubric
-Read and follow: ./rubrics/plan-review-rubric-adversarial.md (Scope & Alignment section)
+Read and follow (absolute path, resolved per the D8 rule above): ${rubricPath} (Scope & Alignment section)
 
 ## User's Original Request
-${userRequest}
+Read: ${requestPath}
 
 ## Plan Under Review
-${planText}
+Read: ${planPath}
 
 ## Your Task
 Determine whether this plan is right-sized for what the user actually asked. Check:

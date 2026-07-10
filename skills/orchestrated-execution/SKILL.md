@@ -28,6 +28,34 @@ See `./guides/agent-coordination.md` for full mode detection and coordination de
 
 ---
 
+## Dispatch Mechanics
+
+Every subagent dispatch in this loop — the implementer (Phase 1), the adversarial
+reviewer (Phase 3), and the fixer that runs when a gate fails — follows the vendored
+**dispatch contract**: `./guides/dispatch-contract.md`. That file is the single
+source for the mechanics this skill does not restate:
+
+- **File-based handoffs (§b)** — hand bulk artifacts (spec, Project Context, review
+  package) as file **paths**, never pasted inline; the DoD checklist and file scope MAY
+  stay inline as the worker's worklist (contract §b carve-out). A **producer**
+  (implementer/fixer) writes its change report to a file and returns that path; a
+  **reviewer** runs read-only and returns its verdict directly (§f). Controller context
+  is the scarce resource.
+  Paths embedded in a subagent prompt MUST be absolute — a worker's cwd is not the
+  controller's.
+- **Explicit model per dispatch (§c)** — name the model tier for every worker; never
+  inherit the session default.
+- **Single consolidated fix dispatch (§d)** — all findings of one FAIL round go to
+  ONE fixer, never one fixer per finding.
+- **Compaction-proof ledger (§g)** — this skill's implementation of that ledger is the
+  Project Context Document (§6) and the Plan/Execution persistence (§6.5); they are the
+  same durable-state discipline applied here, not separate advice.
+
+The contract is host-neutral and vendored — superpowers is cited there as the source,
+not required at runtime.
+
+---
+
 ## Plan Review Gate
 
 After drafting an implementation plan (Step 1: Plan Validation), submit it to the **Plan Review Gate** before presenting to the user. The gate spawns 3 adversarial reviewers (Feasibility, Completeness, Scope & Alignment) — all must PASS. See `skills/plan-review-gate/SKILL.md` for details.
@@ -198,17 +226,17 @@ The coding subagent executes against the work unit spec.
 
 **Orchestrator actions:**
 
-1. Spawn a coding subagent with the work unit spec, DoD items, file scope, and the **Project Context Document**
+1. Spawn a coding subagent with the work unit spec, DoD items, file scope, and the **Project Context Document**. Hand these as file paths and name the model tier explicitly — dispatch contract §b (file handoffs) and §c (explicit model). One dispatch carries the whole work unit; do not fan a single work unit across parallel implementers (they conflict).
 2. The subagent implements the change following TDD (test first, then implementation)
 3. The subagent reports completion — **but the orchestrator does NOT trust this report**
 
-**Subagent spawn template:**
+**Subagent spawn template:** dispatch with an explicit model tier (dispatch contract §c) and pass `${specPath}` and `${projectContextPath}` as **absolute** paths (§b); the DoD checklist and file scope stay inline as the worker's worklist.
 
 ```text
 You are the CODER AGENT for work unit ${wuId}.
 
 ## Spec
-${spec}
+Read your work-unit spec — the exact values to use verbatim live there: ${specPath}
 
 ## Definition of Done
 ${dodItems.map((item, i) => `${i+1}. ${item}`).join('\n')}
@@ -217,20 +245,20 @@ ${dodItems.map((item, i) => `${i+1}. ${item}`).join('\n')}
 You may ONLY modify these files: ${fileScope.join(', ')}
 
 ## Project Context
-${projectContext}
+Read the current Project Context Document: ${projectContextPath}
 
 ## Rules
 - Follow TDD: write failing test first, then implement to make it pass
 - Do NOT modify files outside your file scope
 - Do NOT self-certify — the orchestrator will validate independently
-- When complete, report what you changed and what tests you added
+- When complete, write your change report (files changed, tests added, verification run) to ${reportPath} and return that path — not pasted prose (dispatch contract §b)
 - NEVER use --no-verify on git commits — pre-commit hooks are mandatory
 - NEVER use git push --force
 - NEVER suppress linter/type errors with eslint-disable, @ts-ignore, or as any
 - NEVER skip tests or claim "tests pass" without actually running them
 ```
 
-**Phase 1 output:** List of changed files and new tests.
+**Phase 1 output:** a producer report-file path (files changed, new tests, verification run) per dispatch contract §b.
 
 ### Phase 2: VALIDATE
 
@@ -374,7 +402,7 @@ A **separate review subagent** checks the implementation against the spec contra
 
 Test checking within review is governed by the **Phase 2 Test-Result Acceptance Invariant**; the reviewer-side checks are enumerated in `rubrics/adversarial-review-rubric.md` §6 (Test Integrity). Neither this section nor the rubric redefines the rules.
 
-**Reviewer spawn template:**
+**Reviewer spawn template:** dispatch with an explicit model tier (dispatch contract §c); resolve the rubric, spec, and review-package paths to **absolute** paths before embedding them (§b — a subagent's cwd is the user's project, not the plugin: `${CLAUDE_PLUGIN_ROOT}/skills/orchestrated-execution/rubrics/...` in Claude Code, `${PLUGIN_ROOT}/...` in Codex). The reviewer reads the package the orchestrator wrote per invariant (d); it does not run git itself and does not receive the coding subagent's self-assessment.
 
 ```text
 You are the ADVERSARIAL REVIEWER for work unit ${wuId}.
@@ -383,16 +411,16 @@ You are the ADVERSARIAL REVIEWER for work unit ${wuId}.
 Adversarial — your job is to FIND FAILURES, not to approve.
 
 ## Rubric
-Read and follow: ./rubrics/adversarial-review-rubric.md
+Read and follow: ${adversarialRubricPath}
 
 ## Spec
-${spec}
+Read your work-unit spec: ${specPath}
 
 ## Definition of Done
 ${dodItems.map((item, i) => `${i+1}. ${item}`).join('\n')}
 
 ## What to Review
-Run: git diff ${BASE_SHA}..HEAD -- ${fileScope.join(' ')}
+Read the review package — an explicit ${BASE_SHA}..HEAD range over ${fileScope.join(', ')}, packaged per Phase 2 invariant (d): ${reviewPackagePath}
 (BASE_SHA is the baseline recorded in the Phase 2 evidence record — not `main`.)
 
 ## Rules
@@ -407,7 +435,7 @@ Run: git diff ${BASE_SHA}..HEAD -- ${fileScope.join(' ')}
 **Phase 3 outcomes:**
 
 - **PASS** (zero BLOCKING issues) → proceed to Phase 4
-- **FAIL** (any BLOCKING issue) → return to Phase 1 with the failure report
+- **FAIL** (any BLOCKING issue) → return to Phase 1 with the **complete** BLOCKING-findings report as ONE fix dispatch (dispatch contract §d — never one fixer per finding)
 
 **Fresh reviewer rule:** On re-review after FAIL, the orchestrator MUST spawn a **new** review subagent. Never pass previous findings to the new reviewer. Never reuse the same reviewer instance. This prevents anchoring bias and ensures independent verification.
 
@@ -477,7 +505,7 @@ IMPLEMENT ──→ VALIDATE ──→ REVIEW ──→ COMMIT
 
 ### On FAIL: Mandatory Re-Review Protocol
 
-1. Fix the issue identified by the reviewer
+1. Dispatch ONE fixer carrying the **complete** set of findings from that FAIL round — every BLOCKING item from the review, or every failing gate from validation — in a single dispatch (dispatch contract §d). Never spawn one fixer per finding: each rebuilds context and re-runs suites from cold, and the fix wave can cost more than the original work.
 2. Re-run Phase 2 (VALIDATE) — ALL quality gates, not just the one that failed
 3. **MANDATORY**: Spawn a NEW adversarial reviewer (fresh instance, no memory of previous review)
 4. Only COMMIT after the fresh reviewer returns PASS
@@ -798,6 +826,10 @@ git log main..HEAD --oneline
 
 ### Ready for PR: YES / NO
 ```
+
+### On Findings from the Final Review
+
+If the final comprehensive review returns findings, dispatch ONE fixer with the complete findings list (dispatch contract §d) — not one fixer per finding. The whole-branch fix wave is the canonical case for this rule: each per-finding fixer rebuilds branch context and re-runs the suite, and upstream that wave cost more than all the work units combined. After the fix, re-run this review with a fresh reviewer.
 
 ---
 
