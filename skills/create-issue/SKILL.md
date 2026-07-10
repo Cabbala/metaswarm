@@ -180,9 +180,12 @@ it("should handle [error case]", async () => {
 ## Acceptance Criteria
 
 - [ ] All TDD cycles implemented with passing tests
-- [ ] Zero TypeScript errors (`pnpm typecheck`)
-- [ ] Zero lint warnings (`pnpm lint`)
-- [ ] All tests pass (`pnpm test --run`)
+- [ ] All applicable validation gates from `.metaswarm/project-profile.json`
+      `commands` pass: `test`, `coverage`, `lint`, `typecheck`, and
+      `format_check`
+- [ ] Each profile command string is run as-is as a complete shell command;
+      an explicit `null` gate is recorded as skipped, never failed or replaced
+      by a fallback
 - [ ] **JSDoc documentation** added to all new/modified services
 - [ ] **`docs/SERVICE_INVENTORY.md`** updated (if new/modified service)
 - [ ] **Mock factories** added/updated (if new service)
@@ -192,6 +195,14 @@ it("should handle [error case]", async () => {
 - [ ] PR approved and merged
 
 ---
+
+When `.metaswarm/project-profile.json` is absent, use these **Legacy JS/TS
+fallbacks** in generated issue instructions: `pnpm test --run` for `test`,
+`pnpm test:coverage` for `coverage`, `pnpm lint` for `lint`, `pnpm typecheck`
+for `typecheck`; there is no legacy hard-coded `format_check` command, so that
+gate is skipped. These fallbacks apply only when the profile is absent. They
+never replace a present profile's explicit `null`, which means that gate is
+skipped.
 
 ## Agent Instructions
 
@@ -231,7 +242,10 @@ it("should handle [error case]", async () => {
 1. Create feature branch from main: `git checkout -b feat/[short-name]`
 2. Follow TDD cycles exactly as specified above
 3. **Add JSDoc documentation** to all new/modified services
-4. Run local validation: `pnpm lint && pnpm typecheck && pnpm test --run`
+4. Read `.metaswarm/project-profile.json` and run each applicable `commands`
+   gate (`test`, `coverage`, `lint`, `typecheck`, `format_check`) separately.
+   Run string values as-is; record `null` values as skipped. See
+   `docs/project-profile-schema.md` for the trust boundary.
 5. **Update service inventory** (if new service)
 6. Create PR with comprehensive description using `/create-pr`
 
@@ -267,7 +281,8 @@ For EACH code review iteration:
 4. **After making changes**:
 
    ```bash
-   pnpm lint && pnpm typecheck && pnpm test --run
+   # Run every resolved non-null project-profile command separately.
+   # Do not append flags, chain commands, or interpolate their strings.
    git add . && git commit -m "fix: address review feedback" && git push
    ```
 

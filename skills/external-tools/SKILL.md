@@ -153,13 +153,24 @@ If Claude is selected (escalation or no external tools), use the existing `Task(
 
 ### Phase 2: VALIDATE (Always Orchestrator -- Unchanged)
 
-The orchestrator independently runs all quality gates:
+The orchestrator independently reads `.metaswarm/project-profile.json` and
+runs its `commands.test`, `commands.coverage`, `commands.lint`,
+`commands.typecheck`, and `commands.format_check` gates:
 
-- `npm test` / `npx vitest run`
-- `npx tsc --noEmit`
-- `npx eslint <changed-files>`
-- Coverage enforcement via `.coverage-thresholds.json`
+- A command string is executed as-is as one complete command from the
+  repository root; never append arguments, chain it, interpolate it into a
+  larger shell string, or use `eval`.
+- A `null` command means the gate does not apply: record it as **skipped** and
+  do not fail or use a fallback. See `docs/project-profile-schema.md` for the
+  schema and trust boundary.
 - File scope verification via `git diff --name-only`
+
+Only when `.metaswarm/project-profile.json` is absent, the **Legacy JS/TS
+fallbacks** are: `npm test` / `npx vitest run` for tests, `npx tsc --noEmit`
+for type checking, `npx eslint <changed-files>` for linting, and the
+`.coverage-thresholds.json` enforcement command for coverage. There is no
+legacy hard-coded `format_check` command, so it is skipped. A present
+profile's `null` value never selects a fallback.
 
 This phase is identical whether the implementer was an external tool or Claude. **Never trust the implementer's self-report.**
 
@@ -299,7 +310,9 @@ The prompt file is the key interface between the orchestrator and external tools
 ## Test Expectations
 [what tests should pass after implementation]
 [coverage requirements from .coverage-thresholds.json]
-[test runner command: e.g., npx vitest run]
+[test runner command: resolved from `.metaswarm/project-profile.json`
+`commands.test`, or the explicitly labelled legacy fallback when the profile
+is absent; record `null` as skipped]
 
 ## Previous Attempt (if retry)
 [review feedback from last attempt -- what to fix]

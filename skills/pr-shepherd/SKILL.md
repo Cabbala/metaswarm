@@ -215,17 +215,20 @@ These require user input BEFORE fixing:
 ### FIXING State Rules
 
 1. **Use TDD** - Invoke `superpowers:test-driven-development` for code changes
-2. **Kill stale test runners** - Run `pkill -f vitest 2>/dev/null || true` before test runs
-3. **Stay until green** - Don't leave FIXING until `pnpm lint && pnpm typecheck && pnpm test --run && pnpm test:coverage` all pass
+2. **Resolve validation gates first** - Read `.metaswarm/project-profile.json` and resolve `commands.test`, `commands.coverage`, `commands.lint`, `commands.typecheck`, and `commands.format_check` before running local validation. A string is executed as-is as its own shell command; a `null` is recorded as **skipped**, never treated as a failure, and never replaced by a fallback. See `docs/project-profile-schema.md` for the schema and trust boundary.
+3. **Stay until green** - Don't leave FIXING until every applicable resolved gate passes
 4. **Only push when verified** - Never push code that fails local validation or coverage thresholds
 5. **Return to MONITORING after push** - Let CI run, continue monitoring
 
-```bash
-# Kill stale vitest processes before running tests
-pkill -f vitest 2>/dev/null || true
+Only when `.metaswarm/project-profile.json` is absent, use these **Legacy JS/TS
+fallbacks**: `pnpm lint`, `pnpm typecheck`, `pnpm test --run`, and `pnpm
+test:coverage`; `format_check` has no legacy hard-coded command and is
+skipped. Do not apply these fallbacks to a present profile's `null` value.
 
-# After fixing, always validate locally (including coverage)
-pnpm lint && pnpm typecheck && pnpm test --run && pnpm test:coverage
+```bash
+# After fixing, run every resolved non-null project-profile gate separately.
+# Execute each command exactly as it appears in the profile: do not chain it,
+# append flags, or interpolate it into a larger shell string.
 
 # Only push if all pass (including coverage thresholds)
 git add -A && git commit -m "fix: <description>" && git push
@@ -528,7 +531,9 @@ After all post-merge tasks complete:
 
 **Pushing without local validation**
 
-- NEVER push code that hasn't passed `pnpm lint && pnpm typecheck && pnpm test --run && pnpm test:coverage`
+- NEVER push code that has not passed every applicable resolved
+  `.metaswarm/project-profile.json` validation gate. A `null` gate is an
+  explicit skip, not a failure or a reason to run a fallback.
 
 **Auto-fixing complex issues**
 

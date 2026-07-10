@@ -226,6 +226,7 @@ The coding subagent executes against the work unit spec.
 
 **Orchestrator actions:**
 
+0. **Before dispatching** (ONCE per work unit, before the FIRST implement attempt — never re-taken on a retry), snapshot `.metaswarm/project-profile.json` to `$PROFILE_SNAPSHOT` (an orchestrator-controlled path outside the worktree) with **no-clobber** semantics and record its hash — Phase 2 resolves the gate commands from this snapshot, not the implementer-modified worktree copy (see Project-Profile Gate Resolution). The snapshot is IMMUTABLE across all retry cycles of this WU: a Phase-1 re-execution after a FAIL MUST reuse the existing snapshot (`cp -n`, or skip if `$PROFILE_SNAPSHOT` exists), so a retry can never re-baseline a profile the implementer tampered on the previous attempt. Confine the coding subagent's filesystem/Bash to the worktree.
 1. Spawn a coding subagent with the work unit spec, DoD items, file scope, and the **Project Context Document**. Hand these as file paths and name the model tier explicitly — dispatch contract §b (file handoffs) and §c (explicit model). One dispatch carries the whole work unit; do not fan a single work unit across parallel implementers (they conflict).
 2. The subagent implements the change following TDD (test first, then implementation)
 3. The subagent reports completion — **but the orchestrator does NOT trust this report**
@@ -264,6 +265,76 @@ Read the current Project Context Document: ${projectContextPath}
 
 The **orchestrator independently** runs quality gates. Never trust implementer self-reports — "implementer" means every delegated producer of code: Claude subagents and external tools (Codex and the enterprise/API-key Gemini adapter) alike.
 
+#### Project-Profile Gate Resolution
+
+`.metaswarm/project-profile.json` drives the gate commands, so it is itself part
+of the **test-integrity surface** (it can change what "tests pass" means — a
+null'd `test`/`coverage` command skips a gate). But the profile is gitignored,
+so the git-based surface-delta and baseline-restore machinery below CANNOT see
+it. Therefore the orchestrator MUST, **at WU start — before dispatching the
+implement leg**, snapshot the profile to an orchestrator-controlled path outside
+the worktree (`cp .metaswarm/project-profile.json "$PROFILE_SNAPSHOT"`) and
+record its hash. Resolve every gate from the SNAPSHOT, never from the
+implementer-modified worktree copy.
+
+> **Confinement assumption (load-bearing for this AND the W5 baseline restore).**
+> Every one of these baseline-integrity controls — the profile snapshot, the
+> `BASE_SHA` surface restore, the temp-copy re-run — assumes the implement leg
+> CANNOT reach orchestrator-controlled state outside its worktree. External-tool
+> implementers get this from the adapter sandbox (`--sandbox workspace-write`
+> scoped to the worktree). **Claude `Task()` coding subagents MUST be dispatched
+> with equivalent confinement** — filesystem/Bash access restricted to the work
+> unit's worktree, and specifically no access to `$PROFILE_SNAPSHOT`'s directory,
+> the git dir, or the temp re-run copy. An unconfined coding subagent can
+> overwrite the snapshot to match a tampered profile (or tamper the baseline
+> directly) and defeat every control here — that is a known limitation, not a
+> defended case. If your harness cannot confine a `Task()` subagent's Bash, treat
+> its output as it treats an external tool's: only the produced diff is trusted
+> input, and the snapshot/baseline must live on a host the subagent's tools never
+> touch.
+>
+> **Known residual risks (require per-WU-worktree + clean-dependency isolation to
+> fully close — tracked as a dedicated hardening follow-up, not solved here).**
+> Two W5-baseline properties survive even with worktree confinement:
+> (i) *The validation process runs attacker-influenced code.* The Phase-2
+> acceptance re-run executes the resolved `test` command, which the implementer
+> influenced via the (baseline-restored) test files; a truly adversarial payload
+> in a legitimately-changed test could act during the re-run. Confining the
+> re-run process itself (separate UID / container / read-only mounts of the
+> snapshot, git dir, and evidence store) is the real fix.
+> (ii) *`node_modules` is copied as-installed.* The temp re-run copies
+> `node_modules` (gitignored, so git checks never see it); an implementer with
+> write access to it could plant a compromised dependency the re-run then
+> executes. Rebuilding dependencies from a lockfile into an orchestrator-owned
+> clean tree (`npm ci` in a fresh dir) closes it. Both are documented here so the
+> trust boundary is explicit rather than implied.
+
+Resolve every gate from the snapshot's `commands` object: `test`, `coverage`,
+`lint`, `typecheck`, and `format_check`. A string value is the complete command
+to execute as-is from the repository root; do not append arguments, chain it
+with another command, or interpolate it into a larger shell string. A `null`
+value means that the gate does not apply: record it as **skipped** and do not
+fail validation or run a fallback — a null value is legitimate ONLY when it was
+already null in the WU-start snapshot (an implementer nulling a gate mid-WU is
+caught as a profile-integrity delta, below). See `docs/project-profile-schema.md`
+for the schema and trust boundary.
+
+Only when `.metaswarm/project-profile.json` is absent, use these **Legacy
+JS/TS fallbacks**:
+
+| Gate | Legacy JS/TS fallback |
+| --- | --- |
+| `test` | `npx vitest run` |
+| `coverage` | The enforcement command in `.coverage-thresholds.json`, when that file exists |
+| `lint` | `npx eslint <changed-files>` |
+| `typecheck` | `npx tsc --noEmit` |
+| `format_check` | No legacy hard-coded command; skip the gate |
+
+For a selected command string, invoke the profile owner's shell with the
+unmodified string as its one command argument. Do not use `eval`. For an
+untrusted cloned repository, surface the resolved commands to the user before
+their first execution as required by the schema.
+
 #### Test-Result Acceptance Invariant
 
 > **No claimed test result is accepted until the orchestrator records the command, the exit status, and a fresh re-run from an orchestrator-controlled baseline.**
@@ -287,14 +358,11 @@ Acceptance requires ALL of:
 **Orchestrator actions (run these yourself, NOT via the coding subagent):**
 
 ```bash
-# 1. Type checking
-npx tsc --noEmit
+# 1. Type checking — run resolved `commands.typecheck`, unless it is null.
 
-# 2. Linting
-npx eslint <changed-files>
+# 2. Linting — run resolved `commands.lint`, unless it is null.
 
-# 3. Run tests (full suite, not just new tests)
-npx vitest run
+# 3. Run the full suite — run resolved `commands.test`, unless it is null.
 
 # 3b. Test-integrity surface check + baseline acceptance re-run (invariant (c) — MANDATORY)
 set -euo pipefail   # fail-closed: any unhandled error BLOCKS acceptance
@@ -317,6 +385,18 @@ DECLARED_SURFACE_EXCLUDES=(
 )
 BASE_SHA="${BASE_SHA:-$(git merge-base main HEAD)}"   # prefer the SHA recorded at WU start
 
+# Profile-integrity check (git-independent — the profile is gitignored). Compare
+# the current worktree profile against the WU-start snapshot; ANY change is a
+# BLOCKING surface delta (an implementer must not retune the gate commands, e.g.
+# null out `test`/`coverage`, mid-WU). The acceptance re-run below resolves its
+# command from the SNAPSHOT, never from this worktree copy.
+if [ -f .metaswarm/project-profile.json ] || [ -f "$PROFILE_SNAPSHOT" ]; then
+  if ! cmp -s .metaswarm/project-profile.json "$PROFILE_SNAPSHOT"; then
+    echo "BLOCKING: .metaswarm/project-profile.json changed since WU start (gate-command tampering)" >&2
+    exit 1
+  fi
+fi
+
 # Surface deltas — worktree, INDEX, and untracked all count. Unexplained = BLOCKING per (a).
 delta=$(git diff --name-only "$BASE_SHA" -- "${TEST_SURFACE[@]}" "${DECLARED_SURFACE_EXCLUDES[@]}")
 staged=$(git diff --cached --name-only "$BASE_SHA" -- "${TEST_SURFACE[@]}" "${DECLARED_SURFACE_EXCLUDES[@]}")
@@ -331,7 +411,8 @@ fi
 
 # Acceptance re-run from the orchestrator-controlled baseline: restore the ENTIRE
 # surface from BASE_SHA in a temp copy of the worktree, wipe repo-local env
-# overrides, and run the project-profile test command there.
+# overrides, and run the resolved project-profile test command there. If the
+# `test` gate is null, record the gate as skipped; no test result is claimed.
 WORKTREE_COPY="$(mktemp -d)/wt"
 cp -a . "$WORKTREE_COPY" || { echo "BLOCKING: worktree copy failed" >&2; exit 1; }
 rm -f "$WORKTREE_COPY"/.env "$WORKTREE_COPY"/.env.*   # repo-local env can alter test behavior
@@ -351,19 +432,27 @@ if [ "${#surface_at_base[@]}" -gt 0 ]; then
   git -C "$WORKTREE_COPY" checkout "$BASE_SHA" -- "${surface_at_base[@]}" \
     || { echo "BLOCKING: baseline surface restore failed" >&2; exit 1; }
 fi
-if ! (cd "$WORKTREE_COPY" && npx vitest run); then    # project-profile test command
-  echo "BLOCKING: worktree suite green but baseline re-run red (invariant (c))" >&2
-  exit 1
+# PROFILE_SHELL is the profile owner's shell and TEST_COMMAND is the command
+# resolved from the WU-START SNAPSHOT ("$PROFILE_SNAPSHOT"), never from the
+# worktree profile. Pass TEST_COMMAND as one shell command argument; do not
+# interpolate it into a larger command. The resolver sets TEST_GATE_APPLIES=false
+# for a `null` snapshot test command, which records a skip and intentionally does
+# not claim any test result — safe only because a mid-WU null-out was already
+# BLOCKED by the profile-integrity check above.
+if [ "$TEST_GATE_APPLIES" = true ]; then
+  if ! (cd "$WORKTREE_COPY" && "$PROFILE_SHELL" -c "$TEST_COMMAND"); then
+    echo "BLOCKING: worktree suite green but baseline re-run red (invariant (c))" >&2
+    exit 1
+  fi
 fi
 rm -rf "$WORKTREE_COPY"
 
-# 4. Coverage enforcement (BLOCKING — read .coverage-thresholds.json)
-# If .coverage-thresholds.json exists, read the enforcement command and run it
-# This is NOT optional. Coverage below threshold = VALIDATION FAIL.
-if [ -f .coverage-thresholds.json ]; then
-  CMD=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.coverage-thresholds.json','utf-8')).enforcement.command)")
-  eval "$CMD"
-fi
+# 4. Coverage enforcement — run resolved `commands.coverage`, unless it is
+# null. A non-null coverage command remains BLOCKING: below-threshold coverage
+# is VALIDATION FAIL.
+
+# 4b. Format enforcement — run resolved `commands.format_check`, unless it is
+# null.
 
 # 5. Verify file scope was respected
 git diff --name-only | while read file; do
@@ -772,22 +861,17 @@ After ALL work units are complete and committed, run a final comprehensive revie
 # 1. Combined diff — see the full picture
 git diff main..HEAD
 
-# 2. Full test suite — not just changed files
-npx vitest run
+# 2. Full test suite — run resolved `commands.test`, unless it is null.
 
-# 3. Type check — catch cross-unit type conflicts
-npx tsc --noEmit
+# 3. Type check — run resolved `commands.typecheck`, unless it is null.
 
-# 4. Lint — catch cross-unit style issues
-npx eslint .
+# 4. Lint — run resolved `commands.lint`, unless it is null.
 
-# 5. Coverage — verify overall coverage thresholds
-if [ -f .coverage-thresholds.json ]; then
-  CMD=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.coverage-thresholds.json','utf-8')).enforcement.command)")
-  eval "$CMD"
-fi
+# 5. Coverage — run resolved `commands.coverage`, unless it is null.
 
-# 6. Commit history — verify clean, logical commits
+# 6. Format check — run resolved `commands.format_check`, unless it is null.
+
+# 7. Commit history — verify clean, logical commits
 git log main..HEAD --oneline
 ```
 
@@ -957,9 +1041,10 @@ Before execution (Plan Validation):
 
 For each work unit:
 
+- [ ] Snapshot `.metaswarm/project-profile.json` to `$PROFILE_SNAPSHOT` (outside the worktree, no-clobber, ONCE per WU — immutable across retries) BEFORE first dispatch; confine the subagent's Bash to the worktree
 - [ ] Spawn coding subagent with spec, DoD, file scope, and **Project Context Document**
 - [ ] Wait for implementation to complete
-- [ ] **Independently** run: tsc, eslint, vitest, coverage enforcement (do NOT ask subagent)
+- [ ] **Independently** run: all applicable resolved project-profile gates (do NOT ask subagent)
 - [ ] Enforce the Phase 2 Test-Result Acceptance Invariant: record command, exit status, timestamp, baseline SHA, re-run result; run the step 3b surface check + baseline re-run; red-green any new tests
 - [ ] Verify file scope with `git diff --name-only`
 - [ ] Spawn **fresh** adversarial reviewer with spec and DoD
