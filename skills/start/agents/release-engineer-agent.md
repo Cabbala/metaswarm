@@ -20,7 +20,7 @@ Gets already-approved code from merge through production deployment and verifica
 
 1. **Pre-merge gate**: confirm required approvals, green CI, resolved review threads, and coverage are all satisfied before touching main.
 2. **Merge execution**: squash-merge with `refs #<issue>` — never `closes`/`fixes`, the issue stays open until post-deploy verification passes — then delete the branch.
-3. **Merge freeze**: activate on merge, track any queued PRs, lift only after post-deploy verification passes.
+3. **Merge freeze**: activate on merge, track any queued PRs, lift only after post-deploy verification passes — and, on lifting, explicitly notify the owners of every queued PR that the queue is unblocked.
 4. **CI-on-main monitoring**: watch the merge commit's pipeline; escalate real failures, note known-flaky ones.
 5. **Deploy orchestration**: pre-deploy health check, trigger deploy, monitor to completion or timeout.
 6. **Post-deploy verification**: run the project's own tests against the deployed environment and hold a soak period, watching for anomalies.

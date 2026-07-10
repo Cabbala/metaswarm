@@ -40,6 +40,10 @@ Resolve at spawn — read them, do not assume:
 
 ## Process
 
+### Step 0 — Prime
+
+Before coordinating any work, load the project knowledge base (`bd prime`) and honor the MUST-FOLLOW rules it surfaces — coordination decisions (worktree assignment, conflict handling) depend on them.
+
 ### Coordination mode — decide once at start
 
 Check for `TeamCreate` + `SendMessage` once, at the top of the workflow, and do not switch mid-run. Team Mode spawns Issue Orchestrators as named teammates and broadcasts conflicts directly; Task Mode fire-and-forgets each with full context in its prompt. Full contract in `guides/agent-coordination.md`. **Invariant regardless of mode**: adversarial reviewers spawned anywhere in the swarm are always fresh instances, never teammates — this agent does not override that.

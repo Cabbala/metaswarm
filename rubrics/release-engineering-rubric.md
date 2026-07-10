@@ -30,7 +30,7 @@ This rubric ensures every release passes through rigorous verification at each s
 | Criterion | Severity | Verification |
 |-----------|----------|-------------|
 | PM product review approved | BLOCKING | `gh pr view --json reviews` shows PM APPROVED |
-| QA review approved | BLOCKING | `gh pr view --json reviews` shows QA APPROVED |
+| Required review approvals present | BLOCKING | `gh pr view --json reviews` shows the required APPROVED reviews (Code Review Agent PASS + human approval) |
 | Technical review(s) approved (if required) | BLOCKING | All required reviewers APPROVED |
 | All review threads resolved | BLOCKING | Zero unresolved threads |
 | No blocking defect issues open | BLOCKING | No open issues with `blocking` label referencing this PR |
@@ -166,7 +166,7 @@ This rubric ensures every release passes through rigorous verification at each s
 
 | Criterion | Severity | Verification |
 |-----------|----------|-------------|
-| Original bug no longer reproducible | BLOCKING | QA verified the specific scenario |
+| Original bug no longer reproducible | BLOCKING | Post-deploy verification reproduced the original scenario against the deployed environment and confirmed it no longer occurs |
 | PM notified of verification results | HIGH | PM can instruct customer-support |
 | Customer notification queued | HIGH | Resolution email prepared |
 

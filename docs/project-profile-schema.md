@@ -46,6 +46,12 @@ the calling workflow's normal pass/fail rules.
 Backward-compatible legacy fallbacks apply only when the profile file itself
 is absent. They do not override an explicit `null` in a present profile.
 
+### Timeouts
+
+Command timeouts are the **orchestrator's** responsibility: v1 carries no
+timeout field. Executors must apply their own bound (for example,
+`XT_TIMEOUT`-style) and treat a timeout as a gate failure.
+
 ## Worked examples
 
 | Project | `test` | `coverage` | `lint` | `typecheck` | `format_check` |

@@ -58,5 +58,11 @@ jobs:
       - name: Run sync-resources tests
         run: bash tests/lib/test-sync-resources.sh
 
+      - name: Run project-profile validator tests
+        run: bash tests/lib/test-validate-profile.sh
+
+      - name: Run reviewer dispatch prompt path tests
+        run: bash tests/gates/test-gate-prompts.sh
+
       - name: Verify co-located resources are in sync
         run: node lib/sync-resources.js --check

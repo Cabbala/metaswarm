@@ -356,7 +356,7 @@ GitHub Issue #123 (agent-ready label)
 ┌─────────────────────────────────────┐
 │       Release Engineer                │
 │  Pre-merge verify → merge → CI →     │
-│  deploy → post-deploy QA → release   │
+│  deploy → post-deploy verify → release│
 └─────────────────────────────────────┘
         │
         ▼

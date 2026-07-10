@@ -309,6 +309,7 @@ Write `.metaswarm/project-profile.json` with all detection results and user choi
 
 ```json
 {
+  "schema_version": 1,
   "metaswarm_version": "1.0.0",
   "distribution": "plugin",
   "installed_at": "{current ISO 8601 timestamp}",

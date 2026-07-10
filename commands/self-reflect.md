@@ -126,7 +126,7 @@ Which numbers do you want to capture? (all / 1,2,3 / none)
 
 ```text
 **Fact**: [extracted core insight]
-**Type**: [pattern|gotcha|decision|api_behavior|security|performance]
+**Type**: [api_behavior|code_quirk|pattern|gotcha|decision|dependency|performance|security]
 **Applies to**: [file patterns or components]
 **Confidence**: [high|medium|low]
 
