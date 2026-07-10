@@ -6,7 +6,7 @@ Welcome to Beads! This repository uses **Beads** for issue tracking - a modern, 
 
 Beads is issue tracking that lives in your repo, making it perfect for AI coding agents and developers who want their issues close to their code. No web UI required - everything works through the CLI and integrates seamlessly with git.
 
-**Learn more:** [github.com/steveyegge/beads](https://github.com/steveyegge/beads)
+**Learn more:** [github.com/gastownhall/beads](https://github.com/gastownhall/beads)
 
 ## Quick Start
 
@@ -67,7 +67,7 @@ Issues in Beads are:
 
 ```bash
 # Install from the Claude Code marketplace
-/plugin install beads    # from steveyegge/beads marketplace
+/plugin install beads    # from gastownhall/beads marketplace
 ```
 
 The beads plugin (v0.63.3+) automatically handles context priming on SessionStart and PreCompact, uses `bd admin compact` for semantic summarization, records architectural decisions with `bd create "Decision: ..." -t decision`, and ships a `@task-agent` that autonomously finds and completes ready tasks.
@@ -75,7 +75,7 @@ The beads plugin (v0.63.3+) automatically handles context priming on SessionStar
 ### Or install the CLI directly
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
 
 # Initialize in your repo
 bd init
@@ -86,10 +86,10 @@ bd create "Try out Beads"
 
 ## Learn More
 
-- **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)
-- **Marketplace Plugin**: [steveyegge/beads](https://github.com/steveyegge/beads)
+- **Documentation**: [github.com/gastownhall/beads/docs](https://github.com/gastownhall/beads/tree/main/docs)
+- **Marketplace Plugin**: [gastownhall/beads](https://github.com/gastownhall/beads)
 - **Quick Start Guide**: Run `bd quickstart`
-- **Examples**: [github.com/steveyegge/beads/examples](https://github.com/steveyegge/beads/tree/main/examples)
+- **Examples**: [github.com/gastownhall/beads/examples](https://github.com/gastownhall/beads/tree/main/examples)
 
 ---
 

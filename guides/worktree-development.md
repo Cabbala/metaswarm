@@ -44,9 +44,18 @@ This guide covers git worktree usage patterns for parallel development in projec
 
 ## Worktree Setup
 
-### Creating a Worktree
+### Preferred: Native Harness Worktree Tools
 
-From the **main repository** (not from another worktree):
+When the agent harness exposes native worktree tools, use them first:
+
+- `EnterWorktree` opens or switches to an existing managed worktree.
+- `WorktreeCreate` creates a managed worktree and records the harness state needed to coordinate it.
+
+Do not run raw `git worktree add` while those native tools are available. It bypasses the harness's bookkeeping and can leave phantom worktree state that later agents cannot enter, inspect, or clean up reliably.
+
+### Fallback: Raw Git
+
+Use raw Git only when the harness does not provide native worktree tools. From the **main repository** (not from another worktree):
 
 ```bash
 # Create a worktree with a new branch
@@ -87,7 +96,7 @@ Rules:
 
 ### Post-Setup
 
-After creating a worktree, install dependencies:
+After entering or creating a worktree, install dependencies:
 
 ```bash
 cd ~/Developer/<project>-worktrees/<agent-name>
@@ -165,7 +174,7 @@ echo "Worktree ready at: $WORKTREE_PATH"
 
 ### Starting Work in a Worktree
 
-1. **Create the worktree** from the main repository:
+1. **Enter or create the worktree with native tools**: use `EnterWorktree` for an existing managed worktree or `WorktreeCreate` for a new one. If native tools are unavailable, use the raw-Git fallback from the main repository:
 
    ```bash
    git worktree add ~/Developer/<project>-worktrees/<name> -b feature/<feature>
@@ -658,7 +667,9 @@ git worktree prune
 
 | Operation                 | Command                                                         |
 | ------------------------- | --------------------------------------------------------------- |
-| Create worktree           | `git worktree add <path> -b <branch> [start-point]`            |
+| Enter existing worktree (preferred) | `EnterWorktree` |
+| Create managed worktree (preferred) | `WorktreeCreate` |
+| Create worktree (raw-Git fallback) | `git worktree add <path> -b <branch> [start-point]` |
 | List worktrees            | `git worktree list`                                             |
 | Remove worktree           | `git worktree remove <path>`                                    |
 | Prune stale references    | `git worktree prune`                                            |

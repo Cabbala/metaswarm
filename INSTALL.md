@@ -66,7 +66,7 @@ npx metaswarm setup
 1. **One of**: Claude Code or Codex CLI
 2. **BEADS CLI** (`bd`) — Git-native issue tracking (recommended)
    ```bash
-   curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+   curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
    ```
 3. **GitHub CLI** (`gh`) — For PR automation (recommended)
    ```bash
@@ -83,10 +83,14 @@ metaswarm's skills reference external skills from the [superpowers](https://gith
 | Skill | Used By | Purpose |
 |---|---|---|
 | `superpowers:brainstorming` | Design Review Gate, Brainstorming Extension | Collaborative design ideation before implementation |
-| `superpowers:test-driven-development` | PR Shepherd, Coder Agent | RED-GREEN-REFACTOR implementation cycle |
+| `superpowers:executing-plans` | Execution-routing guidance | Batch execution in a separate session |
+| `superpowers:finishing-a-development-branch` | Execution-completion guidance | Wrap up an execution branch before handoff |
+| `superpowers:subagent-driven-development` | Execution-routing guidance | Task-by-task subagent implementation with review |
 | `superpowers:systematic-debugging` | PR Shepherd | Four-phase bug investigation framework |
+| `superpowers:test-driven-development` | PR Shepherd and completion guidance | RED-GREEN-REFACTOR implementation cycle |
+| `superpowers:using-git-worktrees` | Design Review Gate | Isolated workspace creation for parallel development |
+| `superpowers:verification-before-completion` | Completion guidance | Validate coverage and required checks before completion |
 | `superpowers:writing-plans` | Design Review Gate, Brainstorming Extension | Detailed implementation plan generation |
-| `superpowers:using-git-worktrees` | Design Review Gate | Isolated workspace creation for parallel dev |
 
 **Install superpowers** (follow their README and marketplace docs for current instructions):
 ```bash
@@ -96,7 +100,7 @@ claude plugin add obra/superpowers
 # Codex: install from the claude-plugins-official marketplace in /plugins
 ```
 
-**Without superpowers**: metaswarm still works — the core orchestration (agents, BEADS, review gates, rubrics) is self-contained. The superpowers references are in skill trigger chains and can be removed or replaced with your own equivalents.
+**Without superpowers**: metaswarm still works — the core orchestration (agents, BEADS, review gates, rubrics) is self-contained. The dispatch mechanics are vendored in [`guides/dispatch-contract.md`](guides/dispatch-contract.md) (W9), so the gates do not depend on superpowers. The references above are optional upstream trigger and handoff integrations that can be replaced with your own equivalents.
 
 **BEADS and GTG**: metaswarm does not auto-install runtime CLIs. Install `bd` for BEADS issue tracking and knowledge priming, and install `gtg` for consolidated PR readiness checks. The standalone Beads plugin is optional; metaswarm detects it and defers priming when present.
 

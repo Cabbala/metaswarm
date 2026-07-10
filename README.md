@@ -1,6 +1,6 @@
 # metaswarm
 
-A self-improving multi-agent orchestration framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and Codex CLI. Coordinate 18 specialized AI agents and 13 orchestration skills through a complete software development lifecycle, from issue to merged PR, with recursive orchestration, parallel review gates, and a git-native knowledge base.
+A self-improving multi-agent orchestration framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and Codex CLI. Coordinate 18 specialized AI agents and 14 orchestration skills through a complete software development lifecycle, from issue to merged PR, with recursive orchestration, parallel review gates, and a git-native knowledge base.
 
 ## What Is This?
 
@@ -11,7 +11,7 @@ metaswarm is an extraction of a production-tested agentic orchestration system. 
 - **4-Phase Orchestrated Execution Loop**: Each work unit runs through IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT. The orchestrator validates independently (never trusts subagent self-reports), and adversarial reviewers check DoD compliance with file:line evidence
 - **Parallel Design Review Gate**: 5 specialist agents (PM, Architect, Designer, Security, CTO) review in parallel with a 3-iteration cap before human escalation
 - **Recursive orchestration**: Swarm Coordinators spawn Issue Orchestrators, which spawn sub-orchestrators for complex epics (swarm of swarms)
-- **Git-native task tracking**: Uses [BEADS](https://github.com/steveyegge/beads) (`bd` CLI) for issue/task management, dependencies, and knowledge priming
+- **Git-native task tracking**: Uses [BEADS](https://github.com/gastownhall/beads) (`bd` CLI) for issue/task management, dependencies, and knowledge priming
 - **Knowledge base**: JSONL-based fact store for patterns, gotchas, decisions, and anti-patterns — agents prime from this before every task
 - **Quality rubrics**: Standardized review criteria for code, architecture, security, testing, planning, and adversarial spec compliance
 - **External AI tool delegation**: Optionally delegate implementation and review tasks to OpenAI Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review
@@ -83,6 +83,7 @@ metaswarm/
 │   ├── status/               # Diagnostic checks
 │   ├── pr-shepherd/          # PR lifecycle automation
 │   ├── handling-pr-comments/ # Review comment workflow
+│   ├── handoff/              # Session-handoff analysis
 │   ├── brainstorming-extension/
 │   ├── create-issue/
 │   ├── external-tools/       # Cross-model AI delegation adapters (Codex, enterprise/API-key Gemini)
@@ -197,12 +198,14 @@ This keeps the project-specific context explicit and versioned alongside the wor
 |---|---|---|
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Plugin marketplace | `/start-task`, `/setup`, etc. |
 | [Codex CLI](https://github.com/openai/codex) | Plugin marketplace | `$start`, `$setup`, etc. |
+| Cursor | Stub/planned — not supported | No shipped integration |
+| OpenCode | Stub/planned — not supported | No shipped integration |
 
 ## Requirements
 
 - One of: Claude Code or Codex CLI
 - Node.js 18+ (for automation scripts)
-- [BEADS](https://github.com/steveyegge/beads) CLI (`bd`) v0.40+ — for task tracking (recommended)
+- [BEADS](https://github.com/gastownhall/beads) CLI (`bd`) v0.40+ — for task tracking (recommended)
 - GitHub CLI (`gh`) — for PR automation (recommended)
 - Playwright — for visual review skill (optional, `npx playwright install chromium`)
 
@@ -212,10 +215,12 @@ MIT
 
 ## Acknowledgments
 
-metaswarm stands on the shoulders of two key projects:
+metaswarm stands on the shoulders of three key projects:
 
-- **[BEADS](https://github.com/steveyegge/beads)** by [Steve Yegge](https://github.com/steveyegge) — The git-native, AI-first issue tracking system that serves as the coordination backbone for all agent task management, dependency tracking, and knowledge priming in metaswarm. BEADS made it possible to treat issue tracking as a first-class part of the codebase rather than an external service.
+- **[metaswarm upstream](https://github.com/dsifry/metaswarm)** by Dave Sifry — The upstream project from which this repository evolved.
 
-- **[Superpowers](https://github.com/obra/superpowers)** by [Jesse Vincent](https://github.com/obra) and contributors — The agentic skills framework and software development methodology that provides foundational skills metaswarm builds on, including brainstorming, test-driven development, systematic debugging, and plan writing. Superpowers demonstrated that disciplined agent workflows aren't overhead — they're what make autonomous development reliable.
+- **[BEADS](https://github.com/gastownhall/beads)** — The git-native, AI-first issue tracking system that serves as the coordination backbone for all agent task management, dependency tracking, and knowledge priming in metaswarm. BEADS made it possible to treat issue tracking as a first-class part of the codebase rather than an external service.
+
+- **[Superpowers](https://github.com/obra/superpowers)** by [Jesse Vincent](https://github.com/obra) and contributors — The agentic skills framework and software development methodology that provides the upstream skills metaswarm builds on: `brainstorming`, `executing-plans`, `finishing-a-development-branch`, `subagent-driven-development`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification-before-completion`, and `writing-plans`. Superpowers demonstrated that disciplined agent workflows aren't overhead — they're what make autonomous development reliable.
 
 metaswarm was created by [Dave Sifry](https://linkedin.com/in/dsifry), founder of Technorati, Linuxcare, and Warmstart, and former tech executive at Lyft and Reddit. Extracted from a production multi-tenant SaaS codebase where it has been writing production-level code with 100% test coverage, TDD, and spec-driven development across hundreds of autonomous PRs.

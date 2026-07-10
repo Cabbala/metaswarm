@@ -764,26 +764,27 @@ bd dolt push
 ```
 skills/start/                   # This skill (main orchestration)
 ├── SKILL.md                    # This file
-├── agents/                     # Agent definitions
-│   ├── issue-orchestrator.md   # Main coordinator (runs 4-phase loop)
-│   ├── researcher-agent.md     # Codebase exploration
-│   ├── architect-agent.md      # Implementation planning
-│   ├── product-manager-agent.md # Use case & user benefit review
-│   ├── designer-agent.md       # UX/API design review
-│   ├── security-design-agent.md # Security threat modeling
-│   ├── cto-agent.md            # TDD readiness review
-│   ├── coder-agent.md          # TDD implementation
-│   ├── code-review-agent.md    # Internal code review (collaborative + adversarial modes)
-│   ├── security-auditor-agent.md # Security review (implementation)
-│   ├── release-engineer-agent.md # Merge → deploy → verify → release
-│   └── pr-shepherd-agent.md    # PR lifecycle management
-├── guides/                     # Development guides
-│   ├── agent-coordination.md   # Team Mode, inter-agent messaging
-│   ├── git-workflow.md         # Branch naming, commit conventions
-│   ├── testing-patterns.md     # TDD workflow, mock strategies
-│   ├── coding-standards.md     # Language idioms, naming conventions
-│   ├── worktree-development.md # Parallel development with worktrees
-│   └── build-validation.md     # Pre-push checks, CI pipeline
+├── agents/                     # 18 definitions synced from repo-root agents/
+│   ├── architect-agent.md
+│   ├── code-review-agent.md
+│   ├── coder-agent.md
+│   ├── cto-agent.md
+│   ├── customer-service-agent.md
+│   ├── designer-agent.md
+│   ├── issue-orchestrator.md
+│   ├── knowledge-curator-agent.md
+│   ├── metrics-agent.md
+│   ├── pr-shepherd-agent.md
+│   ├── product-manager-agent.md
+│   ├── release-engineer-agent.md
+│   ├── researcher-agent.md
+│   ├── security-auditor-agent.md
+│   ├── security-design-agent.md
+│   ├── slack-coordinator-agent.md
+│   ├── sre-agent.md
+│   └── swarm-coordinator-agent.md
+├── guides/                     # Co-located guides
+│   └── agent-coordination.md   # The only guide in this directory
 ├── rubrics/                    # Review rubrics
 │   ├── plan-review-rubric.md   # Used by CTO Agent
 │   ├── code-review-rubric.md   # Used by Code Review Agent (collaborative mode)
@@ -793,7 +794,18 @@ skills/start/                   # This skill (main orchestration)
 └── references/                 # Reference docs for other tools
     ├── codex-tools.md          # OpenAI Codex CLI reference
     ├── cursor-tools.md         # Cursor tools reference
-    └── opencode-tools.md       # OpenCode tools reference
+    ├── opencode-tools.md       # OpenCode tools reference
+    └── platform-adaptation.md  # Host-platform adaptation reference
+
+guides/                         # Repository-wide guide sources
+├── agent-authoring-template.md
+├── agent-coordination.md       # Synced into selected skill directories
+├── build-validation.md
+├── coding-standards.md
+├── dispatch-contract.md        # Synced into selected review/execution skills
+├── git-workflow.md
+├── testing-patterns.md
+└── worktree-development.md
 
 skills/orchestrated-execution/  # 4-phase execution loop pattern
 └── SKILL.md

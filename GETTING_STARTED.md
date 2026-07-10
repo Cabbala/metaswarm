@@ -350,7 +350,7 @@ Create a `.md` file in `rubrics/` with scoring criteria that agents reference du
 
 ### Adding Knowledge
 
-Append JSONL entries to the appropriate file in `knowledge/`:
+The repository's `knowledge/` directory is the seed schema shipped with the plugin. Setup copies it to the project's runtime knowledge base at `.beads/knowledge/`; append JSONL entries to the appropriate file there:
 
 ```json
 {"id": "gotcha-my-api", "type": "gotcha", "fact": "The payments API returns 200 even on failure", "recommendation": "Always check the response body status field, not HTTP status", "confidence": "high", "tags": ["payments", "api"]}
@@ -383,5 +383,5 @@ metaswarm can delegate work to Codex (OpenAI) and the enterprise/API-key-only Ge
 ## What's Next
 
 - [USAGE.md](USAGE.md) — Full reference for all agents, skills, and commands
-- [ORCHESTRATION.md](ORCHESTRATION.md) — The complete orchestration workflow specification
+- [ORCHESTRATION.md](ORCHESTRATION.md) — Orchestration overview, current roster, and canonical documentation pointers
 - [CONTRIBUTING.md](CONTRIBUTING.md) — How to contribute back

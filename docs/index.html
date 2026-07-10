@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>metaswarm - Multi-Agent Orchestration for Claude Code</title>
-  <meta name="description" content="A self-improving multi-agent orchestration framework for Claude Code and Codex CLI. 18 agents, 13 skills, 15 commands. TDD, cross-model adversarial review, spec-driven development. Production-proven.">
+  <meta name="description" content="A self-improving multi-agent orchestration framework for Claude Code and Codex CLI. 18 agents, 14 skills, 16 commands. TDD, cross-model adversarial review, spec-driven development. Production-proven.">
   <style>
     :root {
       --bg: #ffffff;
@@ -654,12 +654,12 @@ When all work units pass, create a PR.</code></pre>
         <p>Researcher, Architect, PM, Designer, Security, CTO, Coder, Code Reviewer, Security Auditor, PR Shepherd, Knowledge Curator, and more. Each has a defined role, process, and output format.</p>
       </div>
       <div class="feature">
-        <h4>13 Orchestration Skills</h4>
-        <p>Orchestrated execution, design review gate, plan review gate, PR shepherd, PR comment handling, external AI tools delegation, visual review, brainstorming extension, issue creation, interactive setup, migration, status diagnostics, and the main start workflow.</p>
+        <h4>14 Orchestration Skills</h4>
+        <p>Orchestrated execution, design review gate, plan review gate, PR shepherd, PR comment handling, session handoff, external AI tools delegation, visual review, brainstorming extension, issue creation, interactive setup, migration, status diagnostics, and the main start workflow.</p>
       </div>
       <div class="feature">
-        <h4>15 Slash Commands</h4>
-        <p><code>/metaswarm:setup</code>, <code>/metaswarm:update</code>, <code>/metaswarm:status</code>, <code>/metaswarm:start-task</code>, <code>/metaswarm:start</code>, <code>/metaswarm:prime</code>, <code>/metaswarm:review-design</code>, <code>/metaswarm:brainstorm</code>, <code>/metaswarm:self-reflect</code>, <code>/metaswarm:pr-shepherd</code>, <code>/metaswarm:create-issue</code>, <code>/metaswarm:handle-pr-comments</code>, <code>/metaswarm:external-tools-health</code>.</p>
+        <h4>16 Slash Commands</h4>
+        <p><code>/metaswarm:brainstorm</code>, <code>/metaswarm:create-issue</code>, <code>/metaswarm:external-tools-health</code>, <code>/metaswarm:handle-pr-comments</code>, <code>/metaswarm:handoff</code>, <code>/metaswarm:metaswarm-setup</code>, <code>/metaswarm:metaswarm-update-version</code>, <code>/metaswarm:pr-shepherd</code>, <code>/metaswarm:prime</code>, <code>/metaswarm:review-design</code>, <code>/metaswarm:self-reflect</code>, <code>/metaswarm:setup</code>, <code>/metaswarm:start</code>, <code>/metaswarm:start-task</code>, <code>/metaswarm:status</code>, and <code>/metaswarm:update</code>.</p>
       </div>
       <div class="feature">
         <h4>8 Quality Rubrics</h4>
@@ -775,7 +775,7 @@ When all work units pass, create a PR.</code></pre>
     <h3>Prerequisites</h3>
     <ul>
       <li><a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a></li>
-      <li><a href="https://github.com/steveyegge/beads">BEADS CLI</a> (<code>bd</code>) v0.40+ (optional &mdash; for knowledge base)</li>
+      <li><a href="https://github.com/gastownhall/beads">BEADS CLI</a> (<code>bd</code>) v0.40+ (optional &mdash; for knowledge base)</li>
       <li><a href="https://github.com/obra/superpowers">Superpowers</a> plugin (optional but recommended)</li>
       <li>GitHub CLI (<code>gh</code>)</li>
       <li>Node.js 18+</li>
@@ -863,7 +863,7 @@ When all work units pass, create a PR.</code></pre>
   <section>
     <h2>Built On</h2>
     <div class="callout">
-      <p><strong><a href="https://github.com/steveyegge/beads">BEADS</a></strong> by Steve Yegge. Git-native, AI-first issue tracking. The coordination backbone for all task management, dependency tracking, and knowledge priming. BEADS made it possible to treat issue tracking as part of the codebase instead of an external service.</p>
+      <p><strong><a href="https://github.com/gastownhall/beads">BEADS</a></strong>. Git-native, AI-first issue tracking. The coordination backbone for all task management, dependency tracking, and knowledge priming. BEADS made it possible to treat issue tracking as part of the codebase instead of an external service.</p>
     </div>
     <div class="callout">
       <p><strong><a href="https://github.com/obra/superpowers">Superpowers</a></strong> by Jesse Vincent and contributors. The agentic skills framework that provides foundational workflows for brainstorming, test-driven development, systematic debugging, and plan writing. Superpowers proved that disciplined agent workflows are not overhead. They are what make autonomous development reliable.</p>

@@ -1,5 +1,7 @@
 # Metaswarm Guided Setup
 
+> **LEGACY (npx-era):** This command is preserved for existing npx installations. New installations should use the setup skill (`/setup` in Claude Code or `$setup` in Codex CLI), which supersedes it.
+
 Interactive, Claude-guided setup for metaswarm in your project. Detects your stack, asks targeted questions, and customizes everything automatically.
 
 ## Usage

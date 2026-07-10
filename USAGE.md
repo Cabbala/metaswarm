@@ -37,11 +37,10 @@ metaswarm provides 18 specialized agents, each with a defined role in the softwa
 
 ### PR & Delivery Agents
 
-| **Release Engineer** (optional) | `agents/release-engineer-agent.md` | Safe delivery from merge through production; changelog/release notes. |
-
 | Agent | File | Role |
 |---|---|---|
 | **PR Shepherd** | `agents/pr-shepherd-agent.md` | PR lifecycle: CI monitoring, review comment handling, thread resolution. |
+| **Release Engineer** (optional) | `agents/release-engineer-agent.md` | Safe delivery from merge through production; changelog/release notes. |
 
 ### Support Agents
 
@@ -55,7 +54,7 @@ metaswarm provides 18 specialized agents, each with a defined role in the softwa
 
 ## Guides
 
-metaswarm ships 6 development guides in the `guides/` directory. These are reference documents for agents and humans working in the project.
+metaswarm ships 8 development guides in the `guides/` directory. These are reference documents for agents and humans working in the project.
 
 | Guide | File | Covers |
 |---|---|---|
@@ -259,12 +258,12 @@ bd export                      # Export issues to JSONL (NOT a full backup)
 
 ### File Schema
 
-All files in `knowledge/` use JSONL format:
+The repository's `knowledge/` directory is the seed schema shipped with metaswarm. Setup copies that seed into the project's runtime knowledge base at `.beads/knowledge/`; its JSONL files use this format:
 
 ```json
 {
   "id": "unique-identifier",
-  "type": "pattern|gotcha|decision|anti-pattern|codebase-fact|api-behavior",
+  "type": "api_behavior|code_quirk|pattern|gotcha|decision|dependency|performance|security",
   "fact": "Clear description of the knowledge",
   "recommendation": "What to do about it",
   "confidence": "high|medium|low",

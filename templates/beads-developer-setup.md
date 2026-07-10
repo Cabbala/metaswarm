@@ -17,7 +17,7 @@ This guide helps you set up BEADS (Bug/Enhancement Agent Delegation System) on y
 
 ```bash
 # Install the beads plugin from the Claude Code marketplace
-/plugin install beads    # from steveyegge/beads marketplace
+/plugin install beads    # from gastownhall/beads marketplace
 
 # Verify BEADS CLI is installed
 bd --version
@@ -250,10 +250,10 @@ scripts/
 
 ```bash
 # Install the beads plugin from Claude Code marketplace
-/plugin install beads    # from steveyegge/beads marketplace
+/plugin install beads    # from gastownhall/beads marketplace
 
 # Or install BEADS CLI directly
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
 ```
 
 ### Slack daemon won't connect
@@ -329,7 +329,7 @@ bd doctor                   # Health check
 
 ## Support
 
-- **BEADS CLI docs**: https://github.com/steveyegge/beads
+- **BEADS CLI docs**: https://github.com/gastownhall/beads
 
 ---
 

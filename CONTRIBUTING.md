@@ -24,7 +24,7 @@ Agent definitions live in `agents/`. Each agent is a Markdown file with:
 
 When contributing a new agent:
 - Place it in `agents/<name>-agent.md`
-- Add it to the agent roster in `ORCHESTRATION.md`
+- Add it to the current agent roster in `ORCHESTRATION.md`
 - Document it in `USAGE.md`
 - Keep it generic (no project-specific references)
 
