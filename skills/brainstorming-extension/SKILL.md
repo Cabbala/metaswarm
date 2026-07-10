@@ -1,10 +1,6 @@
 ---
 name: brainstorming-extension
-description: Enforces design review gate after brainstorming — bridges superpowers:brainstorming into the metaswarm quality pipeline
-auto_activate: true
-triggers:
-  - after:superpowers:brainstorming
-  - "design document committed"
+description: Use immediately after superpowers:brainstorming completes or a design document is committed, to enforce the Design Review Gate before the metaswarm quality pipeline continues
 ---
 
 # Brainstorming Extension - Mandatory Review Gate Bridge
@@ -14,6 +10,15 @@ triggers:
 This skill bridges `superpowers:brainstorming` into the metaswarm quality pipeline by enforcing the Design Review Gate after any design document is created. Without this bridge, brainstorming flows directly into `writing-plans`, bypassing the 5-agent design review that catches architectural, security, and requirements issues before expensive implementation begins.
 
 **This is a critical workflow enforcement point, not a passive extension.**
+
+## Upstream File Contract
+
+For superpowers v6.1.1, `superpowers:brainstorming` writes design specifications to
+`docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`. Its subsequent
+`superpowers:writing-plans` step writes implementation plans to
+`docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`. In this skill, “design
+document” refers to the former path; the review gate must run before the latter
+plan is created.
 
 ---
 
@@ -25,7 +30,7 @@ This skill bridges `superpowers:brainstorming` into the metaswarm quality pipeli
 WITHOUT this extension (broken flow):
 
 superpowers:brainstorming
-    └── Commits design doc
+    └── Commits design spec to docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
           └── writing-plans (DIRECTLY — no review!)
                 └── executing-plans
                       └── Implementation begins on UNREVIEWED design
@@ -35,7 +40,7 @@ superpowers:brainstorming
 WITH this extension (correct flow):
 
 superpowers:brainstorming
-    └── Commits design doc
+    └── Commits design spec to docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
           │
           ▼
     ┌─────────────────────────────────────────┐
@@ -65,7 +70,7 @@ superpowers:brainstorming
 
 ## How Enforcement Works
 
-YAML frontmatter triggers (`auto_activate`, `triggers`) are metadata hints — Claude Code does not enforce them automatically. Instead, this enforcement works through three redundant mechanisms:
+Skill frontmatter carries only `name` and `description` (the description encodes the trigger conditions — the legacy `auto_activate`/`triggers` keys were inert metadata no host enforced, and were removed). Enforcement works through three redundant mechanisms:
 
 ### 1. CLAUDE.md Template (Primary)
 
@@ -87,7 +92,8 @@ When this skill is loaded (either by name or auto-activation), it provides the d
 
 ## Procedure: After Brainstorming Completes
 
-When `superpowers:brainstorming` commits a design document:
+When `superpowers:brainstorming` commits a design specification to
+`docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`:
 
 ### Step 1: Announce the Gate
 

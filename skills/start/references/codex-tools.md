@@ -19,5 +19,5 @@ Use these mappings when adapting metaswarm skills to run under Codex.
 
 - Codex discovers metaswarm skills from `.codex-plugin/plugin.json` via `"skills": "./skills/"`.
 - Codex invokes skills by `SKILL.md` frontmatter name, not by directory name.
-- Codex plugin hooks are optional and require the `plugin_hooks` feature; core metaswarm workflows must work without hook context.
+- Historical note: Codex supported optional `plugin_hooks` in older releases; the feature was removed in codex-cli 0.144. Core metaswarm workflows must work without hook context.
 - Prefer explicit setup/status checks over assuming SessionStart hooks ran.

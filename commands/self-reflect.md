@@ -126,7 +126,7 @@ Which numbers do you want to capture? (all / 1,2,3 / none)
 
 ```text
 **Fact**: [extracted core insight]
-**Type**: [pattern|gotcha|decision|api_behavior|security|performance]
+**Type**: [api_behavior|code_quirk|pattern|gotcha|decision|dependency|performance|security]
 **Applies to**: [file patterns or components]
 **Confidence**: [high|medium|low]
 
@@ -183,15 +183,15 @@ For each validated learning, add it to the appropriate knowledge base JSONL file
 
 Before adding, check for semantic duplicates in existing knowledge files.
 
-## Step 7: Semantic Summarization via bd compact
+## Step 7: Semantic Summarization via bd admin compact
 
-The standalone beads plugin (v0.63.3+) provides `bd compact` for semantic summarization of closed issues. After capturing learnings, run:
+The standalone beads plugin (v0.63.3+) provides `bd admin compact` for semantic summarization of closed issues. After capturing learnings, run:
 
 ```bash
-bd compact
+bd admin compact
 ```
 
-This replaces the former `beads-self-reflect.ts` script — `bd compact` handles knowledge base statistics, summarization, and cleanup natively.
+This replaces the former `beads-self-reflect.ts` script — `bd admin compact` handles knowledge base statistics, summarization, and cleanup natively.
 
 ## Step 8: Generate Report
 

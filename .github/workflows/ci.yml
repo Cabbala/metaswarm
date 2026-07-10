@@ -29,11 +29,40 @@ jobs:
       - name: Run session-start.sh tests
         run: bash tests/hooks/test-session-start.sh
 
+      - name: Run installer tests
+        run: bash tests/cli/test-installer.sh
+
+      - name: Run Codex skills tests
+        run: bash tests/codex/test-codex-skills.sh
+      - name: Run Codex manifest guard tests
+        run: bash tests/codex/test-codex-manifest.sh
+
+      - name: Run superpowers upstream reference guard
+        run: bash tests/superpowers/test-upstream-refs.sh
+
+      - name: Run PR helper script tests
+        run: bash tests/bin/test-pr-scripts.sh
+
       - name: Run CI template security tests
         run: bash tests/templates/test-ci-template.sh
 
+      - name: Run Beads cleanup tests
+        run: bash tests/templates/test-beads-cleanup.sh
+
+      - name: Run bd vocabulary compatibility guard
+        run: bash tests/beads/test-bd-vocabulary.sh
+
+      - name: Run Codex external-tools adapter tests
+        run: bash tests/external-tools/test-codex-adapter.sh
+
       - name: Run sync-resources tests
         run: bash tests/lib/test-sync-resources.sh
+
+      - name: Run project-profile validator tests
+        run: bash tests/lib/test-validate-profile.sh
+
+      - name: Run reviewer dispatch prompt path tests
+        run: bash tests/gates/test-gate-prompts.sh
 
       - name: Verify co-located resources are in sync
         run: node lib/sync-resources.js --check

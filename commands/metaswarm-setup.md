@@ -1,5 +1,7 @@
 # Metaswarm Guided Setup
 
+> **LEGACY (npx-era):** This command is preserved for existing npx installations. New installations should use the setup skill (`/setup` in Claude Code or `$setup` in Codex CLI), which supersedes it.
+
 Interactive, Claude-guided setup for metaswarm in your project. Detects your stack, asks targeted questions, and customizes everything automatically.
 
 ## Usage
@@ -230,7 +232,7 @@ Use the AskUserQuestion tool to ask ONLY the questions that are relevant based o
 **Ask only if relevant:**
 
 2. **External AI tools** — Ask ONLY if the project would benefit from it (non-trivial project):
-   - "Set up external AI tools (Codex/Gemini) for cost savings on implementation tasks?"
+   - "Set up external AI tools (Codex and the enterprise/API-key Gemini adapter) for cross-model review? Consumer Gemini CLI access was discontinued 2026-06-18."
    - Options: "Yes (Recommended)", "No"
    - Header: "AI Tools"
 
@@ -412,17 +414,16 @@ target/
 If the user chose YES for external AI tools:
 
 1. Check if Codex CLI is installed: run `which codex` via Bash
-2. Check if Gemini CLI is installed: run `which gemini` via Bash
-3. For any tool NOT installed, tell the user:
+2. Check the enterprise/API-key Gemini adapter with `skills/external-tools/adapters/gemini.sh health`; it is not a host-platform installation target
+3. For a missing Codex CLI, tell the user:
    - Codex: "Codex CLI is not installed. Install it with: `npm i -g @openai/codex`"
-   - Gemini: "Gemini CLI is not installed. Install it with: `npm i -g @google/gemini-cli`"
-   - Ask if the user wants you to install them now. If yes, run the install commands via Bash.
-4. For installed tools, verify they're authenticated:
+   - Ask if the user wants Codex installed. If yes, run the install command via Bash.
+4. For available tools, verify their adapter health:
    - Codex: run `codex --version` — if it works, it's likely configured
-   - Gemini: run `gemini --version` — if it works, it's likely configured
+   - Gemini adapter: retain its resolved binary path and version output; require enterprise/API-key credentials and explicit opt-in
 5. Ensure `.metaswarm/` directory exists (create via Bash `mkdir -p .metaswarm` if needed)
-6. Copy or create `.metaswarm/external-tools.yaml` with both tools configured:
-   - Set `enabled: true` for installed tools
+6. Copy or create `.metaswarm/external-tools.yaml` with the external tools configured:
+   - Set `enabled: true` for installed Codex; leave Gemini `enabled: false` unless the user explicitly enables the enterprise/API-key adapter
    - Set `enabled: false` for tools that aren't installed
 7. Tell the user about any auth steps needed (e.g., "Run `codex login` to authenticate with OpenAI")
 
@@ -542,8 +543,8 @@ If external tools were enabled, run health checks for each enabled tool:
 # For Codex
 codex --version 2>/dev/null && echo "Codex: OK" || echo "Codex: NOT AVAILABLE"
 
-# For Gemini
-gemini --version 2>/dev/null && echo "Gemini: OK" || echo "Gemini: NOT AVAILABLE"
+# For the enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18)
+skills/external-tools/adapters/gemini.sh health
 ```
 
 Report any tools that failed health checks and suggest remediation.

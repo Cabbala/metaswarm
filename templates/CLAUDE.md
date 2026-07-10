@@ -1,6 +1,6 @@
 # Project Instructions
 
-This project uses [metaswarm](https://github.com/dsifry/metaswarm), a multi-agent orchestration framework for Claude Code. It provides 18 specialized agents, a 9-phase development workflow, and quality gates that enforce TDD, coverage thresholds, and spec-driven development.
+This project uses [metaswarm](https://github.com/Cabbala/metaswarm), a multi-agent orchestration framework for Claude Code. It provides 18 specialized agents, a 9-phase development workflow, and quality gates that enforce TDD, coverage thresholds, and spec-driven development.
 
 ## How to Work in This Project
 
@@ -36,7 +36,7 @@ This triggers the full pipeline: Research → Plan → Design Review Gate → Wo
 | `/handle-pr-comments` | Handle PR review comments |
 | `/brainstorm` | Refine an idea before implementation |
 | `/create-issue` | Create a well-structured GitHub Issue |
-| `/external-tools-health` | Check status of external AI tools (Codex, Gemini) |
+| `/external-tools-health` | Check Codex and enterprise/API-key Gemini adapter status |
 | `/setup` | Interactive guided setup — detects project, configures metaswarm |
 | `/update` | Update metaswarm to latest version |
 | `/status` | Run diagnostic checks on your installation |
@@ -167,13 +167,14 @@ Approved plans, project context, and execution state are persisted to `.beads/` 
 - **Project context** → `.beads/context/project-context.md` (updated after each work unit commit)
 - **Execution state** → `.beads/context/execution-state.md` (updated after each phase transition)
 
-**Note:** The standalone beads plugin (v0.63.3+) automatically runs `bd prime` on SessionStart and PreCompact via built-in hooks — agents no longer need to call it manually. If context is lost mid-execution, the beads plugin will re-prime automatically on the next session or compaction event. For explicit recovery, run `bd prime --work-type recovery` to reload the approved plan, completed work, and current position from disk.
+**Note:** The standalone beads plugin (v0.63.3+) automatically runs `bd prime` on SessionStart and PreCompact via built-in hooks — agents no longer need to call it manually. If context is lost mid-execution, the beads plugin will re-prime automatically on the next session or compaction event. For explicit recovery, run bare `bd prime`; customize the project-specific recovery context with the tracked `.beads/PRIME.md` override.
 
 ## External Tools (Optional)
 
 If external AI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator
-can delegate implementation and review tasks to Codex CLI and Gemini CLI for cost savings
-and cross-model adversarial review. See `templates/external-tools-setup.md` for setup.
+can delegate implementation and review tasks to Codex CLI and the enterprise/API-key-only
+Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review.
+See `templates/external-tools-setup.md` for setup.
 
 ## Team Mode
 
@@ -200,8 +201,9 @@ Development patterns and standards are documented in `guides/`:
 
 <!-- Document important architectural decisions here so agents have context.
      These get loaded during knowledge priming (/prime).
-     Use `bd decision` to record decisions persistently in the beads database
-     with rationale tracking — these survive compaction and are available across sessions. -->
+     Use `bd create "Decision: <decision>" -t decision` to record decisions
+     persistently in the beads database with rationale tracking — these survive
+     compaction and are available across sessions. -->
 
 ## Notes
 

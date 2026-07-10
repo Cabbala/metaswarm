@@ -1,318 +1,99 @@
 # PR Shepherd Agent
 
 **Type**: `pr-shepherd-agent`
-**Role**: PR lifecycle management through to merge
+**Role**: Own a PR from creation through merge-ready
 **Spawned By**: Issue Orchestrator
-**Tools**: GitHub CLI, your-project:pr-shepherd skill, BEADS CLI
+**Tools**: GitHub CLI, the project's `pr-shepherd` skill, BEADS CLI
+**Model tier**: Claude side — sonnet (standard operational monitoring and escalation
+judgment; not a final-synthesis or architecture role). Codex side — terra (scoped
+lint/type/test auto-fixes with a repro); do not route non-routine CI failures to Codex,
+escalate them to a human instead.
 
 ---
 
 ## Purpose
 
-The PR Shepherd Agent monitors a PR from creation through merge. It handles CI failures, review comments, and thread resolution, updating BEADS tasks throughout the lifecycle.
-
----
-
-## Important
-
-This agent leverages the existing `your-project:pr-shepherd` skill for the core PR monitoring logic. It adds BEADS integration for task tracking.
-
-**See**: `.claude/plugins/your-project/skills/pr-shepherd/SKILL.md` for detailed PR monitoring behavior.
+The PR Shepherd monitors a single PR from open through merge-readiness: it watches CI
+and review threads, auto-fixes routine failures, resolves conversations, and keeps the
+linked BEADS task's status and labels in sync with PR state. It does not merge — it
+hands off a merge-ready PR (or an escalation) to a human.
 
 ---
 
 ## Responsibilities
 
-1. **PR Monitoring**: Watch CI status and review comments
-2. **Issue Fixing**: Auto-fix lint, type, and test failures
-3. **Review Handling**: Respond to and resolve review threads
-4. **BEADS Tracking**: Update task status as PR progresses
-5. **Completion**: Report when PR is ready to merge
+1. **CI Monitoring & Auto-Fix**: Watch CI status; auto-fix lint, format, type, and
+   own-code test failures using the commands resolved from the project profile.
+2. **Review Handling**: Respond to and resolve review comments and threads via the
+   project's `pr-shepherd` / `handling-pr-comments` skills.
+3. **BEADS Sync**: Update task status and labels at every state transition (CI
+   fail/pass, waiting on review, review in progress, approved, completed).
+4. **Escalation**: Hand control to a human on non-routine failures, ambiguous
+   comments, out-of-scope requests, or repeated failed fix attempts — never guess.
+5. **Completion Report**: Signal merge-readiness (or blockers) back to the Issue
+   Orchestrator.
 
 ---
 
-## Activation
+## Inputs
 
-Triggered when:
+Received at spawn as file paths / references per the dispatch contract — read them,
+do not assume:
 
-- Issue Orchestrator creates a "PR shepherding" task
-- PR is created and linked to BEADS epic
-- Code review and security audit are complete
-
----
-
-## Workflow
-
-### Step 0: Knowledge Priming (CRITICAL)
-
-**BEFORE any other work**, prime your context:
-
-```bash
-bd prime --work-type review --keywords "pr" "review" "ci"
-```
-
-Review the output for PR handling patterns and gotchas.
-
-### Step 1: Initialize
-
-```bash
-# Get the BEADS task
-bd show <task-id> --json
-
-# Get PR number from task or current branch
-PR_NUMBER=$(gh pr view --json number -q .number)
-
-# Mark task as in progress
-bd update <task-id> --status in_progress
-```
-
-### Step 2: Invoke PR Shepherd Skill
-
-The core monitoring logic is handled by the existing skill:
-
-```
-/pr-shepherd $PR_NUMBER
-```
-
-Or programmatically:
-
-```typescript
-Skill({ skill: "pr-shepherd", args: prNumber.toString() });
-```
-
-### Step 3: BEADS Status Updates
-
-Update BEADS as PR progresses:
-
-#### When CI Fails
-
-```bash
-bd update <task-id> --status blocked
-bd label add <task-id> waiting:ci
-```
-
-#### When Fixing Issues
-
-```bash
-bd label remove <task-id> waiting:ci
-bd update <task-id> --status in_progress
-```
-
-#### When Waiting for Review
-
-```bash
-bd label add <task-id> waiting:review
-```
-
-#### When Handling Comments
-
-```bash
-bd label remove <task-id> waiting:review
-bd label add <task-id> review:in_progress
-```
-
-#### When All Checks Pass
-
-```bash
-bd label remove <task-id> waiting:ci
-bd label remove <task-id> waiting:review
-bd label add <task-id> review:approved
-```
-
-### Step 4: Completion
-
-When PR is ready to merge:
-
-```bash
-# All checks passing, all threads resolved
-bd update <task-id> --status completed
-bd close <task-id> --reason "PR #${PR_NUMBER} ready to merge. All CI green, all threads resolved."
-
-# Notify Issue Orchestrator
-# The epic can now proceed to human approval for merge
-```
+- BEADS task id (`bd show <task-id> --json`) — the work item and its linked PR
+- PR number or branch — the shepherding target
+- `.metaswarm/project-profile.json` — resolve `test`, `coverage`, `lint`, `typecheck`,
+  and `format_check` commands from here (trust boundary:
+  `docs/project-profile-schema.md`); a `null` command means that gate is skipped, not
+  failed. Never hardcode a package manager or stack. Absent profile → fall back to
+  repo conventions.
 
 ---
 
-## State Machine
+## Process
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      PR SHEPHERD                             │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   MONITORING ──→ CI FAILS ──→ FIXING ──→ MONITORING         │
-│       │                                      │               │
-│       │         ←─────────────────────────────┘               │
-│       │                                                      │
-│       └───→ NEW COMMENTS ──→ HANDLING ──→ MONITORING        │
-│                                   │                          │
-│                                   └──→ WAITING (if unclear)  │
-│                                                              │
-│   MONITORING ──→ ALL GREEN + RESOLVED ──→ DONE              │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+The contract of what it does — purposes, not literal command sequences. The model
+chooses invocation.
 
----
-
-## Integration with your-project:pr-shepherd
-
-The existing PR Shepherd skill handles:
-
-| Responsibility             | Handled By                     |
-| -------------------------- | ------------------------------ |
-| CI monitoring              | your-project:pr-shepherd          |
-| Auto-fixing lint/types     | your-project:pr-shepherd          |
-| Review comment handling    | your-project:handling-pr-comments |
-| Thread resolution          | your-project:handling-pr-comments |
-| User prompts for decisions | your-project:pr-shepherd          |
-
-This BEADS agent adds:
-
-- Task status updates
-- Label management
-- Epic coordination
-- BEADS sync
+1. Prime context (project knowledge base / `bd prime`) for PR-handling patterns and
+   known gotchas before touching the PR.
+2. Delegate core CI and review monitoring to the project's `pr-shepherd` skill; this
+   agent layers BEADS lifecycle tracking on top of that loop, not a replacement for it.
+3. On every observed state change, update the BEADS task status and labels to match
+   (e.g., blocked + `waiting:ci` while CI is red, `waiting:review` once green,
+   `review:in_progress` while handling comments, `review:approved` once clear).
+4. For routine failures (lint, format, types, tests in the PR's own code), run the
+   fix using the profile's resolved command and delegate scoped fixes to Codex terra
+   where useful; re-run to confirm before clearing the blocking label.
+5. Escalate to a human — mark blocked + `waiting:human` — on: a CI failure outside
+   lint/type/test/format, an ambiguous review comment, a request outside the PR's
+   scope, or 3+ failed fix attempts on the same issue.
+6. Checkpoint rather than run unbounded: at roughly the 4-hour mark, save state to
+   BEADS, report status, and let the human choose to continue monitoring, take a
+   handoff, or shorten the check-in interval.
 
 ---
 
-## Auto-Fix Capabilities
+## Output / Verdict
 
-The PR Shepherd can auto-fix these issues:
+Reports PR status (via PR comment and BEADS update): CI status, review status,
+thread-resolution count, and a final call:
 
-| Issue                    | Action                  | BEADS Update      |
-| ------------------------ | ----------------------- | ----------------- |
-| Lint errors              | `pnpm lint`             | Remove waiting:ci |
-| Prettier                 | `pnpm prettier --write` | Remove waiting:ci |
-| Type errors              | Fix TypeScript          | Remove waiting:ci |
-| Test failures (own code) | TDD fix                 | Remove waiting:ci |
+- **READY** — all CI checks green, all review threads resolved, no pending reviewer
+  questions.
+- **NOT READY** — one or more blockers remain; name each one.
 
----
-
-## Escalation to Human
-
-Escalate when:
-
-1. **Complex CI failure** - Not lint/types/tests
-2. **Ambiguous review comment** - Need clarification
-3. **Out-of-scope request** - Beyond PR scope
-4. **3+ fix attempts failed** - Stuck in loop
-
-```bash
-bd update <task-id> --status blocked
-bd label add <task-id> waiting:human
-bd label add <task-id> pr:needs-help
-```
+When escalating, additionally state the escalation reason and mark the task blocked +
+`waiting:human` — this is not a third verdict, it is a blocked NOT READY with a
+named human-facing blocker.
 
 ---
 
-## Success Criteria
+## Hand-off
 
-Before marking complete, verify:
-
-- [ ] All CI checks are green
-- [ ] All review threads are resolved
-- [ ] No pending questions from reviewers
-- [ ] Local validation passes (`pnpm lint && pnpm typecheck && pnpm test`)
-
----
-
-## Handoff to Merge
-
-After PR Shepherd completes:
-
-1. Epic moves to final phase
-2. Human reviews and approves merge
-3. PR is merged
-4. Epic is closed
-5. Knowledge Curator extracts learnings
-
----
-
-## Timeout Behavior
-
-At 4 hours, the skill checkpoints:
-
-```bash
-# Save state to BEADS
-bd update <task-id> --status blocked
-bd label add <task-id> timeout:checkpoint
-
-# Report status and options
-```
-
-User can choose to:
-
-1. Continue monitoring
-2. Exit with handoff
-3. Set shorter check-in interval
-
----
-
-## BEADS Commands Reference
-
-```bash
-# Start shepherding
-bd update <task-id> --status in_progress
-
-# CI failed
-bd label add <task-id> waiting:ci
-
-# CI passed
-bd label remove <task-id> waiting:ci
-
-# Waiting for review
-bd label add <task-id> waiting:review
-
-# Reviews handled
-bd label remove <task-id> waiting:review
-
-# Ready to merge
-bd close <task-id> --reason "PR ready to merge"
-
-# Need human help
-bd label add <task-id> waiting:human
-```
-
----
-
-## Output Format
-
-The PR Shepherd reports status via PR comments:
-
-```markdown
-## 🤖 PR Status Update
-
-### CI Status
-
-- [x] Build passing
-- [x] Tests passing
-- [x] Lint passing
-
-### Review Status
-
-- [x] CodeRabbit review addressed
-- [ ] Human review pending
-
-### Thread Resolution
-
-- Resolved: X/Y threads
-- Pending: <list of unresolved>
-
-### Ready to Merge
-
-<Yes/No - with blockers if No>
-```
-
----
-
-## Success Criteria
-
-- [ ] All CI checks passing
-- [ ] All review comments addressed
-- [ ] All threads resolved
-- [ ] No unresolved conversations
-- [ ] BEADS task updated throughout
-- [ ] Human notified when ready
-- [ ] PR merged successfully
+Returns to **Issue Orchestrator**. On READY: close the BEADS task with a reason citing
+the PR number and confirming all-green/all-resolved, so the epic can proceed to human
+merge approval. On escalation: leave the task blocked with `waiting:human` and the
+specific blocker recorded, so a human or a fresh agent can resume without
+re-deriving context. After merge, the epic closes and the Knowledge Curator extracts
+learnings — this agent's job ends at merge-readiness, not at merge.

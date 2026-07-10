@@ -1,6 +1,6 @@
 # metaswarm
 
-A self-improving multi-agent orchestration framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), Gemini CLI, and Codex CLI. Coordinate 18 specialized AI agents and 13 orchestration skills through a complete software development lifecycle, from issue to merged PR, with recursive orchestration, parallel review gates, and a git-native knowledge base.
+A self-improving multi-agent orchestration framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and Codex CLI. Coordinate 18 specialized AI agents and 14 orchestration skills through a complete software development lifecycle, from issue to merged PR, with recursive orchestration, parallel review gates, and a git-native knowledge base.
 
 ## What Is This?
 
@@ -11,10 +11,10 @@ metaswarm is an extraction of a production-tested agentic orchestration system. 
 - **4-Phase Orchestrated Execution Loop**: Each work unit runs through IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT. The orchestrator validates independently (never trusts subagent self-reports), and adversarial reviewers check DoD compliance with file:line evidence
 - **Parallel Design Review Gate**: 5 specialist agents (PM, Architect, Designer, Security, CTO) review in parallel with a 3-iteration cap before human escalation
 - **Recursive orchestration**: Swarm Coordinators spawn Issue Orchestrators, which spawn sub-orchestrators for complex epics (swarm of swarms)
-- **Git-native task tracking**: Uses [BEADS](https://github.com/steveyegge/beads) (`bd` CLI) for issue/task management, dependencies, and knowledge priming
+- **Git-native task tracking**: Uses [BEADS](https://github.com/gastownhall/beads) (`bd` CLI) for issue/task management, dependencies, and knowledge priming
 - **Knowledge base**: JSONL-based fact store for patterns, gotchas, decisions, and anti-patterns — agents prime from this before every task
 - **Quality rubrics**: Standardized review criteria for code, architecture, security, testing, planning, and adversarial spec compliance
-- **External AI tool delegation**: Optionally delegate implementation and review tasks to OpenAI Codex CLI and Google Gemini CLI for cost savings and cross-model adversarial review
+- **External AI tool delegation**: Optionally delegate implementation and review tasks to OpenAI Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review
 - **Visual review**: Playwright-based screenshot capture for reviewing web UIs, presentations, and rendered pages
 - **PR lifecycle automation**: Autonomous CI monitoring, review comment handling, and thread resolution
 - **Workflow enforcement**: Mandatory quality gate intercepts at every handoff point — agents cannot skip design review, plan review, or knowledge capture
@@ -48,7 +48,7 @@ Your prompt (spec with DoD items) or GitHub Issue
         ▼
   Orchestrated Execution Loop (per work unit):
     IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT
-    (Optionally delegates IMPLEMENT to Codex/Gemini CLI)
+    (Optionally delegates to Codex or the enterprise/API-key Gemini adapter)
     (Cross-model REVIEW: writer always reviewed by different model)
         │
         ▼
@@ -67,7 +67,6 @@ Your prompt (spec with DoD items) or GitHub Issue
 metaswarm/
 ├── .claude-plugin/
 │   └── plugin.json           # Claude Code plugin manifest
-├── gemini-extension.json      # Gemini CLI extension manifest
 ├── .codex/
 │   ├── install.sh            # Codex CLI install script
 │   └── README.md             # Codex CLI usage guide
@@ -84,23 +83,22 @@ metaswarm/
 │   ├── status/               # Diagnostic checks
 │   ├── pr-shepherd/          # PR lifecycle automation
 │   ├── handling-pr-comments/ # Review comment workflow
+│   ├── handoff/              # Session-handoff analysis
 │   ├── brainstorming-extension/
 │   ├── create-issue/
-│   ├── external-tools/       # Cross-model AI delegation (Codex, Gemini CLI)
+│   ├── external-tools/       # Cross-model AI delegation adapters (Codex, enterprise/API-key Gemini)
 │   └── visual-review/        # Playwright-based screenshot review
-├── commands/                  # Slash commands
-│   ├── *.md                  # Claude Code commands (15 files)
-│   └── metaswarm/*.toml      # Gemini CLI commands (12 files)
+├── commands/                  # Claude Code commands
+│   └── *.md                  # Claude Code command definitions
 ├── agents/                    # 18 agent persona definitions
 ├── rubrics/                   # Quality review standards
 ├── guides/                    # Development patterns
 ├── knowledge/                 # Knowledge base schema + templates
-├── templates/                 # Setup templates (CLAUDE.md, AGENTS.md, GEMINI.md + append variants)
+├── templates/                 # Setup templates (CLAUDE.md and AGENTS.md + append variants)
 ├── lib/                       # Platform detection, sync, setup scripts
-├── cli/                       # Cross-platform installer (npx metaswarm)
+├── cli/                       # Claude/Codex installer (npx metaswarm)
 ├── CLAUDE.md                  # Claude Code project instructions
 ├── AGENTS.md                  # Codex CLI project instructions
-├── GEMINI.md                  # Gemini CLI extension context
 ├── INSTALL.md
 ├── GETTING_STARTED.md
 ├── USAGE.md
@@ -109,36 +107,31 @@ metaswarm/
 
 ## Install
 
+> **Upgrading from the upstream marketplace?** If you previously registered `dsifry/metaswarm-marketplace`, add this fork's marketplace (`claude plugin marketplace add Cabbala/metaswarm`), reinstall with `claude plugin install metaswarm@metaswarm`, then optionally remove the old source with `claude plugin marketplace remove metaswarm-marketplace` (the remove subcommand takes the registered marketplace NAME, not the repo slug).
+
 ### Claude Code (recommended)
 
 ```bash
-claude plugin marketplace add dsifry/metaswarm-marketplace
-claude plugin install metaswarm
+claude plugin marketplace add Cabbala/metaswarm
+claude plugin install metaswarm@metaswarm
 ```
+
+*(The plugin and its marketplace intentionally share the name `metaswarm`, hence the qualified `metaswarm@metaswarm` form.)*
 
 Then run `/setup` in Claude Code.
-
-### Gemini CLI
-
-```bash
-gemini extensions install https://github.com/dsifry/metaswarm.git
-```
-
-Then run `/metaswarm:setup` in your project.
 
 ### Codex CLI
 
 ```bash
-codex plugin marketplace add dsifry/metaswarm-marketplace
-codex
-# Open /plugins, select the metaswarm marketplace, and install metaswarm.
+codex plugin marketplace add Cabbala/metaswarm
+codex plugin add metaswarm@metaswarm
 ```
 
 Then run `$setup` in your project.
 
-### Cross-platform installer
+### Platform installer
 
-Detect installed CLIs and install metaswarm for all of them:
+Detect supported host CLIs and install metaswarm for them:
 
 ```bash
 npx metaswarm init
@@ -146,7 +139,7 @@ npx metaswarm init
 
 ### Start building
 
-Run `/start-task` (Claude/Gemini) or `$start` (Codex) and describe what you want in plain English. No issue required.
+Run `/start-task` (Claude) or `$start` (Codex) and describe what you want in plain English. No issue required.
 
 ```text
 /start-task Add a webhook system with retry logic, signature verification,
@@ -177,16 +170,15 @@ The reflection system also introspects into the Claude Code session itself, look
 
 These signals feed back into the knowledge base and can generate proposals for new skills, updated rubrics, or revised agent behaviors.
 
-### Selective Knowledge Priming
+### Project-Defined Knowledge Priming
 
-The knowledge base grows continuously, but agents don't load all of it. The `bd prime` command uses **selective retrieval** — filtering by affected files, keywords, and work type to load only the relevant subset:
+The bare `bd prime` command loads the project's priming context. To tailor that context for the repository, create the tracked `.beads/PRIME.md` override documented by `bd prime --help`; the former file, keyword, and work-type flags are not supported.
 
 ```bash
-# Only loads knowledge relevant to auth files and implementation work
-bd prime --files "src/api/auth/**" --keywords "authentication" --work-type implementation
+bd prime
 ```
 
-This means the knowledge base can grow to hundreds or thousands of entries without consuming context window. Agents get precisely the facts they need — the 5 critical gotchas for the files they're about to touch, not the entire institutional memory.
+This keeps the project-specific context explicit and versioned alongside the work it governs.
 
 ## Design Principles
 
@@ -205,14 +197,15 @@ This means the knowledge base can grow to hundreds or thousands of entries witho
 | Platform | Install Method | Commands |
 |---|---|---|
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Plugin marketplace | `/start-task`, `/setup`, etc. |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | Extension (`gemini extensions install`) | `/metaswarm:start-task`, etc. |
 | [Codex CLI](https://github.com/openai/codex) | Plugin marketplace | `$start`, `$setup`, etc. |
+| Cursor | Stub/planned — not supported | No shipped integration |
+| OpenCode | Stub/planned — not supported | No shipped integration |
 
 ## Requirements
 
-- One of: Claude Code, Gemini CLI, or Codex CLI
+- One of: Claude Code or Codex CLI
 - Node.js 18+ (for automation scripts)
-- [BEADS](https://github.com/steveyegge/beads) CLI (`bd`) v0.40+ — for task tracking (recommended)
+- [BEADS](https://github.com/gastownhall/beads) CLI (`bd`) v0.40+ — for task tracking (recommended)
 - GitHub CLI (`gh`) — for PR automation (recommended)
 - Playwright — for visual review skill (optional, `npx playwright install chromium`)
 
@@ -222,10 +215,12 @@ MIT
 
 ## Acknowledgments
 
-metaswarm stands on the shoulders of two key projects:
+metaswarm stands on the shoulders of three key projects:
 
-- **[BEADS](https://github.com/steveyegge/beads)** by [Steve Yegge](https://github.com/steveyegge) — The git-native, AI-first issue tracking system that serves as the coordination backbone for all agent task management, dependency tracking, and knowledge priming in metaswarm. BEADS made it possible to treat issue tracking as a first-class part of the codebase rather than an external service.
+- **[metaswarm upstream](https://github.com/dsifry/metaswarm)** by Dave Sifry — The upstream project from which this repository evolved.
 
-- **[Superpowers](https://github.com/obra/superpowers)** by [Jesse Vincent](https://github.com/obra) and contributors — The agentic skills framework and software development methodology that provides foundational skills metaswarm builds on, including brainstorming, test-driven development, systematic debugging, and plan writing. Superpowers demonstrated that disciplined agent workflows aren't overhead — they're what make autonomous development reliable.
+- **[BEADS](https://github.com/gastownhall/beads)** — The git-native, AI-first issue tracking system that serves as the coordination backbone for all agent task management, dependency tracking, and knowledge priming in metaswarm. BEADS made it possible to treat issue tracking as a first-class part of the codebase rather than an external service.
+
+- **[Superpowers](https://github.com/obra/superpowers)** by [Jesse Vincent](https://github.com/obra) and contributors — The agentic skills framework and software development methodology that provides the upstream skills metaswarm builds on: `brainstorming`, `executing-plans`, `finishing-a-development-branch`, `subagent-driven-development`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification-before-completion`, and `writing-plans`. Superpowers demonstrated that disciplined agent workflows aren't overhead — they're what make autonomous development reliable.
 
 metaswarm was created by [Dave Sifry](https://linkedin.com/in/dsifry), founder of Technorati, Linuxcare, and Warmstart, and former tech executive at Lyft and Reddit. Extracted from a production multi-tenant SaaS codebase where it has been writing production-level code with 100% test coverage, TDD, and spec-driven development across hundreds of autonomous PRs.

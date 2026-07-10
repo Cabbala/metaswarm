@@ -1,14 +1,6 @@
 ---
 name: start
-description: Use when starting work on any task, when the user mentions metaswarm, or when the user wants to begin tracked development work
-auto_activate: true
-triggers:
-  - "work on issue"
-  - "start issue"
-  - "start task"
-  - "use metaswarm"
-  - "@metaswarm"
-  - "agent-ready label"
+description: Use when starting a task or work on an issue, beginning tracked development work, the user says to use or @mentions metaswarm, or an issue has an agent-ready label
 ---
 
 # BEADS Multi-Agent Orchestration Skill
@@ -24,7 +16,7 @@ This skill coordinates a swarm of specialized AI agents to autonomously handle G
 ```bash
 # User triggers via any of:
 @beads start #123
-bd start 123
+bd update 123 --claim
 /beads-start 123
 ```
 
@@ -53,7 +45,7 @@ bd doctor         # Check system health
 | **Coder Agent**           | TDD implementation             | Design review gate approved        |
 | **Code Review Agent**     | Internal code review           | Implementation complete            |
 | **Security Auditor**      | Security review (code)         | Implementation complete            |
-| **Release Engineer Agent** | Safe delivery from merge through production | QA approves PR, PR reaches merge readiness |
+| **Release Engineer Agent** (optional) | Safe delivery from merge through production | PR reaches merge readiness (human-approved) |
 | **PR Shepherd**           | PR lifecycle management        | PR created                         |
 
 See `./agents/` directory for detailed agent definitions.
@@ -71,10 +63,11 @@ Design Document Created
 ┌─────────────────────────────────────────────────┐
 │           DESIGN REVIEW GATE                     │
 │                                                  │
-│  Spawns in PARALLEL:                            │
+│  Spawns 5 reviewers in PARALLEL:                │
+│  • Product Manager (use case, user benefit)     │
 │  • Architect Agent (technical architecture)     │
-│  • Designer Agent (UX/API design)               │
-│  • UX Reviewer (user flows, integration WUs)    │
+│  • Designer Agent (UX/API design + UX flows)    │
+│  • Security Design (threat modeling)            │
 │  • CTO Agent (TDD readiness)                    │
 │                                                  │
 │  ALL must approve to proceed                    │
@@ -101,9 +94,8 @@ The gate is automatically triggered when:
 | --------------- | ---------------------------------------------------------- |
 | Product Manager | Use case clarity, user benefits, scope, success metrics    |
 | Architect       | Service architecture, dependencies, patterns, integration  |
-| Designer        | API design, UX flows, developer experience, consistency    |
+| Designer        | API design, developer experience, consistency, AND (when UI exists) user flows, text wireframes, integration WUs, empty/loading/error states |
 | Security Design | Threat modeling, auth/authz, data protection, OWASP Top 10 |
-| UX Reviewer     | User flows, text wireframes, integration WUs, empty/error states |
 | CTO             | TDD readiness, codebase alignment, completeness, risks     |
 
 ### Iteration Protocol
@@ -202,15 +194,15 @@ See `orchestrated-execution` skill for the complete pattern, including work unit
 
 ## External AI Tools (Optional)
 
-When external AI CLI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator can delegate implementation and review tasks to OpenAI Codex CLI and Google Gemini CLI. This enables cost savings through cheaper models and cross-model adversarial review that eliminates single-model blind spots.
+When external AI CLI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator can delegate work to OpenAI Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18). This enables opt-in cross-model adversarial review without making Gemini a host platform.
 
 ### How It Integrates
 
 External tools slot directly into the existing 4-phase execution loop:
 
-- **Phase 1 (IMPLEMENT)**: The orchestrator may delegate to an external tool instead of spawning a Claude subagent. The tool works in an isolated git worktree.
+- **Phase 1 (IMPLEMENT)**: The orchestrator may delegate to an external tool instead of spawning a Claude subagent. The Gemini adapter only implements when its installed binary supports `--sandbox`; otherwise it is review-only post-EOL.
 - **Phase 2 (VALIDATE)**: Unchanged — the orchestrator independently runs all quality gates regardless of who implemented.
-- **Phase 3 (ADVERSARIAL REVIEW)**: Cross-model review — the writer is always reviewed by a different model (e.g., Codex writes, Gemini + Claude review).
+- **Phase 3 (ADVERSARIAL REVIEW)**: Cross-model review — the writer is always reviewed by a different model (e.g., Codex writes, the enterprise/API-key Gemini adapter + Claude review).
 - **Phase 4 (COMMIT)**: Unchanged — merge worktree branch after all phases pass.
 
 ### Escalation Chain
@@ -219,7 +211,7 @@ The orchestrator adapts based on tool availability:
 
 | Available Tools | Escalation Chain | Max Attempts |
 |---|---|---|
-| Both Codex + Gemini | A(2) → B(2) → Claude(1) → user | 5 |
+| Codex + enterprise/API-key Gemini adapter | A(2) → B(2) → Claude(1) → user | 5 |
 | One tool only | Tool(2) → Claude(1) → user | 3 |
 | No tools | Claude → user (existing behavior) | unchanged |
 
@@ -302,16 +294,16 @@ GitHub Issue #123 (agent-ready label)
 └─────────────────────────────────────┘
         │
         ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│                    DESIGN REVIEW GATE (PARALLEL)                          │
-│                                                                           │
-│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐ ┌───────┐ │
-│  │   PM    │ │ Architect│ │ Designer │ │ Security │ │UX Revw.│ │  CTO  │ │
-│  │(users)  │ │  (tech)  │ │ (UX/API) │ │ (threats)│ │(flows) │ │ (TDD) │ │
-│  └─────────┘ └──────────┘ └──────────┘ └──────────┘ └────────┘ └───────┘ │
-│                                                                           │
-│  ALL SIX must approve (max 3 iterations)                                  │
-└──────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                    DESIGN REVIEW GATE (PARALLEL)                 │
+│                                                                  │
+│  ┌─────────┐ ┌──────────┐ ┌──────────────┐ ┌──────────┐ ┌─────┐ │
+│  │   PM    │ │ Architect│ │   Designer   │ │ Security │ │ CTO │ │
+│  │(users)  │ │  (tech)  │ │(UX/API+flows)│ │ (threats)│ │(TDD)│ │
+│  └─────────┘ └──────────┘ └──────────────┘ └──────────┘ └─────┘ │
+│                                                                  │
+│  ALL FIVE must approve (max 3 iterations)                        │
+└────────────────────────────────────────────────────────────────┘
         │
         ▼
 ┌─────────────────────────────────────┐
@@ -364,7 +356,7 @@ GitHub Issue #123 (agent-ready label)
 ┌─────────────────────────────────────┐
 │       Release Engineer                │
 │  Pre-merge verify → merge → CI →     │
-│  deploy → post-deploy QA → release   │
+│  deploy → post-deploy verify → release│
 └─────────────────────────────────────┘
         │
         ▼
@@ -411,8 +403,8 @@ For manually-created PRs, invoke `/pr-shepherd <pr-number>` to start the monitor
 ### Issue Management
 
 ```bash
-# Create epic for GitHub Issue
-bd create "Feature: User Auth" --type epic --issue 123
+# Create epic linked to GitHub Issue 123
+bd create "Feature: User Auth" --type epic --external-ref "gh-123"
 
 # Create task under epic
 bd create "Research auth patterns" --type task --parent bd-abc123
@@ -459,14 +451,15 @@ bd label add <task-id> agent:failed
 bd label add <task-id> review:iteration-1
 ```
 
-### Sync Operations
+### Dolt Persistence Operations
 
 ```bash
-# Check sync status
-bd sync --status
+# Check Dolt persistence status
+bd dolt status
 
-# Pull updates from main
-bd sync --from-main
+# Commit and publish pending BEADS changes
+bd dolt commit
+bd dolt push
 
 # Export to JSONL
 bd export
@@ -489,8 +482,8 @@ gh issue view 123 --json labels | jq '.labels[].name' | grep agent-ready
 # Get Issue details
 ISSUE=$(gh issue view 123 --json title,body,number)
 
-# Create epic linked to Issue
-bd create "$(echo $ISSUE | jq -r .title)" --type epic --issue 123 --json
+# Create epic linked to the GitHub Issue
+bd create "$(echo $ISSUE | jq -r .title)" --type epic --external-ref "gh-$(echo $ISSUE | jq -r .number)" --json
 ```
 
 ### Step 3: Post Acknowledgment
@@ -625,24 +618,11 @@ const [reviewResult, securityResult] = await Promise.all([
 **ALL agents MUST prime their context before starting ANY work.** This prevents bad assumptions and ensures alignment with established patterns.
 
 ```bash
-# General prime (loads critical rules + gotchas)
+# Project-defined priming for every task phase
 bd prime
-
-# Prime for specific files you'll modify
-bd prime --files "src/lib/services/*.ts" "src/api/routes/*.ts"
-
-# Prime for specific topic
-bd prime --keywords "authentication" "jwt"
-
-# Prime for work type
-bd prime --work-type planning     # Before planning
-bd prime --work-type implementation  # Before coding
-bd prime --work-type review       # Before reviewing
-bd prime --work-type research     # Before exploring
-
-# Combined (most thorough)
-bd prime --files "<files>" --keywords "<topic>" --work-type <type>
 ```
+
+`bd prime` does not accept file, keyword, or work-type filters. Define project-specific priming context in the tracked `.beads/PRIME.md` override.
 
 The prime command outputs relevant facts categorized as:
 
@@ -663,7 +643,7 @@ GITHUB_TOKEN=$(gh auth token) npx tsx scripts/beads-fetch-pr-comments.ts --days 
 /self-reflect
 
 # Compact closed issues (semantic summarization via beads plugin)
-bd compact
+bd admin compact
 ```
 
 Or spawn Knowledge Curator agent:
@@ -674,7 +654,7 @@ Task({
   description: "Extract learnings from epic",
   prompt: `Review completed epic <epic-id> and extract learnings.
 
-FIRST: Run \`bd prime --work-type review\` to load context.
+FIRST: Run bare \`bd prime\` to load the project-defined context from \`.beads/PRIME.md\`.
 
 Then analyze:
 - What patterns were used?
@@ -768,17 +748,13 @@ bd doctor
 bd dep remove <task1> <task2>
 ```
 
-### BEADS Sync Issues
+### BEADS Dolt Persistence Issues
 
 ```bash
-# Check sync status
-bd sync --status
-
-# Force export
-bd export
-
-# Pull from main
-bd sync --from-main
+# Check persistence status, then commit and publish pending changes
+bd dolt status
+bd dolt commit
+bd dolt push
 ```
 
 ---
@@ -788,26 +764,27 @@ bd sync --from-main
 ```
 skills/start/                   # This skill (main orchestration)
 ├── SKILL.md                    # This file
-├── agents/                     # Agent definitions
-│   ├── issue-orchestrator.md   # Main coordinator (runs 4-phase loop)
-│   ├── researcher-agent.md     # Codebase exploration
-│   ├── architect-agent.md      # Implementation planning
-│   ├── product-manager-agent.md # Use case & user benefit review
-│   ├── designer-agent.md       # UX/API design review
-│   ├── security-design-agent.md # Security threat modeling
-│   ├── cto-agent.md            # TDD readiness review
-│   ├── coder-agent.md          # TDD implementation
-│   ├── code-review-agent.md    # Internal code review (collaborative + adversarial modes)
-│   ├── security-auditor-agent.md # Security review (implementation)
-│   ├── release-engineer-agent.md # Merge → deploy → verify → release
-│   └── pr-shepherd-agent.md    # PR lifecycle management
-├── guides/                     # Development guides
-│   ├── agent-coordination.md   # Team Mode, inter-agent messaging
-│   ├── git-workflow.md         # Branch naming, commit conventions
-│   ├── testing-patterns.md     # TDD workflow, mock strategies
-│   ├── coding-standards.md     # Language idioms, naming conventions
-│   ├── worktree-development.md # Parallel development with worktrees
-│   └── build-validation.md     # Pre-push checks, CI pipeline
+├── agents/                     # 18 definitions synced from repo-root agents/
+│   ├── architect-agent.md
+│   ├── code-review-agent.md
+│   ├── coder-agent.md
+│   ├── cto-agent.md
+│   ├── customer-service-agent.md
+│   ├── designer-agent.md
+│   ├── issue-orchestrator.md
+│   ├── knowledge-curator-agent.md
+│   ├── metrics-agent.md
+│   ├── pr-shepherd-agent.md
+│   ├── product-manager-agent.md
+│   ├── release-engineer-agent.md
+│   ├── researcher-agent.md
+│   ├── security-auditor-agent.md
+│   ├── security-design-agent.md
+│   ├── slack-coordinator-agent.md
+│   ├── sre-agent.md
+│   └── swarm-coordinator-agent.md
+├── guides/                     # Co-located guides
+│   └── agent-coordination.md   # The only guide in this directory
 ├── rubrics/                    # Review rubrics
 │   ├── plan-review-rubric.md   # Used by CTO Agent
 │   ├── code-review-rubric.md   # Used by Code Review Agent (collaborative mode)
@@ -817,7 +794,18 @@ skills/start/                   # This skill (main orchestration)
 └── references/                 # Reference docs for other tools
     ├── codex-tools.md          # OpenAI Codex CLI reference
     ├── cursor-tools.md         # Cursor tools reference
-    └── opencode-tools.md       # OpenCode tools reference
+    ├── opencode-tools.md       # OpenCode tools reference
+    └── platform-adaptation.md  # Host-platform adaptation reference
+
+guides/                         # Repository-wide guide sources
+├── agent-authoring-template.md
+├── agent-coordination.md       # Synced into selected skill directories
+├── build-validation.md
+├── coding-standards.md
+├── dispatch-contract.md        # Synced into selected review/execution skills
+├── git-workflow.md
+├── testing-patterns.md
+└── worktree-development.md
 
 skills/orchestrated-execution/  # 4-phase execution loop pattern
 └── SKILL.md
@@ -836,7 +824,7 @@ skills/external-tools/          # External AI tool delegation
 ├── adapters/
 │   ├── _common.sh              # Shared adapter helpers (14 functions)
 │   ├── codex.sh                # OpenAI Codex CLI adapter
-│   └── gemini.sh               # Google Gemini CLI adapter
+│   └── gemini.sh               # Enterprise/API-key Gemini compatibility adapter
 └── rubrics/
     └── external-tool-review-rubric.md  # Used by cross-model adversarial review
 

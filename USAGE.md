@@ -27,7 +27,6 @@ metaswarm provides 18 specialized agents, each with a defined role in the softwa
 | Agent | File | Role |
 |---|---|---|
 | **Coder** | `agents/coder-agent.md` | TDD implementation (RED-GREEN-REFACTOR). 100% coverage required. |
-| **Test Automator** | `agents/test-automator-agent.md` | Test generation and coverage enforcement. |
 
 ### Review Agents
 
@@ -41,6 +40,7 @@ metaswarm provides 18 specialized agents, each with a defined role in the softwa
 | Agent | File | Role |
 |---|---|---|
 | **PR Shepherd** | `agents/pr-shepherd-agent.md` | PR lifecycle: CI monitoring, review comment handling, thread resolution. |
+| **Release Engineer** (optional) | `agents/release-engineer-agent.md` | Safe delivery from merge through production; changelog/release notes. |
 
 ### Support Agents
 
@@ -54,7 +54,7 @@ metaswarm provides 18 specialized agents, each with a defined role in the softwa
 
 ## Guides
 
-metaswarm ships 6 development guides in the `guides/` directory. These are reference documents for agents and humans working in the project.
+metaswarm ships 8 development guides in the `guides/` directory. These are reference documents for agents and humans working in the project.
 
 | Guide | File | Covers |
 |---|---|---|
@@ -123,14 +123,14 @@ Uses the `adversarial-review-rubric.md` for reviews (distinct from the collabora
 
 **Path**: `skills/design-review-gate/SKILL.md`
 
-Spawns 6 agents in parallel to review a design document:
+Spawns 5 agents in parallel to review a design document:
 
 ```text
 /review-design <path-to-spec>
 ```
 
-- PM, Architect, Designer, Security, UX Reviewer, CTO review simultaneously
-- All 6 must APPROVE
+- PM, Architect, Designer, Security, CTO review simultaneously (5 reviewers; the Designer covers UX flows when a UI exists)
+- All 5 must APPROVE
 - Max 3 iterations before human escalation
 - Catches architectural issues before implementation begins
 
@@ -181,7 +181,7 @@ All 3 reviewers must APPROVE before the plan proceeds to implementation. Sits be
 
 **Path**: `skills/external-tools/SKILL.md`
 
-Delegates implementation and review tasks to external AI CLI tools (OpenAI Codex CLI, Google Gemini CLI) for cost savings and cross-model adversarial review:
+Delegates implementation and review tasks to OpenAI Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review:
 
 - **Adapter protocol**: Uniform shell adapter interface (health, implement, review) with structured JSON output
 - **Cross-model review**: Writer is always reviewed by a different AI model, eliminating single-model blind spots
@@ -216,14 +216,14 @@ Prerequisites: `npx playwright install chromium`
 | `/update` | Update metaswarm plugin to latest version |
 | `/status` | Run 9 diagnostic checks on your installation |
 | `/prime` | Load relevant knowledge before starting work |
-| `/review-design <path>` | Run the 6-agent Design Review Gate |
+| `/review-design <path>` | Run the 5-agent Design Review Gate |
 | `/brainstorm` | Refine an idea before implementation |
 | `/self-reflect` | Extract learnings from recent PR reviews |
 | `/handoff` | Write a self-contained handoff doc so a fresh agent can resume the work |
 | `/pr-shepherd <pr>` | Monitor PR through to merge |
 | `/handle-pr-comments <pr>` | Address PR review feedback |
 | `/create-issue` | Create a GitHub issue with agent instructions |
-| `/external-tools-health` | Check status of external AI tools (Codex, Gemini) |
+| `/external-tools-health` | Check Codex and enterprise/API-key Gemini adapter status |
 | `/metaswarm-setup` | Legacy alias for `/setup` |
 | `/metaswarm-update-version` | Legacy alias for `/update` |
 
@@ -245,25 +245,25 @@ bd ready                       # Show unblocked tasks
 bd blocked                     # Show blocked tasks
 
 # Knowledge
-bd prime                       # Load all relevant knowledge
-bd prime --keywords "auth"     # Filter by keyword
-bd prime --work-type impl      # Filter by work type
+bd prime                       # Load project context (customize via tracked .beads/PRIME.md)
 
-# Sync
-bd sync                        # Sync with git
-bd export                      # Export to JSONL
+# Persistence (Dolt-backed)
+bd dolt status                 # Show Dolt server status
+bd dolt commit                 # Commit pending changes
+bd dolt push                   # Push commits to Dolt remote
+bd export                      # Export issues to JSONL (NOT a full backup)
 ```
 
 ## Knowledge Base
 
 ### File Schema
 
-All files in `knowledge/` use JSONL format:
+The repository's `knowledge/` directory is the seed schema shipped with metaswarm. Setup copies that seed into the project's runtime knowledge base at `.beads/knowledge/`; its JSONL files use this format:
 
 ```json
 {
   "id": "unique-identifier",
-  "type": "pattern|gotcha|decision|anti-pattern|codebase-fact|api-behavior",
+  "type": "api_behavior|code_quirk|pattern|gotcha|decision|dependency|performance|security",
   "fact": "Clear description of the knowledge",
   "recommendation": "What to do about it",
   "confidence": "high|medium|low",
@@ -380,7 +380,7 @@ Quality standards used by review agents:
 | `architecture-rubric.md` | Architect Agent | Service design, coupling, scalability |
 | `security-review-rubric.md` | Security Auditor | OWASP Top 10, auth, data handling |
 | `plan-review-rubric.md` | CTO Agent | TDD readiness, completeness, alignment |
-| `test-coverage-rubric.md` | Test Automator | Coverage, edge cases, mock quality |
+| `test-coverage-rubric.md` | Coder Agent (TDD) | Coverage, edge cases, mock quality |
 | `external-tool-review-rubric.md` | Cross-model adversarial reviewers | Binary PASS/FAIL for cross-model review, file:line evidence |
 
 ## Scripts
@@ -403,9 +403,9 @@ The full orchestration lifecycle:
 | 2. Planning | Architect | Implementation plan with tasks |
 | 2a. External Dependency Detection | Issue Orchestrator | Identifies API keys/credentials, prompts user |
 | 2b. Plan Validation | Issue Orchestrator | Pre-flight checklist (architecture, deps, API contracts, security, UI/UX) |
-| 3. Design Review | PM + Architect + Designer + Security + UX Reviewer + CTO (parallel) | APPROVE/REVISE verdicts |
+| 3. Design Review | PM + Architect + Designer + Security + CTO (parallel, 5 reviewers) | APPROVE/REVISE verdicts |
 | 4. Work Unit Decomposition | Issue Orchestrator | Work units with DoD items, file scopes, dependency graph |
-| 5. Orchestrated Execution | Coder (or External Tool) + Orchestrator + Adversarial Reviewer (per unit) | IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT loop (optionally delegates to Codex/Gemini) |
+| 5. Orchestrated Execution | Coder (or External Tool) + Orchestrator + Adversarial Reviewer (per unit) | IMPLEMENT → VALIDATE → ADVERSARIAL REVIEW → COMMIT loop (optionally delegates to Codex or the enterprise/API-key Gemini adapter) |
 | 6. Final Comprehensive Review | Issue Orchestrator | Cross-unit integration check, full test suite |
 | 7. PR Creation | Issue Orchestrator | GitHub PR |
 | 8. PR Shepherd | PR Shepherd | CI fixes, comment responses |

@@ -92,7 +92,7 @@ else
 fi
 
 # emit_error: produces valid JSON
-ERROR_JSON="$(bash -c "source '$COMMON_SH' && emit_error codex implement gpt-5.3-codex 1 1 '' 0 ''")"
+ERROR_JSON="$(bash -c "source '$COMMON_SH' && emit_error codex implement gpt-5.6-terra 1 1 '' 0 ''")"
 if printf '%s' "$ERROR_JSON" | jq . >/dev/null 2>&1; then
   pass "emit_error produces valid JSON"
 else
@@ -123,9 +123,9 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 3. gemini.sh tests
+# 3. Enterprise/API-key Gemini adapter tests (consumer CLI discontinued 2026-06-18)
 # ---------------------------------------------------------------------------
-printf '\n=== gemini.sh ===\n'
+printf '\n=== enterprise/API-key gemini adapter ===\n'
 
 # Syntax check
 check "gemini.sh syntax" bash -n "$GEMINI_SH"
@@ -139,10 +139,10 @@ else
 fi
 
 # Health JSON contains required keys
-if printf '%s' "$HEALTH_JSON" | jq -e '.tool and .status and .model' >/dev/null 2>&1; then
-  pass "gemini.sh health JSON has required keys (tool, status, model)"
+if printf '%s' "$HEALTH_JSON" | jq -e '.tool and .status and .model and .binary_path and .version_output' >/dev/null 2>&1; then
+  pass "gemini.sh health JSON has supply-chain keys (tool, status, model, binary_path, version_output)"
 else
-  fail "gemini.sh health JSON missing required keys"
+  fail "gemini.sh health JSON missing required supply-chain keys"
 fi
 
 # ---------------------------------------------------------------------------

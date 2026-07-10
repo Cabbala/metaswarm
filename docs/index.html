@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>metaswarm - Multi-Agent Orchestration for Claude Code</title>
-  <meta name="description" content="A self-improving multi-agent orchestration framework for Claude Code, Gemini CLI, and Codex CLI. 18 agents, 13 skills, 15 commands. TDD, cross-model adversarial review, spec-driven development. Production-proven.">
+  <meta name="description" content="A self-improving multi-agent orchestration framework for Claude Code and Codex CLI. 18 agents, 14 skills, 16 commands. TDD, cross-model adversarial review, spec-driven development. Production-proven.">
   <style>
     :root {
       --bg: #ffffff;
@@ -386,18 +386,18 @@
 <div class="container">
 
   <nav style="display: flex; align-items: center; gap: 24px; padding: 24px 0; font-size: 14px;">
-    <a href="https://github.com/dsifry/metaswarm">GitHub</a>
-    <a href="https://github.com/dsifry/metaswarm/blob/main/INSTALL.md">Install</a>
-    <a href="https://github.com/dsifry/metaswarm/blob/main/GETTING_STARTED.md">Getting Started</a>
-    <a href="https://github.com/dsifry/metaswarm/blob/main/USAGE.md">Usage</a>
+    <a href="https://github.com/Cabbala/metaswarm">GitHub</a>
+    <a href="https://github.com/Cabbala/metaswarm/blob/main/INSTALL.md">Install</a>
+    <a href="https://github.com/Cabbala/metaswarm/blob/main/GETTING_STARTED.md">Getting Started</a>
+    <a href="https://github.com/Cabbala/metaswarm/blob/main/USAGE.md">Usage</a>
     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode">
       <span id="theme-icon">&#9788;</span>
     </button>
   </nav>
 
   <header>
-    <h1><a href="https://github.com/dsifry/metaswarm" style="color: inherit; text-decoration: none;"><span>meta</span>swarm</a></h1>
-    <p class="tagline">A self-improving multi-agent orchestration framework for Claude Code, Gemini CLI, and Codex CLI. 18 specialized agents coordinate through the full development lifecycle, from GitHub issue to merged PR, with TDD, cross-model adversarial review, and spec-driven development.</p>
+    <h1><a href="https://github.com/Cabbala/metaswarm" style="color: inherit; text-decoration: none;"><span>meta</span>swarm</a></h1>
+    <p class="tagline">A self-improving multi-agent orchestration framework for Claude Code and Codex CLI. 18 specialized agents coordinate through the full development lifecycle, from GitHub issue to merged PR, with TDD, cross-model adversarial review, and spec-driven development.</p>
   </header>
 
   <!-- QUICK INSTALL -->
@@ -405,18 +405,18 @@
     <p style="color: var(--text-muted); font-size: 15px; margin-bottom: 12px;">Just tell Claude what you want:</p>
     <div style="position: relative;">
       <pre style="font-size: 18px; padding: 20px 24px; margin: 0;"><code><span class="cmd">$</span> claude
-<span style="color: var(--accent);">&gt;</span> Read through https://github.com/dsifry/metaswarm and install it for my project.</code></pre>
+<span style="color: var(--accent);">&gt;</span> Read through https://github.com/Cabbala/metaswarm and install it for my project.</code></pre>
       <button onclick="copyInstall()" style="position: absolute; top: 12px; right: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; cursor: pointer; color: var(--text-muted); font-size: 16px; line-height: 1; transition: color 0.15s, border-color 0.15s;" aria-label="Copy to clipboard" title="Copy to clipboard" id="copy-btn">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/></svg>
       </button>
       <span id="copy-tooltip" style="position: absolute; top: -32px; right: 12px; left: auto; transform: translateX(0) translateY(4px); background: var(--text); color: var(--bg); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; white-space: nowrap; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none;">Copied!</span>
     </div>
     <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px;">Claude reads the documentation, understands your project structure, installs the plugin, and configures everything for your stack. Supports TypeScript, Python, Go, Rust, Java, Ruby, and JavaScript.</p>
-    <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px;"><strong style="color: var(--text);">Have Gemini CLI or Codex CLI installed?</strong> metaswarm can delegate implementation and review tasks to them automatically &mdash; the writer is always reviewed by a different model. Setup detects them and offers to enable cross-model orchestration.</p>
+    <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px;"><strong style="color: var(--text);">Need cross-model review?</strong> metaswarm can use Codex and the optional enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18); the adapter remains disabled until explicitly configured.</p>
     <p style="color: var(--text-muted); font-size: 13px; margin-top: 16px;">Or install directly:</p>
     <div style="position: relative;">
-      <pre style="font-size: 14px; padding: 14px 18px; margin: 8px 0 0 0;"><code><span class="cmd">claude</span> plugin marketplace add dsifry/metaswarm-marketplace
-<span class="cmd">claude</span> plugin install metaswarm
+      <pre style="font-size: 14px; padding: 14px 18px; margin: 8px 0 0 0;"><code><span class="cmd">claude</span> plugin marketplace add Cabbala/metaswarm
+<span class="cmd">claude</span> plugin install metaswarm@metaswarm
 <span class="comment"># then in Claude Code:</span> /metaswarm:setup</code></pre>
       <button onclick="copyDirect()" style="position: absolute; top: 8px; right: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; cursor: pointer; color: var(--text-muted); font-size: 14px; line-height: 1; transition: color 0.15s, border-color 0.15s;" aria-label="Copy to clipboard" title="Copy to clipboard" id="copy-btn-direct">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/></svg>
@@ -437,7 +437,7 @@
     }, 2000);
   }
   function copyInstall() {
-    copyText('Read through https://github.com/dsifry/metaswarm and install it for my project.', 'copy-btn');
+    copyText('Read through https://github.com/Cabbala/metaswarm and install it for my project.', 'copy-btn');
     var tooltip = document.getElementById('copy-tooltip');
     tooltip.style.opacity = '1';
     tooltip.style.transform = 'translateX(-50%) translateY(0)';
@@ -446,7 +446,7 @@
       tooltip.style.transform = 'translateX(-50%) translateY(4px)';
     }, 2000);
   }
-  function copyDirect() { copyText('claude plugin marketplace add dsifry/metaswarm-marketplace && claude plugin install metaswarm', 'copy-btn-direct'); }
+  function copyDirect() { copyText('claude plugin marketplace add Cabbala/metaswarm && claude plugin install metaswarm@metaswarm', 'copy-btn-direct'); }
   </script>
 
   <!-- ONE-SHOT EXAMPLE -->
@@ -457,7 +457,7 @@
     <h3>Set up</h3>
     <pre><code><span class="cmd">mkdir</span> my-app <span class="cmd">&amp;&amp; cd</span> my-app <span class="cmd">&amp;&amp;</span> git init <span class="cmd">&amp;&amp;</span> npm init -y
 <span class="cmd">claude</span>
-<span class="comment"># &gt; Read through https://github.com/dsifry/metaswarm and install it for my project.</span></code></pre>
+<span class="comment"># &gt; Read through https://github.com/Cabbala/metaswarm and install it for my project.</span></code></pre>
 
     <h3>Start building</h3>
     <p>Run <code>/metaswarm:start-task</code> and describe what you want in plain English. Include a tech stack, Definition of Done items, and where you want human checkpoints. The more specific the spec, the better the agents perform.</p>
@@ -482,7 +482,7 @@ after the database schema and after the AI integration.
 When all work units pass, create a PR.</code></pre>
     </div>
 
-    <p>The orchestrator takes over. It researches your project, plans the implementation, runs a pre-flight validation checklist, then six agents review the plan in parallel. It identifies external dependencies and prompts you for API keys. It breaks the plan into work units, and executes each through the 4-phase loop: implement with TDD, validate independently (with blocking coverage enforcement), adversarial review against the spec, and commit only after PASS. Quality gates are blocking state transitions &mdash; there is no path from FAIL to COMMIT. It pauses for your review at the checkpoints you specified. When everything passes, it creates and shepherds the PR.</p>
+    <p>The orchestrator takes over. It researches your project, plans the implementation, runs a pre-flight validation checklist, then five agents review the plan in parallel. It identifies external dependencies and prompts you for API keys. It breaks the plan into work units, and executes each through the 4-phase loop: implement with TDD, validate independently (with blocking coverage enforcement), adversarial review against the spec, and commit only after PASS. Quality gates are blocking state transitions &mdash; there is no path from FAIL to COMMIT. It pauses for your review at the checkpoints you specified. When everything passes, it creates and shepherds the PR.</p>
     <p>You described what you wanted. The system figured out how to build it.</p>
   </section>
 
@@ -519,8 +519,8 @@ When all work units pass, create a PR.</code></pre>
       <div class="pipeline-step">
         <div class="step-num">4</div>
         <span class="step-label">Design Review Gate</span>
-        <span class="step-detail">PM, Architect, Designer, Security, UX Reviewer, CTO review in parallel</span>
-        <span class="parallel-badge">6 agents parallel</span>
+        <span class="step-detail">PM, Architect, Designer, Security, CTO review in parallel (5 reviewers)</span>
+        <span class="parallel-badge">5 agents parallel</span>
       </div>
       <div class="pipeline-step">
         <div class="step-num">5</div>
@@ -535,7 +535,7 @@ When all work units pass, create a PR.</code></pre>
       <div class="pipeline-step">
         <div class="step-num">7</div>
         <span class="step-label">Orchestrated Execution</span>
-        <span class="step-detail">Per work unit: Implement &rarr; Validate &rarr; Adversarial Review &rarr; Commit. Can delegate to Codex/Gemini CLIs.</span>
+        <span class="step-detail">Per work unit: Implement &rarr; Validate &rarr; Adversarial Review &rarr; Commit. Can delegate to Codex or the enterprise/API-key Gemini adapter.</span>
         <span class="parallel-badge">4-phase loop</span>
       </div>
       <div class="pipeline-step">
@@ -560,7 +560,7 @@ When all work units pass, create a PR.</code></pre>
       </div>
     </div>
 
-    <p>The Design Review Gate is the part that surprised me. Six agents review the plan simultaneously, each from a different perspective &mdash; including a UX Reviewer that verifies user flows and integration work units. All six have to approve before implementation starts. If they do not agree after three rounds, the system escalates to a human. This catches real problems. Not theoretical ones.</p>
+    <p>The Design Review Gate is the part that surprised me. Five agents review the plan simultaneously, each from a different perspective &mdash; the Designer also verifies user flows and integration work units when there is a UI. All five have to approve before implementation starts. If they do not agree after three rounds, the system escalates to a human. This catches real problems. Not theoretical ones.</p>
   </section>
 
   <!-- SELF-LEARNING -->
@@ -608,16 +608,16 @@ When all work units pass, create a PR.</code></pre>
   <!-- EXTERNAL AI TOOLS -->
   <section>
     <h2>Cross-Model Adversarial Review</h2>
-    <p>A coding agent reviewing its own output has an inherent bias. metaswarm can delegate implementation and review tasks to external AI tools &mdash; OpenAI Codex CLI and Google Gemini CLI &mdash; with one rule: <strong>the writer is always reviewed by a different model.</strong></p>
+    <p>A coding agent reviewing its own output has an inherent bias. metaswarm can delegate to OpenAI Codex CLI and the optional enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18) with one rule: <strong>the writer is always reviewed by a different model.</strong></p>
 
     <div class="features">
       <div class="feature">
         <h4>Cross-Model Review</h4>
-        <p>If Claude writes the code, Codex or Gemini reviews it. If Codex writes it, Claude or Gemini reviews. The reviewer never shares the writer's biases.</p>
+        <p>If Claude writes the code, Codex or the enterprise/API-key Gemini adapter reviews it. If Codex writes it, Claude or the adapter reviews it. The reviewer never shares the writer's biases.</p>
       </div>
       <div class="feature">
         <h4>Availability-Aware Escalation</h4>
-        <p>Model A (2 tries) &rarr; Model B (2 tries) &rarr; Claude (1 try) &rarr; user alert. If Codex is down, Gemini takes over automatically.</p>
+        <p>Model A (2 tries) &rarr; Model B (2 tries) &rarr; Claude (1 try) &rarr; user alert. The enterprise/API-key Gemini adapter is explicit opt-in and never a host-platform fallback.</p>
       </div>
       <div class="feature">
         <h4>Shell Adapters</h4>
@@ -651,15 +651,15 @@ When all work units pass, create a PR.</code></pre>
     <div class="features">
       <div class="feature">
         <h4>18 Agent Personas</h4>
-        <p>Researcher, Architect, PM, Designer, Security, CTO, Coder, Code Reviewer, Security Auditor, PR Shepherd, Test Automator, Knowledge Curator, and more. Each has a defined role, process, and output format.</p>
+        <p>Researcher, Architect, PM, Designer, Security, CTO, Coder, Code Reviewer, Security Auditor, PR Shepherd, Knowledge Curator, and more. Each has a defined role, process, and output format.</p>
       </div>
       <div class="feature">
-        <h4>13 Orchestration Skills</h4>
-        <p>Orchestrated execution, design review gate, plan review gate, PR shepherd, PR comment handling, external AI tools delegation, visual review, brainstorming extension, issue creation, interactive setup, migration, status diagnostics, and the main start workflow.</p>
+        <h4>14 Orchestration Skills</h4>
+        <p>Orchestrated execution, design review gate, plan review gate, PR shepherd, PR comment handling, session handoff, external AI tools delegation, visual review, brainstorming extension, issue creation, interactive setup, migration, status diagnostics, and the main start workflow.</p>
       </div>
       <div class="feature">
-        <h4>15 Slash Commands</h4>
-        <p><code>/metaswarm:setup</code>, <code>/metaswarm:update</code>, <code>/metaswarm:status</code>, <code>/metaswarm:start-task</code>, <code>/metaswarm:start</code>, <code>/metaswarm:prime</code>, <code>/metaswarm:review-design</code>, <code>/metaswarm:brainstorm</code>, <code>/metaswarm:self-reflect</code>, <code>/metaswarm:pr-shepherd</code>, <code>/metaswarm:create-issue</code>, <code>/metaswarm:handle-pr-comments</code>, <code>/metaswarm:external-tools-health</code>.</p>
+        <h4>16 Slash Commands</h4>
+        <p><code>/metaswarm:brainstorm</code>, <code>/metaswarm:create-issue</code>, <code>/metaswarm:external-tools-health</code>, <code>/metaswarm:handle-pr-comments</code>, <code>/metaswarm:handoff</code>, <code>/metaswarm:metaswarm-setup</code>, <code>/metaswarm:metaswarm-update-version</code>, <code>/metaswarm:pr-shepherd</code>, <code>/metaswarm:prime</code>, <code>/metaswarm:review-design</code>, <code>/metaswarm:self-reflect</code>, <code>/metaswarm:setup</code>, <code>/metaswarm:start</code>, <code>/metaswarm:start-task</code>, <code>/metaswarm:status</code>, and <code>/metaswarm:update</code>.</p>
       </div>
       <div class="feature">
         <h4>8 Quality Rubrics</h4>
@@ -703,7 +703,7 @@ When all work units pass, create a PR.</code></pre>
       </div>
       <div class="feature">
         <h4>Context Recovery</h4>
-        <p>Approved plans and execution state persist to <code>.beads/</code> on disk. After context compaction or session interruption, <code>bd prime --work-type recovery</code> reloads everything: the plan, completed work, current position. No re-running expensive review gates.</p>
+        <p>Approved plans and execution state persist to <code>.beads/</code> on disk. After context compaction or session interruption, bare <code>bd prime</code> reloads the project-defined context. Customize that context with the tracked <code>.beads/PRIME.md</code> override. No re-running expensive review gates.</p>
       </div>
     </div>
   </section>
@@ -717,6 +717,7 @@ When all work units pass, create a PR.</code></pre>
         <tr><th>Agent</th><th>Phase</th><th>What It Does</th></tr>
       </thead>
       <tbody>
+        <tr><td>Release Engineer (optional)</td><td>Deliver</td><td>Merge through production: deploy, verify, changelog/release notes</td></tr>
         <tr><td>Swarm Coordinator</td><td>Meta</td><td>Assigns work to worktrees, manages parallel execution</td></tr>
         <tr><td>Issue Orchestrator</td><td>Meta</td><td>Decomposes issues into tasks, manages phase handoffs</td></tr>
         <tr><td>Researcher</td><td>Research</td><td>Explores codebase, discovers patterns and dependencies</td></tr>
@@ -730,8 +731,7 @@ When all work units pass, create a PR.</code></pre>
         <tr><td>Security Auditor</td><td>Review</td><td>Vulnerability scanning, OWASP checks</td></tr>
         <tr><td>PR Shepherd</td><td>Delivery</td><td>CI monitoring, comment handling, thread resolution</td></tr>
         <tr><td>Knowledge Curator</td><td>Learning</td><td>Extracts learnings, updates knowledge base</td></tr>
-        <tr><td>Test Automator</td><td>Implement</td><td>Test generation and coverage enforcement</td></tr>
-        <tr><td>Metrics</td><td>Support</td><td>Analytics and weekly reports</td></tr>
+                <tr><td>Metrics</td><td>Support</td><td>Analytics and weekly reports</td></tr>
         <tr><td>SRE</td><td>Support</td><td>Infrastructure and performance</td></tr>
         <tr><td>Slack Coordinator</td><td>Support</td><td>Notifications and human communication</td></tr>
         <tr><td>Customer Service</td><td>Support</td><td>User support and triage</td></tr>
@@ -766,7 +766,7 @@ When all work units pass, create a PR.</code></pre>
 
     <p>The guided setup (<code>/metaswarm:setup</code>) detects your test runner and configures coverage enforcement automatically. For manual setup, copy the template:</p>
     <pre><code><span class="cmd">cp</span> templates/coverage-thresholds.json .coverage-thresholds.json</code></pre>
-    <p>The thresholds work with any test runner. The setup skill maps your detected test runner to the correct coverage command automatically &mdash; <code>pnpm test:coverage</code>, <code>pytest --cov</code>, <code>cargo tarpaulin</code>, <code>go test -cover</code>, or whatever your project uses. See <a href="https://github.com/dsifry/metaswarm/blob/main/docs/coverage-enforcement.md">coverage-enforcement.md</a> for the full setup guide.</p>
+    <p>The thresholds work with any test runner. The setup skill maps your detected test runner to the correct coverage command automatically &mdash; <code>pnpm test:coverage</code>, <code>pytest --cov</code>, <code>cargo tarpaulin</code>, <code>go test -cover</code>, or whatever your project uses. See <a href="https://github.com/Cabbala/metaswarm/blob/main/docs/coverage-enforcement.md">coverage-enforcement.md</a> for the full setup guide.</p>
   </section>
 
   <!-- SETUP -->
@@ -775,44 +775,40 @@ When all work units pass, create a PR.</code></pre>
     <h3>Prerequisites</h3>
     <ul>
       <li><a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a></li>
-      <li><a href="https://github.com/steveyegge/beads">BEADS CLI</a> (<code>bd</code>) v0.40+ (optional &mdash; for knowledge base)</li>
+      <li><a href="https://github.com/gastownhall/beads">BEADS CLI</a> (<code>bd</code>) v0.40+ (optional &mdash; for knowledge base)</li>
       <li><a href="https://github.com/obra/superpowers">Superpowers</a> plugin (optional but recommended)</li>
       <li>GitHub CLI (<code>gh</code>)</li>
       <li>Node.js 18+</li>
     </ul>
 
     <h3>Claude Code</h3>
-    <pre><code><span class="cmd">claude</span> plugin marketplace add dsifry/metaswarm-marketplace
-<span class="cmd">claude</span> plugin install metaswarm</code></pre>
-    <p>Then: <code>/metaswarm:setup</code></p>
-
-    <h3>Gemini CLI</h3>
-    <pre><code><span class="cmd">gemini</span> extensions install https://github.com/dsifry/metaswarm.git</code></pre>
+    <pre><code><span class="cmd">claude</span> plugin marketplace add Cabbala/metaswarm
+<span class="cmd">claude</span> plugin install metaswarm@metaswarm</code></pre>
     <p>Then: <code>/metaswarm:setup</code></p>
 
     <h3>Codex CLI</h3>
-    <pre><code>curl -sSL https://raw.githubusercontent.com/dsifry/metaswarm/main/.codex/install.sh | bash</code></pre>
+    <pre><code>curl -sSL https://raw.githubusercontent.com/Cabbala/metaswarm/main/.codex/install.sh | bash</code></pre>
     <p>Then: <code>$setup</code></p>
 
-    <h3>Cross-Platform (auto-detect)</h3>
+    <h3>Supported Platform Auto-detection</h3>
     <pre><code>npx metaswarm init</code></pre>
     <p>Detects which CLIs you have installed and sets up metaswarm for each.</p>
 
-    <p>Setup detects your project's language, framework, test runner, linter, formatter, type checker, package manager, CI system, and git hooks. It creates the appropriate instruction file (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, or <code>AGENTS.md</code>), configures coverage thresholds, and sets up <code>.gitignore</code>. Supports: TypeScript, Python, Go, Rust, Java, Ruby, JavaScript.</p>
+    <p>Setup detects your project's language, framework, test runner, linter, formatter, type checker, package manager, CI system, and git hooks. It creates the appropriate instruction file (<code>CLAUDE.md</code> or <code>AGENTS.md</code>), configures coverage thresholds, and sets up <code>.gitignore</code>. Supports: TypeScript, Python, Go, Rust, Java, Ruby, JavaScript.</p>
 
     <h3>Updating</h3>
-    <p>Claude Code: <code>/metaswarm:update</code> &bull; Gemini CLI: <code>/metaswarm:update</code> &bull; Codex CLI: <code>cd ~/.codex/metaswarm && git pull</code></p>
+    <p>Claude Code: <code>/metaswarm:update</code> &bull; Codex CLI: <code>cd ~/.codex/metaswarm && git pull</code></p>
 
     <h3>Upgrading from an Older Version</h3>
     <p>If you installed metaswarm via <code>npx metaswarm init</code> (v0.6&ndash;v0.8), upgrade to the plugin:</p>
     <ol>
-      <li>Install the plugin: <code>claude plugin marketplace add dsifry/metaswarm-marketplace && claude plugin install metaswarm</code></li>
+      <li>Install the plugin: <code>claude plugin marketplace add Cabbala/metaswarm && claude plugin install metaswarm@metaswarm</code></li>
       <li>Open Claude Code and run <code>/metaswarm:migrate</code> &mdash; this removes redundant npm-installed copies (your project files are never touched)</li>
       <li>Run <code>/metaswarm:status</code> to verify everything is clean</li>
       <li>Review and commit the cleanup</li>
     </ol>
 
-    <p>See <a href="https://github.com/dsifry/metaswarm/blob/main/INSTALL.md#upgrading-to-v090">INSTALL.md</a> for the full upgrade guide.</p>
+    <p>See <a href="https://github.com/Cabbala/metaswarm/blob/main/INSTALL.md#upgrading-to-v090">INSTALL.md</a> for the full upgrade guide.</p>
   </section>
 
   <!-- HOW IT WORKS -->
@@ -867,7 +863,7 @@ When all work units pass, create a PR.</code></pre>
   <section>
     <h2>Built On</h2>
     <div class="callout">
-      <p><strong><a href="https://github.com/steveyegge/beads">BEADS</a></strong> by Steve Yegge. Git-native, AI-first issue tracking. The coordination backbone for all task management, dependency tracking, and knowledge priming. BEADS made it possible to treat issue tracking as part of the codebase instead of an external service.</p>
+      <p><strong><a href="https://github.com/gastownhall/beads">BEADS</a></strong>. Git-native, AI-first issue tracking. The coordination backbone for all task management, dependency tracking, and knowledge priming. BEADS made it possible to treat issue tracking as part of the codebase instead of an external service.</p>
     </div>
     <div class="callout">
       <p><strong><a href="https://github.com/obra/superpowers">Superpowers</a></strong> by Jesse Vincent and contributors. The agentic skills framework that provides foundational workflows for brainstorming, test-driven development, systematic debugging, and plan writing. Superpowers proved that disciplined agent workflows are not overhead. They are what make autonomous development reliable.</p>
@@ -877,8 +873,8 @@ When all work units pass, create a PR.</code></pre>
   <section style="text-align: center; padding: 64px 0;">
     <h2>Get Started</h2>
     <p>The repo has everything: agent definitions, skills, commands, rubrics, knowledge templates, and full documentation.</p>
-    <a href="https://github.com/dsifry/metaswarm" class="cta">View on GitHub</a>
-    <p style="margin-top: 24px; color: var(--text-muted); font-size: 14px;">Star it. Clone it. <a href="https://github.com/dsifry/metaswarm/issues">File issues</a>. MIT licensed.</p>
+    <a href="https://github.com/Cabbala/metaswarm" class="cta">View on GitHub</a>
+    <p style="margin-top: 24px; color: var(--text-muted); font-size: 14px;">Star it. Clone it. <a href="https://github.com/Cabbala/metaswarm/issues">File issues</a>. MIT licensed.</p>
   </section>
 
 </div>
@@ -886,11 +882,11 @@ When all work units pass, create a PR.</code></pre>
 <footer>
   <div class="container">
     <div class="footer-links">
-      <a href="https://github.com/dsifry/metaswarm">GitHub</a>
-      <a href="https://github.com/dsifry/metaswarm/blob/main/INSTALL.md">Install</a>
-      <a href="https://github.com/dsifry/metaswarm/blob/main/GETTING_STARTED.md">Getting Started</a>
-      <a href="https://github.com/dsifry/metaswarm/blob/main/USAGE.md">Usage</a>
-      <a href="https://github.com/dsifry/metaswarm/issues">Issues</a>
+      <a href="https://github.com/Cabbala/metaswarm">GitHub</a>
+      <a href="https://github.com/Cabbala/metaswarm/blob/main/INSTALL.md">Install</a>
+      <a href="https://github.com/Cabbala/metaswarm/blob/main/GETTING_STARTED.md">Getting Started</a>
+      <a href="https://github.com/Cabbala/metaswarm/blob/main/USAGE.md">Usage</a>
+      <a href="https://github.com/Cabbala/metaswarm/issues">Issues</a>
     </div>
     <p>MIT License. Built by <a href="https://linkedin.com/in/dsifry">Dave Sifry</a>, founder of Technorati, Linuxcare, and Warmstart. Former tech exec at Lyft and Reddit.</p>
   </div>

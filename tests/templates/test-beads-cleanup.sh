@@ -87,8 +87,9 @@ echo "Test 3: CLAUDE.md templates reference standalone beads plugin"
 assert_file_contains "Root CLAUDE.md mentions automatic bd prime" "CLAUDE.md" "standalone beads plugin"
 assert_file_contains "Template CLAUDE.md mentions automatic bd prime" "templates/CLAUDE.md" "standalone beads plugin"
 assert_file_contains "Setup template CLAUDE.md mentions automatic bd prime" "skills/setup/templates/CLAUDE.md" "standalone beads plugin"
-assert_file_contains "Root CLAUDE.md mentions bd decision" "CLAUDE.md" "bd decision"
-assert_file_contains "Template CLAUDE.md mentions bd decision" "templates/CLAUDE.md" "bd decision"
+assert_file_contains "Root CLAUDE.md creates decision issues" "CLAUDE.md" "bd create \"Decision:"
+assert_file_contains "Template CLAUDE.md creates decision issues" "templates/CLAUDE.md" "bd create \"Decision:"
+assert_file_contains "Setup template CLAUDE.md creates decision issues" "skills/setup/templates/CLAUDE.md" "bd create \"Decision:"
 
 # --- Test 4: Developer setup references standalone plugin ---
 echo "Test 4: Developer setup references standalone plugin installation"
@@ -113,9 +114,9 @@ echo "Test 7: USAGE.md updated"
 assert_file_not_contains "USAGE.md no longer lists beads-self-reflect.ts" "USAGE.md" "beads-self-reflect.ts"
 assert_file_contains "USAGE.md lists beads-fetch-conversation-history.ts" "USAGE.md" "beads-fetch-conversation-history.ts"
 
-# --- Test 8: self-reflect command references bd compact ---
-echo "Test 8: self-reflect command references bd compact"
-assert_file_contains "self-reflect references bd compact" "commands/self-reflect.md" "bd compact"
+# --- Test 8: self-reflect command uses semantic compaction ---
+echo "Test 8: self-reflect command uses semantic compaction"
+assert_file_contains "self-reflect references bd admin compact" "commands/self-reflect.md" "bd admin compact"
 
 # --- Test 9: No hook conflicts ---
 echo "Test 9: Session hook avoids conflict with beads plugin"

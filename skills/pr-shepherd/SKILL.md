@@ -215,17 +215,20 @@ These require user input BEFORE fixing:
 ### FIXING State Rules
 
 1. **Use TDD** - Invoke `superpowers:test-driven-development` for code changes
-2. **Kill stale test runners** - Run `pkill -f vitest 2>/dev/null || true` before test runs
-3. **Stay until green** - Don't leave FIXING until `pnpm lint && pnpm typecheck && pnpm test --run && pnpm test:coverage` all pass
+2. **Resolve validation gates first** - Read `.metaswarm/project-profile.json` and resolve `commands.test`, `commands.coverage`, `commands.lint`, `commands.typecheck`, and `commands.format_check` before running local validation. A string is executed as-is as its own shell command; a `null` is recorded as **skipped**, never treated as a failure, and never replaced by a fallback. See `docs/project-profile-schema.md` for the schema and trust boundary.
+3. **Stay until green** - Don't leave FIXING until every applicable resolved gate passes
 4. **Only push when verified** - Never push code that fails local validation or coverage thresholds
 5. **Return to MONITORING after push** - Let CI run, continue monitoring
 
-```bash
-# Kill stale vitest processes before running tests
-pkill -f vitest 2>/dev/null || true
+Only when `.metaswarm/project-profile.json` is absent, use these **Legacy JS/TS
+fallbacks**: `pnpm lint`, `pnpm typecheck`, `pnpm test --run`, and `pnpm
+test:coverage`; `format_check` has no legacy hard-coded command and is
+skipped. Do not apply these fallbacks to a present profile's `null` value.
 
-# After fixing, always validate locally (including coverage)
-pnpm lint && pnpm typecheck && pnpm test --run && pnpm test:coverage
+```bash
+# After fixing, run every resolved non-null project-profile gate separately.
+# Execute each command exactly as it appears in the profile: do not chain it,
+# append flags, or interpolate it into a larger shell string.
 
 # Only push if all pass (including coverage thresholds)
 git add -A && git commit -m "fix: <description>" && git push
@@ -364,28 +367,6 @@ Report:
 The PR is ready for final approval and merge.
 ```
 
-### Post-Completion RAM Cleanup
-
-After the PR is merged and knowledge extraction tasks are created, invoke automatic RAM cleanup to free resources:
-
-```text
-/auto-ram-cleanup
-```
-
-**Why**: Development processes (test runners, build watchers, language servers) accumulate during PR work. Cleaning up after merge frees memory for the next task.
-
-**What stays running**:
-
-- Docker containers (needed for database/services)
-- Essential IDE processes
-
-**What gets cleaned**:
-
-- Orphaned test runners (vitest, jest)
-- Build watchers no longer needed
-- Duplicate language server instances
-- Other development tool cruft
-
 ## Phase 7: Post-Merge Verification & Fallback Knowledge Extraction
 
 **Primary path**: Self-reflect should have already run pre-PR (see orchestrated-execution section 8.5), with knowledge base changes committed as part of the PR. This phase verifies that happened and handles the fallback case.
@@ -424,17 +405,7 @@ Created blocking task: [CURATION_TASK_ID]
 - Status: pending
 - Blocker for: [epic if applicable]
 
-To extract learnings, invoke:
-```
-/curate-pr-learnings [number]
-```
-
-The command will:
-1. Fetch PR comments (deterministic script)
-2. AI analyzes and extracts learnings (your job)
-3. Store validated learnings (deterministic script)
-
-Then close the task.
+Use the existing `/self-reflect` workflow to review PR feedback and capture validated learnings, then close the task.
 ````
 
 ### Why This Matters
@@ -547,7 +518,6 @@ After PR is merged (Phase 7):
 
 After all post-merge tasks complete:
 
-- [ ] Ran `/auto-ram-cleanup` to free development resources
 - [ ] Confirmed Docker containers still running (if needed)
 
 ## Common Mistakes
@@ -561,7 +531,9 @@ After all post-merge tasks complete:
 
 **Pushing without local validation**
 
-- NEVER push code that hasn't passed `pnpm lint && pnpm typecheck && pnpm test --run && pnpm test:coverage`
+- NEVER push code that has not passed every applicable resolved
+  `.metaswarm/project-profile.json` validation gate. A `null` gate is an
+  explicit skip, not a failure or a reason to run a fallback.
 
 **Auto-fixing complex issues**
 

@@ -1,11 +1,6 @@
 ---
 name: design-review-gate
-description: Automatic review gate that runs after brainstorming completes - spawns PM, Architect, Designer, Security, and CTO agents in parallel, iterates until all approve
-auto_activate: true
-triggers:
-  - "design document created"
-  - "docs/plans/*-design.md committed"
-  - after:superpowers:brainstorming
+description: Use after superpowers:brainstorming completes or a design document is created or committed, especially docs/superpowers/specs/*-design.md or legacy docs/plans/*-design.md, to run parallel PM, Architect, Designer, Security, and CTO review until all approve
 ---
 
 # Design Review Gate
@@ -31,7 +26,7 @@ This skill supports both coordination modes:
 - **Task Mode** (default): Spawn 5 parallel `Task()` subagents for each review round. Fresh instances per round.
 - **Team Mode**: `TeamCreate("review-{design-doc-name}")`, spawn 5 reviewers as named teammates (`pm`, `architect`, `designer`, `security`, `cto`). Reviewers retain context through revision cycles — saves 5 cold starts per re-review round. After approval, send `shutdown_request` to all, then `TeamDelete`.
 
-In either mode, the review criteria, iteration protocol, and escalation rules are identical. See `./guides/agent-coordination.md` for mode detection.
+In either mode, the review criteria, iteration protocol, and escalation rules are identical. See `./guides/agent-coordination.md` for mode detection. The generic dispatch mechanics — parallel spawn with no cross-reviewer visibility (§a), file-based handoffs (§b), and an explicit model per reviewer (§c) — follow the vendored dispatch contract (`./guides/dispatch-contract.md`); this skill adds only the reviewer roster, prompts, and rubrics.
 
 ---
 
@@ -39,9 +34,10 @@ In either mode, the review criteria, iteration protocol, and escalation rules ar
 
 This skill auto-activates when:
 
-1. A design document is committed to `docs/plans/*-design.md`
-2. The `superpowers:brainstorming` skill completes
-3. User explicitly requests: `/review-design <path-to-design.md>`
+1. A design document is committed to `docs/superpowers/specs/*-design.md` (primary superpowers v6.1.1 location)
+2. A design document is committed to `docs/plans/*-design.md` (legacy fallback)
+3. The `superpowers:brainstorming` skill completes
+4. User explicitly requests: `/review-design <path-to-design.md>`
 
 ---
 
@@ -49,32 +45,44 @@ This skill auto-activates when:
 
 ### Phase 1: Spawn Review Agents (Parallel)
 
+Dispatch the five reviewers per the dispatch contract (`./guides/dispatch-contract.md`): one worker each, issued in a single turn so they run concurrently (§a), with no cross-reviewer visibility (§a) and an explicit model tier per reviewer (§c). The design document and any rubric reach each reviewer as file **paths** (§b), not pasted content.
+
+**Path resolution (D8, MANDATORY).** A path embedded in a subagent prompt is read from the *worker's* working directory — the user's project, not the plugin. Before embedding this skill's synced `./guides/dispatch-contract.md` (or any skill-local rubric) in a reviewer prompt, resolve it to an absolute path against the host plugin root: `${CLAUDE_PLUGIN_ROOT}/skills/design-review-gate/...` in Claude Code, `${PLUGIN_ROOT}/...` in Codex. A bare relative path (`./guides/...`) breaks under installed-plugin cwd.
+
+The `Promise.all` block below shows the roster; the mechanics above govern how it is dispatched.
+
 ```typescript
-// Spawn all five agents in parallel for efficiency
+// Spawn all five agents in parallel. Explicit model per reviewer (contract §c —
+// these are judgment reviewers; use a capable tier). designDocPath is ABSOLUTE (§b, D8).
 const [pmResult, architectResult, designerResult, securityResult, ctoResult] = await Promise.all([
   Task({
     subagent_type: "general-purpose",
     description: "PM review",
+    model: "<judgment tier — dispatch contract §c>",
     prompt: pmReviewPrompt(designDocPath),
   }),
   Task({
     subagent_type: "general-purpose",
     description: "Architect review",
+    model: "<judgment tier — dispatch contract §c>",
     prompt: architectReviewPrompt(designDocPath),
   }),
   Task({
     subagent_type: "general-purpose",
     description: "Designer review",
+    model: "<judgment tier — dispatch contract §c>",
     prompt: designerReviewPrompt(designDocPath),
   }),
   Task({
     subagent_type: "general-purpose",
     description: "Security design review",
+    model: "<judgment tier — dispatch contract §c>",
     prompt: securityDesignReviewPrompt(designDocPath),
   }),
   Task({
     subagent_type: "general-purpose",
     description: "CTO review",
+    model: "<judgment tier — dispatch contract §c>",
     prompt: ctoReviewPrompt(designDocPath),
   }),
 ]);

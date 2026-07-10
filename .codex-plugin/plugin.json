@@ -1,13 +1,14 @@
 {
   "name": "metaswarm",
   "version": "0.12.0",
-  "description": "Multi-agent orchestration framework for Claude Code, Gemini CLI, and Codex CLI — 19 agents, 14 skills, quality gates, and TDD enforcement",
+  "description": "Multi-agent orchestration framework for Claude Code and Codex CLI, with an optional enterprise/API-key Gemini adapter — 18 agents, 14 skills, quality gates, and TDD enforcement",
   "author": {
     "name": "David Sifry",
     "email": "david@sifry.com"
   },
-  "homepage": "https://github.com/dsifry/metaswarm",
-  "repository": "https://github.com/dsifry/metaswarm",
+  "homepage": "https://github.com/Cabbala/metaswarm",
+  "repository": "https://github.com/Cabbala/metaswarm",
+  "hooks": {},
   "license": "MIT",
   "keywords": [
     "orchestration",
@@ -21,7 +22,7 @@
   "interface": {
     "displayName": "metaswarm",
     "shortDescription": "Multi-agent orchestration, quality gates, TDD, and PR shepherding for Codex",
-    "longDescription": "Use metaswarm to plan, decompose, execute, review, and shepherd development work with specialized agent roles, BEADS-backed tracking, strict quality gates, and cross-platform support for Claude Code, Gemini CLI, and Codex CLI.",
+    "longDescription": "Use metaswarm to plan, decompose, execute, review, and shepherd development work with specialized agent roles, BEADS-backed tracking, strict quality gates, host-platform support for Claude Code and Codex CLI, and an optional enterprise/API-key Gemini adapter.",
     "developerName": "David Sifry",
     "category": "Coding",
     "capabilities": [
@@ -29,7 +30,7 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/dsifry/metaswarm",
+    "websiteURL": "https://github.com/Cabbala/metaswarm",
     "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
     "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
     "defaultPrompt": [

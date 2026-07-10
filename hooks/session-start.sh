@@ -7,16 +7,14 @@ set -euo pipefail
 
 # --- Phase 0: Self-locate plugin root ---
 # Works with Codex ($PLUGIN_ROOT), Claude Code ($CLAUDE_PLUGIN_ROOT),
-# Gemini CLI ($extensionPath), or direct invocation (derive from script location)
+# or direct invocation (derive from script location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CODEX_PLUGIN_ROOT="${PLUGIN_ROOT:-}"
-PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${extensionPath:-$(cd "$SCRIPT_DIR/.." && pwd)}}}"
+PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}}"
 METASWARM_PLATFORM="${METASWARM_PLATFORM:-}"
 if [ -z "$METASWARM_PLATFORM" ]; then
   if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
     METASWARM_PLATFORM="claude"
-  elif [ -n "${extensionPath:-}" ]; then
-    METASWARM_PLATFORM="gemini"
   elif [ -n "$CODEX_PLUGIN_ROOT" ] || [ -n "${CODEX_HOME:-}" ]; then
     METASWARM_PLATFORM="codex"
   else
@@ -69,7 +67,6 @@ if [ "$new_project" = false ] && [ "$legacy_install" = false ]; then
 
   case "$METASWARM_PLATFORM" in
     codex) instruction_file="AGENTS.md" ;;
-    gemini) instruction_file="GEMINI.md" ;;
     *) instruction_file="CLAUDE.md" ;;
   esac
 
@@ -119,15 +116,14 @@ case "$METASWARM_PLATFORM" in
     start_cmd='/start-task'
     migrate_cmd='/migrate'
     ;;
-  gemini)
-    setup_cmd='/metaswarm:setup'
-    start_cmd='/metaswarm:start-task'
-    migrate_cmd='/metaswarm:migrate'
-    ;;
 esac
 
 if [ "$new_project" = true ]; then
   context_parts+=("Metaswarm is installed but this project hasn't been set up yet. Run \`${setup_cmd}\` to configure it, or \`${start_cmd}\` to begin working.")
+fi
+
+if [ "$new_project" = false ]; then
+  context_parts+=("Before starting any task, check whether a metaswarm skill applies (for example, start, brainstorming-extension, design-review-gate, plan-review-gate, orchestrated-execution, visual-review, or external-tools). If there is even a small chance one applies, invoke it; do not proceed on instinct.")
 fi
 
 if [ "$legacy_install" = true ]; then

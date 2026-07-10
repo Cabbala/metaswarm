@@ -8,28 +8,22 @@ Choose your platform:
 
 **Claude Code:**
 ```bash
-claude plugin marketplace add dsifry/metaswarm-marketplace
-claude plugin install metaswarm
-```
-
-**Gemini CLI:**
-```bash
-gemini extensions install https://github.com/dsifry/metaswarm.git
+claude plugin marketplace add Cabbala/metaswarm
+claude plugin install metaswarm@metaswarm
 ```
 
 **Codex CLI:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/dsifry/metaswarm/main/.codex/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Cabbala/metaswarm/main/.codex/install.sh | bash
 ```
 
-**All platforms at once:**
+**Supported platforms at once:**
 ```bash
 npx metaswarm init
 ```
 
 Then run setup in your project:
 - Claude Code: `/setup`
-- Gemini CLI: `/metaswarm:setup`
 - Codex CLI: `$setup`
 
 The setup skill detects your project's language, framework, test runner, and tools, then configures everything interactively.
@@ -38,7 +32,6 @@ The setup skill detects your project's language, framework, test runner, and too
 
 Start your first task:
 - Claude Code: `/start-task`
-- Gemini CLI: `/metaswarm:start-task`
 - Codex CLI: `$start`
 
 Verify it worked:
@@ -69,10 +62,10 @@ npm init -y        # or whatever your stack needs
 Then open Claude Code and tell it to install metaswarm:
 
 ```text
-> Read through https://github.com/dsifry/metaswarm and install it for my project.
+> Read through https://github.com/Cabbala/metaswarm and install it for my project.
 ```
 
-Or install directly: `claude plugin marketplace add dsifry/metaswarm-marketplace` then `claude plugin install metaswarm`, then run `/setup`.
+Or install directly: `claude plugin marketplace add Cabbala/metaswarm` then `claude plugin install metaswarm@metaswarm`, then run `/setup`.
 
 ### 2. Tell Claude what to build
 
@@ -116,7 +109,7 @@ That's it. The orchestrator takes over:
 2. **Plan** — Architect agent creates an implementation plan with work units
 3. **Plan Review Gate** — 3 adversarial reviewers (Feasibility, Completeness, Scope & Alignment) validate the plan before it reaches the Design Review Gate
 4. **Plan Validation** — Pre-flight checklist catches structural issues (missing service layer, wrong dependencies, oversized WUs) before spending agent cycles
-5. **Design Review** — 6 agents review the plan in parallel (PM, Architect, Designer, Security, UX Reviewer, CTO)
+5. **Design Review** — 5 agents review the plan in parallel (PM, Architect, Designer, Security, CTO); the Designer covers UX flows when a UI exists
 6. **Decompose** — Breaks the plan into work units with DoD items and dependencies
 7. **External Dependency Check** — Identifies required API keys/credentials and prompts you to configure them
 8. **Execute** — For each work unit: implement with TDD, validate independently, adversarial review against DoD. Quality gates are blocking state transitions, not advisory.
@@ -196,7 +189,7 @@ This triggers the full pipeline:
 2. **Research** — Explores your codebase for related patterns
 3. **Plan** — Creates an implementation plan
 4. **Plan Review Gate** — 3 adversarial reviewers validate the plan (Feasibility, Completeness, Scope & Alignment)
-5. **Design Review** (if complex) — Runs the 6-agent Design Review Gate
+5. **Design Review** (if complex) — Runs the 5-agent Design Review Gate
 6. **Implement** — TDD implementation
 7. **Review** — Code review + security audit
 8. **PR** — Creates PR with auto-shepherd
@@ -236,18 +229,20 @@ bd ready
 For a more complex feature, trigger the parallel review manually:
 
 ```text
-> /review-design docs/specs/my-feature.md
+> /review-design docs/superpowers/specs/YYYY-MM-DD-my-feature-design.md
 ```
 
-Six agents review in parallel:
+This is the primary superpowers v6.1.1 design-spec location. The gate also
+accepts `docs/plans/*-design.md` as an explicit legacy fallback.
+
+Five agents review in parallel:
 - **PM**: Validates use cases and scope
 - **Architect**: Checks service design and patterns
 - **Designer**: Reviews API/UX design
 - **Security**: Threat modeling (STRIDE)
-- **UX Reviewer**: Verifies user flows, integration work units, and component wiring
 - **CTO**: TDD readiness and alignment
 
-Each produces an APPROVE/REVISE verdict. All six must approve, or the plan iterates (max 3 rounds before human escalation).
+Each produces an APPROVE/REVISE verdict. All five must approve, or the plan iterates (max 3 rounds before human escalation).
 
 ## Step 4.5: Orchestrated Execution (for Complex Tasks)
 
@@ -280,10 +275,10 @@ Before any task, prime your agent with relevant context:
 > /prime
 ```
 
-Or with specific filters:
+The project can tailor priming by maintaining the tracked `.beads/PRIME.md` override; run the same command for that project-defined context:
 
 ```bash
-bd prime --files "src/api/**/*.ts" --keywords "authentication" --work-type implementation
+bd prime
 ```
 
 This outputs prioritized knowledge:
@@ -355,7 +350,7 @@ Create a `.md` file in `rubrics/` with scoring criteria that agents reference du
 
 ### Adding Knowledge
 
-Append JSONL entries to the appropriate file in `knowledge/`:
+The repository's `knowledge/` directory is the seed schema shipped with the plugin. Setup copies it to the project's runtime knowledge base at `.beads/knowledge/`; append JSONL entries to the appropriate file there:
 
 ```json
 {"id": "gotcha-my-api", "type": "gotcha", "fact": "The payments API returns 200 even on failure", "recommendation": "Always check the response body status field, not HTTP status", "confidence": "high", "tags": ["payments", "api"]}
@@ -363,16 +358,16 @@ Append JSONL entries to the appropriate file in `knowledge/`:
 
 ## Optional: Set Up External Tools
 
-metaswarm can delegate work to Codex (OpenAI) and Gemini (Google) for cost savings and cross-model adversarial review. This is optional — skip this section if you only want to use Claude.
+metaswarm can delegate work to Codex (OpenAI) and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review. This is optional — skip this section if you only want to use Claude.
 
 1. **Install** the CLIs:
    ```bash
-   npm i -g @openai/codex @google/gemini-cli
+   npm i -g @openai/codex
    ```
 
 2. **Authenticate** each tool:
    - Codex: set `OPENAI_API_KEY` in your `.env`
-   - Gemini: run `gemini` once to log in with Google, or set `GEMINI_API_KEY`
+   - Gemini adapter: configure enterprise/API-key credentials (`GEMINI_API_KEY`) and a working binary
    - See [`templates/external-tools-setup.md`](templates/external-tools-setup.md) for full details
 
 3. **Copy the config** into your project:
@@ -388,5 +383,5 @@ metaswarm can delegate work to Codex (OpenAI) and Gemini (Google) for cost savin
 ## What's Next
 
 - [USAGE.md](USAGE.md) — Full reference for all agents, skills, and commands
-- [ORCHESTRATION.md](ORCHESTRATION.md) — The complete orchestration workflow specification
+- [ORCHESTRATION.md](ORCHESTRATION.md) — Orchestration overview, current roster, and canonical documentation pointers
 - [CONTRIBUTING.md](CONTRIBUTING.md) — How to contribute back

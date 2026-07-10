@@ -20,7 +20,8 @@ LOG_DIR="${HOME}/.claude/sessions"
 # parse_args()
 #   Parses common CLI arguments into shell variables.
 #   Sets: XT_WORKTREE, XT_PROMPT_FILE, XT_RUBRIC_FILE, XT_SPEC_FILE,
-#         XT_ATTEMPT, XT_TIMEOUT, XT_CONTEXT_DIR
+#         XT_ATTEMPT, XT_TIMEOUT, XT_CONTEXT_DIR, MODEL, EFFORT,
+#         XT_ALLOW_NETWORK
 # ---------------------------------------------------------------------------
 parse_args() {
   # Defaults
@@ -31,6 +32,9 @@ parse_args() {
   XT_ATTEMPT="1"
   XT_TIMEOUT="300"
   XT_CONTEXT_DIR=""
+  MODEL="${XT_MODEL:-}"
+  EFFORT="${XT_EFFORT:-}"
+  XT_ALLOW_NETWORK="${XT_ALLOW_NETWORK:-0}"
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -61,6 +65,18 @@ parse_args() {
       --context-dir)
         XT_CONTEXT_DIR="${2:-}"
         shift 2
+        ;;
+      --model)
+        MODEL="${2:-}"
+        shift 2
+        ;;
+      --effort)
+        EFFORT="${2:-}"
+        shift 2
+        ;;
+      --allow-network)
+        XT_ALLOW_NETWORK="1"
+        shift
         ;;
       *)
         shift
@@ -246,12 +262,14 @@ cleanup_worktree() {
 # ---------------------------------------------------------------------------
 # verify_scope()
 #   Checks all changed files are within context_dir. Reverts out-of-scope changes.
-#   Usage: verify_scope <worktree_path> [context_dir]
+#   Usage: verify_scope <worktree_path> [context_dir] [base_ref]
+#   base_ref defaults to HEAD for backwards compatibility.
 #   Returns 0 if all changes in scope, 1 if violations found (and reverted).
 # ---------------------------------------------------------------------------
 verify_scope() {
   local worktree_path="${1:?verify_scope: worktree_path required}"
   local context_dir="${2:-}"
+  local base_ref="${3:-HEAD}"
 
   # If no context_dir specified, everything is in scope
   if [[ -z "$context_dir" ]]; then
@@ -260,10 +278,20 @@ verify_scope() {
 
   # Normalize context_dir: strip trailing slash, make relative to worktree
   context_dir="${context_dir%/}"
+  context_dir="${context_dir#./}"
+  if [[ -z "$context_dir" || "$context_dir" == "." ]]; then
+    return 0
+  fi
 
   local violations_found=0
   local changed_files
-  changed_files="$(git -C "$worktree_path" diff --name-only HEAD 2>/dev/null || true)"
+  changed_files="$(
+    {
+      git -C "$worktree_path" diff --name-only "$base_ref" 2>/dev/null || true
+      git -C "$worktree_path" status --porcelain --untracked-files=all 2>/dev/null |
+        sed -n 's/^?? //p'
+    } | sort -u
+  )"
 
   if [[ -z "$changed_files" ]]; then
     return 0
@@ -272,9 +300,19 @@ verify_scope() {
   while IFS= read -r file; do
     [[ -z "$file" ]] && continue
     # Check if the file path starts with the context_dir prefix
-    if [[ "$file" != "${context_dir}"* && "$file" != "${context_dir}/"* ]]; then
+    if [[ "$file" != "$context_dir" && "$file" != "${context_dir}/"* ]]; then
       # Out of scope — revert this file
-      git -C "$worktree_path" checkout HEAD -- "$file" 2>/dev/null || true
+      if git -C "$worktree_path" cat-file -e "${base_ref}:${file}" 2>/dev/null; then
+        if ! git -C "$worktree_path" checkout "$base_ref" -- "$file" 2>/dev/null; then
+          printf 'Error: failed to restore out-of-scope file: %s\n' "$file" >&2
+          return 2
+        fi
+      else
+        if ! rm -f -- "$worktree_path/$file"; then
+          printf 'Error: failed to remove out-of-scope file: %s\n' "$file" >&2
+          return 2
+        fi
+      fi
       violations_found=1
     fi
   done <<< "$changed_files"
@@ -432,7 +470,7 @@ extract_cost_gemini() {
 #   Usage: emit_json <tool> <command> <model> <attempt> <exit_code> \
 #            <branch> <git_sha> <files_changed_json> <diff_stats_json> \
 #            <duration_seconds> <cost_json> <raw_log_file> \
-#            [error_type]
+#            [error_type] [error_code]
 #   All fields from the output schema are included.
 # ---------------------------------------------------------------------------
 emit_json() {
@@ -449,17 +487,29 @@ emit_json() {
   local cost="${11:-}"
   local raw_log_file="${12:-}"
   local error_type="${13:-}"
+  local error_code="${14:-}"
 
   # Apply JSON defaults outside of parameter expansion to avoid brace conflicts
   local _default_diff_stats='{"additions": 0, "deletions": 0}'
   local _default_cost='{"input_tokens": 0, "output_tokens": 0}'
   diff_stats="${diff_stats:-$_default_diff_stats}"
   cost="${cost:-$_default_cost}"
+  if [[ -z "$error_code" && "$exit_code" -ne 0 ]]; then
+    error_code="tool_error"
+  fi
 
   # Read raw log content if file exists
   local raw_log=""
+  local raw_log_truncated=false
   if [[ -n "$raw_log_file" && -f "$raw_log_file" ]]; then
-    raw_log="$(cat "$raw_log_file" 2>/dev/null || true)"
+    local raw_log_size
+    raw_log_size="$(wc -c < "$raw_log_file" | tr -d ' ')"
+    if [[ "$raw_log_size" -gt 65536 ]]; then
+      raw_log="$(head -c 65536 "$raw_log_file" 2>/dev/null || true)"
+      raw_log_truncated=true
+    else
+      raw_log="$(cat "$raw_log_file" 2>/dev/null || true)"
+    fi
   fi
 
   if command -v jq >/dev/null 2>&1; then
@@ -477,6 +527,8 @@ emit_json() {
       --argjson cost "$cost" \
       --arg raw_log "$raw_log" \
       --arg error_type "$error_type" \
+      --arg error_code "$error_code" \
+      --argjson raw_log_truncated "$raw_log_truncated" \
       --arg schema_version "$SCHEMA_VERSION" \
       '{
         schema_version: $schema_version,
@@ -492,7 +544,9 @@ emit_json() {
         duration_seconds: $duration_seconds,
         cost: $cost,
         raw_log: $raw_log,
-        error_type: (if $error_type == "" then null else $error_type end)
+        truncated: $raw_log_truncated,
+        error_type: (if $error_type == "" then null else $error_type end),
+        error_code: (if $error_code == "" then null else $error_code end)
       }'
   else
     # Fallback without jq — produce JSON manually
@@ -505,6 +559,11 @@ emit_json() {
     local error_type_json="null"
     if [[ -n "$error_type" ]]; then
       error_type_json="\"${error_type}\""
+    fi
+
+    local error_code_json="null"
+    if [[ -n "$error_code" ]]; then
+      error_code_json="\"${error_code}\""
     fi
 
     cat <<ENDJSON
@@ -522,7 +581,9 @@ emit_json() {
   "duration_seconds": ${duration_seconds},
   "cost": ${cost},
   "raw_log": "${raw_log}",
-  "error_type": ${error_type_json}
+  "truncated": ${raw_log_truncated},
+  "error_type": ${error_type_json},
+  "error_code": ${error_code_json}
 }
 ENDJSON
   fi
@@ -532,7 +593,7 @@ ENDJSON
 # emit_error()
 #   Convenience wrapper for error JSON output.
 #   Usage: emit_error <tool> <command> <model> <attempt> <exit_code> \
-#            <stderr_file> <duration_seconds> [raw_log_file]
+#            <stderr_file> <duration_seconds> [raw_log_file] [error_code]
 # ---------------------------------------------------------------------------
 emit_error() {
   local tool="${1:-}"
@@ -543,6 +604,7 @@ emit_error() {
   local stderr_file="${6:-}"
   local duration_seconds="${7:-0}"
   local raw_log_file="${8:-}"
+  local error_code="${9:-}"
 
   local error_type
   error_type="$(classify_error "$exit_code" "$stderr_file")"
@@ -560,7 +622,8 @@ emit_error() {
     "$duration_seconds" \
     '{"input_tokens": 0, "output_tokens": 0}' \
     "$raw_log_file" \
-    "$error_type"
+    "$error_type" \
+    "$error_code"
 }
 
 # ---------------------------------------------------------------------------
@@ -575,6 +638,7 @@ log_session() {
 
   # Ensure the log directory exists
   mkdir -p "$LOG_DIR"
+  chmod 700 "$LOG_DIR"
 
   local log_file="${LOG_DIR}/external-tools.jsonl"
 
@@ -589,4 +653,6 @@ log_session() {
     oneline="$(printf '%s' "$json_string" | tr '\n' ' ' | tr -s ' ')"
     printf '%s\n' "$oneline" >> "$log_file"
   fi
+
+  chmod 600 "$log_file"
 }

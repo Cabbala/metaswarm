@@ -1,19 +1,13 @@
 ---
 name: external-tools
-description: Delegate implementation and review tasks to external AI CLI tools (Codex, Gemini) with cross-model adversarial review
-auto_activate: false
-triggers:
-  - "use external tools"
-  - "delegate to codex"
-  - "delegate to gemini"
-  - "cross-model review"
+description: Use when asked to use external tools, delegate implementation or review to Codex or the enterprise/API-key Gemini adapter, or run cross-model adversarial review
 ---
 
 # External Tools Skill
 
 ## Purpose
 
-This skill delegates implementation and review tasks to external AI CLI tools (OpenAI Codex CLI, Google Gemini CLI), enabling cost savings through cheaper models and cross-model adversarial review that eliminates single-model blind spots. Three core principles govern every interaction: **one job per invocation** (an external tool implements OR reviews, never self-validates), **minimal permissions** (sandboxed execution scoped to the task's working directory with only the tool's own API key), and **the orchestrator verifies independently** (external tools report facts only, the orchestrator judges pass/fail).
+This skill delegates implementation and review tasks to OpenAI Codex CLI and an optional enterprise/API-key Gemini adapter (consumer Gemini CLI discontinued 2026-06-18). Three core principles govern every interaction: **one job per invocation** (an external tool implements OR reviews, never self-validates), **minimal permissions** (sandboxed execution scoped to the task's working directory with only the tool's own API key), and **the orchestrator verifies independently** (external tools report facts only, the orchestrator judges pass/fail).
 
 ---
 
@@ -24,7 +18,7 @@ This skill delegates implementation and review tasks to external AI CLI tools (O
 | Tool | Install | Auth |
 |------|---------|------|
 | OpenAI Codex CLI | `npm i -g @openai/codex` | API key or ChatGPT subscription |
-| Google Gemini CLI | `npm i -g @google/gemini-cli` | Google login (free 1K req/day) or API key |
+| Enterprise/API-key Gemini adapter | Explicit opt-in; requires a working compatible binary | Enterprise/API-key credentials only; consumer CLI discontinued 2026-06-18 |
 
 Neither tool is strictly required. The skill adapts based on what is available (see Escalation Model below).
 
@@ -36,18 +30,22 @@ Per-project config at `.metaswarm/external-tools.yaml` (optional -- if absent, e
 adapters:
   codex:
     enabled: true
-    model: "gpt-5.3-codex"
+    model: "gpt-5.6-terra"          # Model to use for Codex CLI invocations
+    # Tiers: gpt-5.6-terra = implement default (effort xhigh) | gpt-5.6-sol = review/hard (xhigh; "ultra" experimental: Sol-only, requires XT_ULTRA_OPTIN=1, ~2-3x tokens) | gpt-5.6-luna = small tasks (high) | gpt-5.3-codex-spark = 1000+ tok/s latency loops
     timeout_seconds: 300
-    sandbox: docker          # docker | platform | none
+    sandbox: none                    # docker | platform | none
+    auth_env_var: "OPENAI_API_KEY"   # Environment variable holding the API key
   gemini:
-    enabled: true
+    enabled: false
+    # Consumer Gemini CLI discontinued 2026-06-18; enterprise/API-key access only — explicit opt-in
     model: "pro"
     timeout_seconds: 300
-    sandbox: docker
+    sandbox: none
+    auth_env_var: "GEMINI_API_KEY"   # Enterprise/API-key adapter credentials
 
 routing:
   default_implementer: "cheapest-available"
-  escalation_order: ["codex", "gemini", "claude"]
+  escalation_order: ["codex", "claude"]
 
 budget:
   per_task_usd: 2.00        # circuit breaker per task
@@ -60,6 +58,19 @@ budget:
 - **One tool available**: Reduced chain with mutual review between the tool and Claude
 - **No tools available**: Existing metaswarm behavior unchanged; skill is a no-op
 
+### Model tiers & availability
+
+- Implement default: `gpt-5.6-terra` (xhigh; $2.50 input / $15 output per 1M tokens)
+- Review/hard: `gpt-5.6-sol` (xhigh; $5 input / $30 output per 1M tokens)
+- Small tasks: `gpt-5.6-luna` (high; $1 input / $6 output per 1M tokens)
+- Latency loops: `gpt-5.3-codex-spark` (1000+ tok/s)
+- Bare `gpt-5.6` aliases to Sol; no `gpt-5.6-codex` variant exists.
+- Health checks report the model actually used. A `model_unavailable` error escalates down the chain.
+- `ultra` effort is EXPERIMENTAL (undocumented in the official ladder `minimal|low|medium|high|xhigh`), Sol-only, and requires `XT_ULTRA_OPTIN=1`; it is hard-bounded by `XT_TIMEOUT`.
+- The official budget keys are `features.rollout_budget.enabled` and `features.rollout_budget.limit_tokens`. Verify with a clean `CODEX_HOME` probe using `codex exec --strict-config` and the key; do not use `--strict-config` against real user configs because they legitimately carry unknown fields.
+
+Sandbox policy: implement uses `--sandbox workspace-write` with `network_access=false` by default (`--allow-network` opts in); review uses `--sandbox read-only`.
+
 ---
 
 ## Quick Reference
@@ -70,7 +81,7 @@ budget:
 # Check if Codex is installed, authenticated, and reachable
 adapters/codex.sh health
 
-# Check Gemini
+# Check the enterprise/API-key Gemini adapter (consumer CLI discontinued 2026-06-18)
 adapters/gemini.sh health
 ```
 
@@ -136,13 +147,24 @@ If Claude is selected (escalation or no external tools), use the existing `Task(
 
 ### Phase 2: VALIDATE (Always Orchestrator -- Unchanged)
 
-The orchestrator independently runs all quality gates:
+The orchestrator independently reads `.metaswarm/project-profile.json` and
+runs its `commands.test`, `commands.coverage`, `commands.lint`,
+`commands.typecheck`, and `commands.format_check` gates:
 
-- `npm test` / `npx vitest run`
-- `npx tsc --noEmit`
-- `npx eslint <changed-files>`
-- Coverage enforcement via `.coverage-thresholds.json`
+- A command string is executed as-is as one complete command from the
+  repository root; never append arguments, chain it, interpolate it into a
+  larger shell string, or use `eval`.
+- A `null` command means the gate does not apply: record it as **skipped** and
+  do not fail or use a fallback. See `docs/project-profile-schema.md` for the
+  schema and trust boundary.
 - File scope verification via `git diff --name-only`
+
+Only when `.metaswarm/project-profile.json` is absent, the **Legacy JS/TS
+fallbacks** are: `npm test` / `npx vitest run` for tests, `npx tsc --noEmit`
+for type checking, `npx eslint <changed-files>` for linting, and the
+`.coverage-thresholds.json` enforcement command for coverage. There is no
+legacy hard-coded `format_check` command, so it is skipped. A present
+profile's `null` value never selects a fallback.
 
 This phase is identical whether the implementer was an external tool or Claude. **Never trust the implementer's self-report.**
 
@@ -152,9 +174,9 @@ The key advantage of external tools: the writer is always reviewed by a **differ
 
 | Implementer | Reviewer 1 | Reviewer 2 |
 |-------------|-----------|-----------|
-| Codex | Gemini (via adapter) | Claude (via Task) |
-| Gemini | Codex (via adapter) | Claude (via Task) |
-| Claude | Codex (via adapter) | Gemini (via adapter) |
+| Codex | Enterprise/API-key Gemini adapter | Claude (via Task) |
+| Enterprise/API-key Gemini adapter | Codex (via adapter) | Claude (via Task) |
+| Claude | Codex (via adapter) | Enterprise/API-key Gemini adapter |
 
 Review is invoked via the adapter's `review` command. The orchestrator reads the reviewer's raw log and evaluates it independently -- the adapter never returns a pass/fail verdict.
 
@@ -255,7 +277,7 @@ else:
 
 1. Pick the tool with lower estimated cost per invocation (based on model pricing and average token usage from session logs)
 2. On tie, prefer the tool with higher historical success rate for this task type
-3. If no historical data, prefer Gemini (free tier) over Codex
+3. If no historical data, prefer the configured tool with the lower documented cost; the Gemini adapter is enterprise/API-key only and disabled by default
 
 ---
 
@@ -282,7 +304,9 @@ The prompt file is the key interface between the orchestrator and external tools
 ## Test Expectations
 [what tests should pass after implementation]
 [coverage requirements from .coverage-thresholds.json]
-[test runner command: e.g., npx vitest run]
+[test runner command: resolved from `.metaswarm/project-profile.json`
+`commands.test`, or the explicitly labelled legacy fallback when the profile
+is absent; record `null` as skipped]
 
 ## Previous Attempt (if retry)
 [review feedback from last attempt -- what to fix]
@@ -394,7 +418,7 @@ Session log entry:
 These logs feed the existing `/self-reflect` pipeline. Over time, the knowledge base accumulates routing intelligence:
 
 - **Patterns**: "Codex excels at single-file TypeScript implementations"
-- **Gotchas**: "Gemini tends to skip error handling in async functions"
+- **Gotchas**: "The enterprise/API-key Gemini adapter may be review-only when its binary lacks `--sandbox`"
 - **Routing decisions**: "Route database migration tasks directly to Claude (external tools fail 80%)"
 
 Future routing decisions improve automatically as the knowledge base grows from session log analysis.

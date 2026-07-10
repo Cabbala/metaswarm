@@ -18,12 +18,12 @@ Before starting any new task:
 
 - [ ] Check if `.beads/plans/active-plan.md` exists with `status: in-progress`
 - [ ] If YES: An interrupted execution exists. Ask user: "There's an active plan from a previous session. Resume it or start fresh?"
-  - Resume → run `bd prime --work-type recovery` and pick up where execution stopped
+  - Resume → run bare `bd prime` and pick up where execution stopped; customize recovery context with the tracked `.beads/PRIME.md` override
   - Start fresh → mark the old plan as `status: abandoned` and proceed normally
 
 **Knowledge Priming (CRITICAL)**:
 
-- [ ] Run BEADS prime: `bd prime --keywords "<task-keywords>" --work-type planning`
+- [ ] Run BEADS prime: `bd prime` (the tracked `.beads/PRIME.md` override defines project-specific context)
 - [ ] Review MUST FOLLOW rules and GOTCHAS before proceeding
 - [ ] Note any relevant patterns or decisions that constrain the approach
 
@@ -36,17 +36,17 @@ Before starting any new task:
 
 ### 0.5. External Tools Check (informational only — never blocks the task)
 
-Check if external AI tools (Codex, Gemini) are available for cost savings and cross-model review:
+Check whether Codex and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) are available for cross-model review:
 
 - Run the health check scripts to detect installed tools:
   ```bash
   command -v codex >/dev/null 2>&1 && echo "codex: available" || echo "codex: not found"
-  command -v gemini >/dev/null 2>&1 && echo "gemini: available" || echo "gemini: not found"
+  skills/external-tools/adapters/gemini.sh health
   ```
 - **If tools are detected but `.metaswarm/external-tools.yaml` does not exist**: Suggest the user enable them:
-  > "External tools (Codex/Gemini) are installed but not configured. Run `mkdir -p .metaswarm && cp templates/external-tools.yaml .metaswarm/` to enable cost-saving delegation."
+  > "External tools are installed but not configured. Run `mkdir -p .metaswarm && cp templates/external-tools.yaml .metaswarm/`; the Gemini adapter is enterprise/API-key only and remains disabled by default."
 - **If no tools are detected**: Briefly mention they can be installed:
-  > "Optional: Install Codex and Gemini CLIs for cost savings and cross-model review — see `templates/external-tools-setup.md`."
+  > "Optional: Install Codex for cross-model review; the Gemini adapter is enterprise/API-key only — see `templates/external-tools-setup.md`."
 - **If tools are configured and working**: No message needed — proceed silently.
 
 This check is informational only. Always proceed to the task regardless of the result.
@@ -177,11 +177,13 @@ For complex tasks requiring multiple phases, consider spawning sub-agents:
 
 **Model specialization guidance:**
 
-| Model  | Best For                                                  |
-| ------ | --------------------------------------------------------- |
-| Opus   | Orchestration, architecture, security analysis, synthesis |
-| Sonnet | Code analysis, implementation, code review, feature work  |
-| Haiku  | Metrics collection, simple analysis, data processing      |
+| Model                 | Best For                                                               |
+| --------------------- | ---------------------------------------------------------------------- |
+| haiku                 | Mechanical legs: scans, extraction, formatting, high-fan-out sweeps   |
+| sonnet                | Standard legs: code reading, single-dimension review, small implementation |
+| inherit (omit model)  | Judgment legs: final synthesis, adversarial verdicts, architecture, security |
+
+Fork-local policy: genericize before any upstream contribution.
 
 **Pattern**: Spawn parallel sub-agents for independent work (e.g., code review + security audit), sequential agents for dependent phases (research -> planning -> implementation).
 

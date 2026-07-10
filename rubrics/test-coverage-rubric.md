@@ -1,6 +1,6 @@
 # Test Coverage Rubric
 
-**Used By**: Test Automator Agent
+**Used By**: Coder Agent (TDD coverage self-check)
 **Purpose**: Ensure adequate test coverage and test quality
 **Version**: 1.0
 

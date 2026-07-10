@@ -38,24 +38,42 @@ const METASWARM_MARKER = '## metaswarm';
 function installClaude() {
   console.log('\n  Installing for Claude Code...\n');
   try {
-    console.log('  Running: claude plugin marketplace add dsifry/metaswarm-marketplace');
-    execSync('claude plugin marketplace add dsifry/metaswarm-marketplace', { stdio: 'inherit' });
-    console.log('  Running: claude plugin install metaswarm');
-    execSync('claude plugin install metaswarm', { stdio: 'inherit' });
+    console.log('  Running: claude plugin marketplace add Cabbala/metaswarm');
+    execSync('claude plugin marketplace add Cabbala/metaswarm', { stdio: 'inherit' });
+    console.log('  Running: claude plugin install metaswarm@metaswarm');
+    execSync('claude plugin install metaswarm@metaswarm', { stdio: 'inherit' });
     info('Claude Code plugin installed');
     console.log('  Next: Open Claude Code and run /setup');
   } catch (e) {
     warn(`Claude Code install failed: ${e.message}`);
     console.log('  Try manually:');
-    console.log('    claude plugin marketplace add dsifry/metaswarm-marketplace');
-    console.log('    claude plugin install metaswarm');
+    console.log('    claude plugin marketplace add Cabbala/metaswarm');
+    console.log('    claude plugin install metaswarm@metaswarm');
   }
 }
 
-function installCodex() {
-  console.log('\n  Installing for Codex CLI...\n');
-  const installDir = path.join(process.env.CODEX_HOME || path.join(os.homedir(), '.codex'), 'metaswarm');
-  const skillsDir = path.join(os.homedir(), '.agents', 'skills');
+function codexCommandExists() {
+  const probe = process.platform === 'win32' ? 'where codex' : 'command -v codex';
+  try {
+    execSync(probe, { stdio: 'ignore' });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function hasMetaswarmPluginCache(cacheDir) {
+  if (!fs.existsSync(cacheDir)) return false;
+
+  for (const entry of fs.readdirSync(cacheDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    if (entry.name.toLowerCase().includes('metaswarm')) return true;
+    if (hasMetaswarmPluginCache(path.join(cacheDir, entry.name))) return true;
+  }
+  return false;
+}
+
+function installCodexFallback(installDir, skillsDir) {
 
   if (fs.existsSync(installDir)) {
     console.log(`  Updating existing installation at ${installDir}...`);
@@ -70,7 +88,7 @@ function installCodex() {
     console.log(`  Cloning metaswarm to ${installDir}...`);
     mkdirp(path.dirname(installDir));
     try {
-      execSync(`git clone https://github.com/dsifry/metaswarm.git "${installDir}"`, { stdio: 'inherit' });
+      execSync(`git clone https://github.com/Cabbala/metaswarm.git "${installDir}"`, { stdio: 'inherit' });
       info('Cloned metaswarm');
     } catch (e) {
       warn(`Clone failed: ${e.message}`);
@@ -108,17 +126,38 @@ function installCodex() {
   console.log('  Next: In your project, run $setup');
 }
 
-function installGemini() {
-  console.log('\n  Installing for Gemini CLI...\n');
+function installCodex() {
+  console.log('\n  Installing for Codex CLI...\n');
+  const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
+  const installDir = path.join(codexHome, 'metaswarm');
+  const skillsDir = path.join(os.homedir(), '.agents', 'skills');
+  const cacheDir = path.join(codexHome, 'plugins', 'cache');
+
+  const fallback = (reason) => {
+    warn(reason);
+    console.log('  Falling back to clone + symlink installation...');
+    installCodexFallback(installDir, skillsDir);
+  };
+
+  if (!codexCommandExists()) {
+    fallback('Codex CLI is not on PATH');
+    return;
+  }
+
   try {
-    console.log('  Running: gemini extensions install https://github.com/dsifry/metaswarm.git');
-    execSync('gemini extensions install https://github.com/dsifry/metaswarm.git', { stdio: 'inherit' });
-    info('Gemini CLI extension installed');
-    console.log('  Next: In your project, run /metaswarm:setup');
+    console.log('  Running: codex plugin marketplace add Cabbala/metaswarm');
+    execSync('codex plugin marketplace add Cabbala/metaswarm', { stdio: 'inherit' });
+    console.log('  Running: codex plugin add metaswarm@metaswarm');
+    execSync('codex plugin add metaswarm@metaswarm', { stdio: 'inherit' });
+
+    if (!hasMetaswarmPluginCache(cacheDir)) {
+      throw new Error(`metaswarm plugin cache was not created at ${cacheDir}`);
+    }
+
+    info('Codex CLI plugin installed');
+    console.log('  Next: In your project, run $setup');
   } catch (e) {
-    warn(`Gemini CLI install failed: ${e.message}`);
-    console.log('  Try manually:');
-    console.log('    gemini extensions install https://github.com/dsifry/metaswarm.git');
+    fallback(`Codex plugin install failed: ${e.message || e}`);
   }
 }
 
@@ -132,7 +171,7 @@ function setupProject(platformFlag) {
 
   if (platformFlag === 'all') {
     // Explicit --all: target all platforms regardless of install status
-    targetPlatforms.push('claude', 'codex', 'gemini');
+    targetPlatforms.push('claude', 'codex');
   } else if (!platformFlag) {
     // No flag: auto-detect which are installed
     for (const [key, p] of Object.entries(platforms)) {
@@ -207,13 +246,11 @@ Usage:
 Init flags:
   --claude            Install for Claude Code only
   --codex             Install for Codex CLI only
-  --gemini            Install for Gemini CLI only
   (no flag)           Auto-detect installed CLIs and install for all
 
 Setup flags:
   --claude            Write CLAUDE.md only
   --codex             Write AGENTS.md only
-  --gemini            Write GEMINI.md only
   --all               Write instruction files for all platforms
   (no flag)           Auto-detect installed CLIs
 
@@ -235,7 +272,7 @@ async function initCommand(args) {
   console.log('');
 
   // Determine which platforms to install for
-  const explicit = flags.has('--claude') || flags.has('--codex') || flags.has('--gemini');
+  const explicit = flags.has('--claude') || flags.has('--codex');
 
   if (flags.has('--claude') || (!explicit && platforms.claude.installed)) {
     installClaude();
@@ -245,15 +282,11 @@ async function initCommand(args) {
     installCodex();
   }
 
-  if (flags.has('--gemini') || (!explicit && platforms.gemini.installed)) {
-    installGemini();
-  }
-
   if (!explicit) {
     const installed = Object.values(platforms).filter(p => p.installed);
     if (installed.length === 0) {
       console.log('\n  No supported CLI tools detected.');
-      console.log('  Install one of: claude, codex, gemini');
+      console.log('  Install one of: claude, codex');
       console.log('  Then re-run: npx metaswarm init\n');
     }
   }
@@ -289,7 +322,6 @@ if (cmd === 'init') {
   let platformFlag = null;
   if (flags.has('--claude')) platformFlag = 'claude';
   else if (flags.has('--codex')) platformFlag = 'codex';
-  else if (flags.has('--gemini')) platformFlag = 'gemini';
   else if (flags.has('--all')) platformFlag = 'all';
   setupProject(platformFlag);
 } else if (cmd === 'detect') {

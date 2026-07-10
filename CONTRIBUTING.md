@@ -24,13 +24,30 @@ Agent definitions live in `agents/`. Each agent is a Markdown file with:
 
 When contributing a new agent:
 - Place it in `agents/<name>-agent.md`
-- Add it to the agent roster in `ORCHESTRATION.md`
+- Add it to the current agent roster in `ORCHESTRATION.md`
 - Document it in `USAGE.md`
 - Keep it generic (no project-specific references)
 
 ### Adding Skills
 
 Skills are orchestration behaviors in `skills/<name>/SKILL.md`. A skill coordinates multiple agents or provides a reusable workflow pattern.
+
+### Changing Skill or Agent Prose
+
+Editing existing prose in `skills/`, `agents/`, or a gate — not just adding a new file — is a
+discipline change, not a wording tweak. It requires:
+
+1. Follow `guides/skill-authoring.md`: classify the failure (discipline vs. shaping) before
+   choosing a prohibition table or a positive recipe, and keep `description` fields to
+   trigger conditions only.
+2. Attach evidence: a RED/GREEN pressure-test walkthrough for behavior/discipline changes,
+   or a trigger-eval entry in `evals/trigger-evals.md` for routing/description changes. See
+   `docs/testing.md` for which kind applies and where the evidence goes.
+3. Doc-truth: any count, path, or roster claim in the changed prose must be verified against
+   the actual tree before merge — grep it, don't recall it.
+
+Skip step 2 only for changes with no behavioral or routing surface (typos, link fixes,
+formatting).
 
 ### Improving Rubrics
 
@@ -59,7 +76,7 @@ claude plugin add /path/to/metaswarm
 # Run /status to verify all 9 diagnostic checks pass
 ```
 
-If you're also contributing external tool adapters (Codex, Gemini), run the verification script:
+If you're also contributing external tool adapters (Codex or the enterprise/API-key Gemini adapter), run the verification script:
 
 ```bash
 bin/external-tools-verify.sh

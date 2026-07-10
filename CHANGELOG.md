@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased (refine/superpowers-v6-gpt56)
+
+### BREAKING
+- **Gemini CLI host-platform support removed.** Google discontinued the consumer Gemini CLI on 2026-06-18 (enterprise/Code Assist/API-key access continues). `gemini-extension.json`, `GEMINI.md` (and its templates), the generated Gemini command TOMLs, `installGemini`/`detectGemini`, the gemini session-hook branch, and the `tests/gemini` suite are gone. **Existing Gemini-host installs will not receive updates through the extension path.** The external-tools delegation adapter (`skills/external-tools/adapters/gemini.sh`) is KEPT for enterprise/API-key users — relabeled, sandboxed (no more `--yolo`; review-only when the binary lacks `--sandbox`), disabled by default in seeded configs, and removed from the default escalation order.
+- **Fork identity / self-marketplace.** This fork distributes as `Cabbala/metaswarm`, serving as its own marketplace: install via `claude plugin marketplace add Cabbala/metaswarm && claude plugin install metaswarm@metaswarm` (Codex: `codex plugin marketplace add Cabbala/metaswarm && codex plugin add metaswarm@metaswarm`). Users of the old `metaswarm-marketplace` source should re-add and reinstall (see README migration note).
+- **Legacy bd vocabulary removed.** All skills/agents/docs now target beads (bd) 1.0.5: bare `bd prime` (+ tracked `.beads/PRIME.md` override), `bd update --claim`, `--external-ref gh-N`, `bd create -t decision`, `bd admin compact`, explicit Dolt persistence — see `docs/bd-compatibility.md`. A CI grep-guard prevents re-drift.
+
+### Added
+- Functional GPT-5.6 tier routing in the Codex adapter (`--model`/`--effort` threaded into `codex exec`; terra=implement, sol=review, luna=small, spark=latency; ultra experimental behind `XT_ULTRA_OPTIN=1`), with sandbox hardening (workspace-write + network off by default, read-only reviews) and a fixed pre-commit base-SHA `verify_scope`.
+- Test-Result Acceptance Invariant (orchestrated-execution Phase 2): baseline-restored test-integrity surface countering both fabricated test claims and test tampering, with a fail-closed runnable check and profile-snapshot protection.
+- Vendored host-neutral dispatch contract (`guides/dispatch-contract.md`) distilling superpowers' strict-cost SDD (file handoffs, explicit model per dispatch, single consolidated fix dispatch, base/head review packages, compaction-proof ledger).
+- Codex hooks suppression guard (`"hooks": {}`) + manifest tests + AGENTS.md session-start parity; upstream-drift guard test for superpowers references; multi-language quality gates driven by `.metaswarm/project-profile.json` (`docs/project-profile-schema.md`).
+- Authoring discipline docs (`guides/skill-authoring.md`, `docs/testing.md`) and trigger evals (`evals/trigger-evals.md`).
+
+### Changed
+- All 18 agent personas rewritten to a tight contract style (8369 -> ~1600 lines): read-only + anti-sycophancy reviewer contracts, per-persona model tiers, no hardcoded SaaS stack; design-review gate consolidated to exactly 5 reviewers (UX-flow checks folded into the Designer); adversarial plan-review-gate is the binding plan review. `test-automator-agent` removed (never spawned). `agents/` is canonical and synced to `skills/start/agents/`.
+- design-review-gate now triggers on superpowers v6.1.1 output paths (`docs/superpowers/specs/*-design.md`, with the legacy path as fallback).
+- Skill frontmatter reduced to spec-conformant `name`+`description` (trigger conditions folded into descriptions; inert `auto_activate`/`triggers` removed).
+- `installCodex()` performs the documented marketplace two-step with clone+symlink as fallback; docs/counts/links truth-swept (18/14/16, beads moved to gastownhall, ORCHESTRATION.md real).
+
 ## 0.12.0
 
 ### Added

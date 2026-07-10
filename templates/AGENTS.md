@@ -1,8 +1,17 @@
 # Agent Instructions
 
-This project uses [metaswarm](https://github.com/dsifry/metaswarm), a multi-agent orchestration framework. It provides 18 specialized agents, a 9-phase development workflow, and quality gates that enforce TDD, coverage thresholds, and spec-driven development.
+This project uses [metaswarm](https://github.com/Cabbala/metaswarm), a multi-agent orchestration framework. It provides 18 specialized agents, a 9-phase development workflow, and quality gates that enforce TDD, coverage thresholds, and spec-driven development.
 
 ## How to Work in This Project
+
+### Session start (Codex has no session hook — do this yourself)
+
+1. **First step of EVERY session**: run `bd prime` to load project context (customize via the
+   tracked `.beads/PRIME.md` override).
+2. **After context compaction or interruption**: re-run `bd prime` — Codex has no automatic
+   re-priming path.
+3. **Skills check**: before starting any task, if there is even a small chance a metaswarm
+   skill applies, invoke it — do not proceed on instinct alone.
 
 ### Starting work
 
@@ -96,7 +105,7 @@ When a plan is produced:
 
 ## External Tools (Optional)
 
-If external AI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator can delegate implementation and review tasks to Codex CLI and Gemini CLI for cost savings and cross-model adversarial review.
+If external AI tools are configured (`.metaswarm/external-tools.yaml`), the orchestrator can delegate implementation and review tasks to Codex CLI and the enterprise/API-key-only Gemini adapter (consumer CLI discontinued 2026-06-18) for cross-model adversarial review.
 
 ## Guides
 

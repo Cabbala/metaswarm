@@ -17,7 +17,7 @@ This guide helps you set up BEADS (Bug/Enhancement Agent Delegation System) on y
 
 ```bash
 # Install the beads plugin from the Claude Code marketplace
-/plugin install beads    # from steveyegge/beads marketplace
+/plugin install beads    # from gastownhall/beads marketplace
 
 # Verify BEADS CLI is installed
 bd --version
@@ -175,14 +175,9 @@ For explicit priming outside the automatic hooks:
 # General priming
 bd prime
 
-# For recovery after context loss
-bd prime --work-type recovery
-
-# For implementation work
-bd prime --work-type implementation
-
-# For debugging
-bd prime --work-type debugging
+# Load project-defined context for recovery, implementation, or debugging.
+# Customize it with the tracked .beads/PRIME.md override.
+bd prime
 ```
 
 ### Common Workflows
@@ -197,7 +192,7 @@ bd ready
 bd update <task-id> --status in_progress
 
 # Prime your context
-npx tsx scripts/beads-prime.ts --work-type implementation --keywords "relevant" "keywords"
+bd prime
 ```
 
 #### 2. Create tasks from a GitHub issue
@@ -219,10 +214,10 @@ bd create --title "Write tests" --type task --parent <epic-id>
 bd close <task-id> --reason "Implementation complete"
 
 # Compact closed issues (semantic summarization)
-bd compact
+bd admin compact
 
 # Record architectural decisions
-bd decision "Chose X over Y because Z"
+bd create "Decision: Chose X over Y because Z" -t decision
 ```
 
 ---
@@ -255,10 +250,10 @@ scripts/
 
 ```bash
 # Install the beads plugin from Claude Code marketplace
-/plugin install beads    # from steveyegge/beads marketplace
+/plugin install beads    # from gastownhall/beads marketplace
 
 # Or install BEADS CLI directly
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
 ```
 
 ### Slack daemon won't connect
@@ -334,7 +329,7 @@ bd doctor                   # Health check
 
 ## Support
 
-- **BEADS CLI docs**: https://github.com/steveyegge/beads
+- **BEADS CLI docs**: https://github.com/gastownhall/beads
 
 ---
 

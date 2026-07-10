@@ -103,15 +103,6 @@ assert_json_valid "Output is valid JSON" "$output"
 assert_contains "Contains Codex setup nudge" "$output" '$setup'
 assert_contains "Contains Codex start nudge" "$output" '$start'
 
-# --- Test 1c: Gemini new project uses Gemini command names ---
-echo "Test 1c: Gemini new project command names"
-TEST_CWD="$TMPDIR_BASE/test1c"
-mkdir -p "$TEST_CWD"
-output=$(cd "$TEST_CWD" && extensionPath="$REPO_ROOT" bash "$HOOK_SCRIPT" 2>/dev/null || true)
-assert_json_valid "Output is valid JSON" "$output"
-assert_contains "Contains Gemini setup nudge" "$output" '/metaswarm:setup'
-assert_contains "Contains Gemini start nudge" "$output" '/metaswarm:start-task'
-
 # --- Test 2: Configured project (has .metaswarm/project-profile.json) ---
 echo "Test 2: Configured project"
 TEST_CWD="$TMPDIR_BASE/test2"

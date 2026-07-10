@@ -1,12 +1,12 @@
 # Installation
 
-metaswarm works with Claude Code, Gemini CLI, and Codex CLI. Install for one platform or all three.
+metaswarm works with Claude Code and Codex CLI. Install for either supported host platform.
 
 ## Claude Code (Plugin Marketplace)
 
 ```bash
-claude plugin marketplace add dsifry/metaswarm-marketplace
-claude plugin install metaswarm
+claude plugin marketplace add Cabbala/metaswarm
+claude plugin install metaswarm@metaswarm
 ```
 
 Then in Claude Code:
@@ -15,24 +15,11 @@ Then in Claude Code:
 /setup
 ```
 
-## Gemini CLI (Extension)
-
-```bash
-gemini extensions install https://github.com/dsifry/metaswarm.git
-```
-
-Then in Gemini CLI:
-
-```text
-/metaswarm:setup
-```
-
 ## Codex CLI (Plugin Marketplace)
 
 ```bash
-codex plugin marketplace add dsifry/metaswarm-marketplace
-codex
-# Then open /plugins, select the metaswarm marketplace, and install metaswarm.
+codex plugin marketplace add Cabbala/metaswarm
+codex plugin add metaswarm@metaswarm
 ```
 
 Then in Codex CLI:
@@ -45,7 +32,7 @@ Legacy fallback: if plugin marketplaces are unavailable in your Codex build, use
 
 ## Cross-Platform Installer
 
-Detect all installed CLIs and install metaswarm for each:
+Detect supported installed CLIs and install metaswarm for each:
 
 ```bash
 npx metaswarm init
@@ -56,7 +43,6 @@ Or target a specific platform:
 ```bash
 npx metaswarm init --claude
 npx metaswarm init --codex
-npx metaswarm init --gemini
 ```
 
 After installing, set up your project:
@@ -67,20 +53,20 @@ npx metaswarm setup
 
 ## Platform Comparison
 
-| Feature | Claude Code | Gemini CLI | Codex CLI |
-|---|---|---|---|
-| Install method | Plugin marketplace | `gemini extensions install` | Plugin marketplace |
-| Commands | `/start-task` | `/metaswarm:start-task` | `$start` |
-| Instruction file | `CLAUDE.md` | `GEMINI.md` | `AGENTS.md` |
-| Parallel agents | Full (`Task()`) | Experimental | Sequential only |
-| Setup command | `/setup` | `/metaswarm:setup` | `$setup` |
+| Feature | Claude Code | Codex CLI |
+|---|---|---|
+| Install method | Plugin marketplace | Plugin marketplace |
+| Commands | `/start-task` | `$start` |
+| Instruction file | `CLAUDE.md` | `AGENTS.md` |
+| Parallel agents | Full (`Task()`) | Sequential only |
+| Setup command | `/setup` | `$setup` |
 
 ## Prerequisites
 
-1. **One of**: Claude Code, Gemini CLI, or Codex CLI
+1. **One of**: Claude Code or Codex CLI
 2. **BEADS CLI** (`bd`) — Git-native issue tracking (recommended)
    ```bash
-   curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+   curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
    ```
 3. **GitHub CLI** (`gh`) — For PR automation (recommended)
    ```bash
@@ -97,10 +83,14 @@ metaswarm's skills reference external skills from the [superpowers](https://gith
 | Skill | Used By | Purpose |
 |---|---|---|
 | `superpowers:brainstorming` | Design Review Gate, Brainstorming Extension | Collaborative design ideation before implementation |
-| `superpowers:test-driven-development` | PR Shepherd, Coder Agent | RED-GREEN-REFACTOR implementation cycle |
+| `superpowers:executing-plans` | Execution-routing guidance | Batch execution in a separate session |
+| `superpowers:finishing-a-development-branch` | Execution-completion guidance | Wrap up an execution branch before handoff |
+| `superpowers:subagent-driven-development` | Execution-routing guidance | Task-by-task subagent implementation with review |
 | `superpowers:systematic-debugging` | PR Shepherd | Four-phase bug investigation framework |
+| `superpowers:test-driven-development` | PR Shepherd and completion guidance | RED-GREEN-REFACTOR implementation cycle |
+| `superpowers:using-git-worktrees` | Design Review Gate | Isolated workspace creation for parallel development |
+| `superpowers:verification-before-completion` | Completion guidance | Validate coverage and required checks before completion |
 | `superpowers:writing-plans` | Design Review Gate, Brainstorming Extension | Detailed implementation plan generation |
-| `superpowers:using-git-worktrees` | Design Review Gate | Isolated workspace creation for parallel dev |
 
 **Install superpowers** (follow their README and marketplace docs for current instructions):
 ```bash
@@ -110,18 +100,18 @@ claude plugin add obra/superpowers
 # Codex: install from the claude-plugins-official marketplace in /plugins
 ```
 
-**Without superpowers**: metaswarm still works — the core orchestration (agents, BEADS, review gates, rubrics) is self-contained. The superpowers references are in skill trigger chains and can be removed or replaced with your own equivalents.
+**Without superpowers**: metaswarm still works — the core orchestration (agents, BEADS, review gates, rubrics) is self-contained. The dispatch mechanics are vendored in [`guides/dispatch-contract.md`](guides/dispatch-contract.md) (W9), so the gates do not depend on superpowers. The references above are optional upstream trigger and handoff integrations that can be replaced with your own equivalents.
 
 **BEADS and GTG**: metaswarm does not auto-install runtime CLIs. Install `bd` for BEADS issue tracking and knowledge priming, and install `gtg` for consolidated PR readiness checks. The standalone Beads plugin is optional; metaswarm detects it and defers priming when present.
 
 ## Optional: External AI Tools
 
-metaswarm can delegate implementation and review tasks to **Codex CLI** (OpenAI) and **Gemini CLI** (Google) for cost savings and cross-model adversarial review. This is entirely optional — metaswarm works fine without any external tools.
+metaswarm can delegate implementation and review tasks to **Codex CLI** (OpenAI) and the **enterprise/API-key-only Gemini adapter** (consumer CLI discontinued 2026-06-18) for cross-model adversarial review. This is entirely optional — metaswarm works fine without external tools.
 
 **Quick setup:**
 
 ```bash
-npm i -g @openai/codex @google/gemini-cli
+npm i -g @openai/codex
 ```
 
 After installing, see [`templates/external-tools-setup.md`](templates/external-tools-setup.md) for the full configuration guide (authentication, model selection, budget controls, and routing options).
@@ -144,8 +134,8 @@ This is the most common upgrade path. Your project has metaswarm files in `.clau
 
 1. **Install the plugin:**
    ```bash
-   claude plugin marketplace add dsifry/metaswarm-marketplace
-   claude plugin install metaswarm
+   claude plugin marketplace add Cabbala/metaswarm
+   claude plugin install metaswarm@metaswarm
    ```
 
 2. **Run the migration** in Claude Code:
@@ -195,9 +185,9 @@ If you skip the manual migration, the session-start hook will detect the old npm
 
 This runs platform-aware diagnostic checks: plugin version, project setup, platform install state, command shims where applicable, legacy install detection, BEADS plugin, bd CLI, gtg CLI, external tools, coverage thresholds, and Node.js.
 
-## npm Package (Cross-Platform Installer)
+## npm Package (Platform Installer)
 
-The npm package (`npx metaswarm`) is now the cross-platform installer. It detects your installed CLIs and installs metaswarm for each.
+The npm package (`npx metaswarm`) detects supported installed host CLIs and installs metaswarm for each.
 
 ```bash
 npx metaswarm init          # Auto-detect and install for all CLIs

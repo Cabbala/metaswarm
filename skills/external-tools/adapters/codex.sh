@@ -3,13 +3,13 @@
 #
 # Commands:
 #   health     Preflight check: binary exists, version, auth status
-#   implement  Write code on a worktree branch via Codex full-auto mode
+#   implement  Write code on a worktree branch via a workspace-write sandbox
 #   review     Review code changes (read-only sandbox) against a rubric/spec
 #
 # Usage:
 #   codex.sh health
-#   codex.sh implement --worktree <path> --prompt-file <path> [--attempt N] [--timeout S] [--context-dir <dir>]
-#   codex.sh review   --worktree <path> --rubric-file <path> --spec-file <path> [--attempt N] [--timeout S]
+#   codex.sh implement --worktree <path> --prompt-file <path> [--model <slug>] [--effort <level>] [--allow-network]
+#   codex.sh review   --worktree <path> --rubric-file <path> --spec-file <path> [--model <slug>] [--effort <level>]
 
 set -euo pipefail
 
@@ -23,20 +23,49 @@ source "$(cd "$(dirname "$0")" && pwd)/_common.sh"
 # ---------------------------------------------------------------------------
 TOOL_NAME="codex"
 TOOL_CMD="codex"
-DEFAULT_MODEL="gpt-5.3-codex"
+DEFAULT_EFFORT="xhigh"
+REVIEW_DEFAULT_MODEL="gpt-5.6-sol"
+
+# The implementation model is intentionally distinct from the review default.
+DEFAULT_MODEL="gpt-5.6-terra"
+
+validate_ultra_effort() {
+  local model="${1:?validate_ultra_effort: model required}"
+  local effort="${2:?validate_ultra_effort: effort required}"
+
+  if [[ "$effort" == "ultra" ]] && { [[ "$model" != "gpt-5.6-sol" ]] || [[ "${XT_ULTRA_OPTIN:-}" != "1" ]]; }; then
+    printf 'Error: ultra reasoning effort is experimental, Sol-only (MODEL=gpt-5.6-sol), and requires XT_ULTRA_OPTIN=1 (~2-3x tokens; XT_TIMEOUT is the hard backstop).\n' >&2
+    return 2
+  fi
+}
+
+codex_error_code() {
+  local stderr_file="${1:-}"
+  local stdout_file="${2:-}"
+  local pattern='model.*(not[[:space:]_-]*found|unavailable|does[[:space:]_-]*not[[:space:]_-]*exist|unsupported)|unknown[[:space:]_-]*model|no[[:space:]_-]*such[[:space:]_-]*model'
+
+  if grep -Eqi "$pattern" "$stderr_file" "$stdout_file" 2>/dev/null; then
+    printf 'model_unavailable'
+  else
+    printf 'tool_error'
+  fi
+}
 
 # ===========================================================================
 # health — Preflight check
 # ===========================================================================
 cmd_health() {
+  parse_args "$@"
+
   local status="ready"
   local version="unknown"
   local auth_valid=false
+  local model="${MODEL:-$DEFAULT_MODEL}"
 
   # Check if codex binary exists
   if ! command -v "$TOOL_CMD" >/dev/null 2>&1; then
     printf '{"tool":"%s","status":"unavailable","version":"not_installed","auth_valid":false,"model":"%s"}\n' \
-      "$TOOL_NAME" "$DEFAULT_MODEL"
+      "$TOOL_NAME" "$model"
     return 0
   fi
 
@@ -63,11 +92,11 @@ cmd_health() {
       --arg status "$status" \
       --arg version "$version" \
       --argjson auth_valid "$auth_valid" \
-      --arg model "$DEFAULT_MODEL" \
+      --arg model "$model" \
       '{tool: $tool, status: $status, version: $version, auth_valid: $auth_valid, model: $model}'
   else
     printf '{"tool":"%s","status":"%s","version":"%s","auth_valid":%s,"model":"%s"}\n' \
-      "$TOOL_NAME" "$status" "$version" "$auth_valid" "$DEFAULT_MODEL"
+      "$TOOL_NAME" "$status" "$version" "$auth_valid" "$model"
   fi
 }
 
@@ -76,6 +105,10 @@ cmd_health() {
 # ===========================================================================
 cmd_implement() {
   parse_args "$@"
+  MODEL="${MODEL:-$DEFAULT_MODEL}"
+  EFFORT="${EFFORT:-$DEFAULT_EFFORT}"
+
+  validate_ultra_effort "$MODEL" "$EFFORT" || return $?
 
   # Validate required arguments
   if [[ -z "$XT_WORKTREE" ]]; then
@@ -95,6 +128,9 @@ cmd_implement() {
     return 1
   fi
 
+  local base_sha
+  base_sha="$(git -C "$XT_WORKTREE" rev-parse HEAD)"
+
   # Create secure tmp dir for capturing output
   local tmp_dir
   tmp_dir="$(create_secure_tmp)"
@@ -111,13 +147,23 @@ cmd_implement() {
 
   # Invoke codex with minimal environment
   local exit_code=0
+  local -a codex_args=(
+    exec
+    -c "model=${MODEL}"
+    -c "model_reasoning_effort=${EFFORT}"
+    --sandbox workspace-write
+  )
+  if [[ "$XT_ALLOW_NETWORK" != "1" ]]; then
+    codex_args+=(-c "sandbox_workspace_write.network_access=false")
+  fi
+  codex_args+=(--json -C "$XT_WORKTREE" "$prompt_content")
   safe_invoke "$XT_TIMEOUT" "$stdout_file" "$stderr_file" \
     env -i \
       HOME="$HOME" \
       PATH="$PATH" \
       OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
       CODEX_API_KEY="${CODEX_API_KEY:-}" \
-    "$TOOL_CMD" exec --full-auto --json -C "$XT_WORKTREE" "$prompt_content" \
+    "$TOOL_CMD" "${codex_args[@]}" \
     || exit_code=$?
 
   # Calculate duration
@@ -127,29 +173,32 @@ cmd_implement() {
 
   # Save raw output to LOG_DIR
   mkdir -p "$LOG_DIR"
+  chmod 700 "$LOG_DIR"
   local session_id
   session_id="${TOOL_NAME}-implement-$(date +%Y%m%dT%H%M%S)-$$"
   local raw_log_file="${LOG_DIR}/${session_id}.jsonl"
   if [[ -f "$stdout_file" ]]; then
     cp "$stdout_file" "$raw_log_file"
+    chmod 600 "$raw_log_file"
   fi
 
   # Handle error
   if [[ "$exit_code" -ne 0 ]]; then
-    local error_type
-    error_type="$(classify_error "$exit_code" "$stderr_file")"
+    local error_code
+    error_code="$(codex_error_code "$stderr_file" "$stdout_file")"
 
     # Log and emit error
     local error_json
     error_json="$(emit_error \
       "$TOOL_NAME" \
       "implement" \
-      "$DEFAULT_MODEL" \
+      "$MODEL" \
       "$XT_ATTEMPT" \
       "$exit_code" \
       "$stderr_file" \
       "$duration" \
-      "$raw_log_file")"
+      "$raw_log_file" \
+      "$error_code")"
     log_session "$error_json"
     printf '%s\n' "$error_json"
 
@@ -158,31 +207,37 @@ cmd_implement() {
     return 1
   fi
 
-  # Success path: stage and commit all changes in worktree
+  # Verify scope before staging so a rejected file cannot enter a commit.
   local branch=""
   local git_sha=""
+  local scope_error_type=""
+  local scope_status=0
 
   if [[ -d "$XT_WORKTREE" ]]; then
-    # Stage all changes
-    git -C "$XT_WORKTREE" add -A 2>/dev/null || true
-
-    # Check if there are changes to commit
-    if ! git -C "$XT_WORKTREE" diff --cached --quiet 2>/dev/null; then
-      git -C "$XT_WORKTREE" commit -m "feat: codex implement (attempt ${XT_ATTEMPT})" \
-        --author="Codex CLI <codex@openai.com>" \
-        >/dev/null 2>&1 || true
+    # Verify scope against the pre-invocation commit, including untracked files.
+    if [[ -n "$XT_CONTEXT_DIR" ]]; then
+      verify_scope "$XT_WORKTREE" "$XT_CONTEXT_DIR" "$base_sha" || scope_status=$?
+      if [[ "$scope_status" -eq 1 ]]; then
+        scope_error_type="scope_violation"
+      elif [[ "$scope_status" -ne 0 ]]; then
+        printf 'Error: scope enforcement failed; changes were not staged.\n' >&2
+        rm -rf "$tmp_dir"
+        return "$scope_status"
+      fi
     fi
 
-    # Verify scope (revert out-of-scope changes if context_dir is set)
-    if [[ -n "$XT_CONTEXT_DIR" ]]; then
-      if ! verify_scope "$XT_WORKTREE" "$XT_CONTEXT_DIR"; then
-        # Re-commit after reverting out-of-scope files
-        git -C "$XT_WORKTREE" add -A 2>/dev/null || true
-        if ! git -C "$XT_WORKTREE" diff --cached --quiet 2>/dev/null; then
-          git -C "$XT_WORKTREE" commit -m "fix: revert out-of-scope changes" \
-            --author="Codex CLI <codex@openai.com>" \
-            >/dev/null 2>&1 || true
-        fi
+    # Stage and commit only the scope-checked worktree changes.
+    if ! git -C "$XT_WORKTREE" add -A; then
+      printf 'Error: failed to stage scope-checked changes.\n' >&2
+      rm -rf "$tmp_dir"
+      return 1
+    fi
+    if ! git -C "$XT_WORKTREE" diff --cached --quiet 2>/dev/null; then
+      if ! git -C "$XT_WORKTREE" commit -m "feat: codex implement (attempt ${XT_ATTEMPT})" \
+        --author="Codex CLI <codex@openai.com>"; then
+        printf 'Error: failed to commit scope-checked changes.\n' >&2
+        rm -rf "$tmp_dir"
+        return 1
       fi
     fi
 
@@ -206,7 +261,7 @@ cmd_implement() {
   result_json="$(emit_json \
     "$TOOL_NAME" \
     "implement" \
-    "$DEFAULT_MODEL" \
+    "$MODEL" \
     "$XT_ATTEMPT" \
     "$exit_code" \
     "$branch" \
@@ -215,7 +270,8 @@ cmd_implement() {
     "$diff_stats_json" \
     "$duration" \
     "$cost_json" \
-    "$raw_log_file")"
+    "$raw_log_file" \
+    "$scope_error_type")"
 
   log_session "$result_json"
   printf '%s\n' "$result_json"
@@ -229,6 +285,10 @@ cmd_implement() {
 # ===========================================================================
 cmd_review() {
   parse_args "$@"
+  MODEL="${MODEL:-$REVIEW_DEFAULT_MODEL}"
+  EFFORT="${EFFORT:-$DEFAULT_EFFORT}"
+
+  validate_ultra_effort "$MODEL" "$EFFORT" || return $?
 
   # Validate required arguments
   if [[ -z "$XT_WORKTREE" ]]; then
@@ -314,7 +374,11 @@ PROMPT_FOOTER
       PATH="$PATH" \
       OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
       CODEX_API_KEY="${CODEX_API_KEY:-}" \
-    "$TOOL_CMD" exec --sandbox read-only --json -C "$XT_WORKTREE" "$review_prompt" \
+    "$TOOL_CMD" exec \
+      -c "model=${MODEL}" \
+      -c "model_reasoning_effort=${EFFORT}" \
+      --sandbox read-only \
+      --json -C "$XT_WORKTREE" "$review_prompt" \
     || exit_code=$?
 
   # Calculate duration
@@ -324,25 +388,30 @@ PROMPT_FOOTER
 
   # Save raw output to LOG_DIR
   mkdir -p "$LOG_DIR"
+  chmod 700 "$LOG_DIR"
   local session_id
   session_id="${TOOL_NAME}-review-$(date +%Y%m%dT%H%M%S)-$$"
   local raw_log_file="${LOG_DIR}/${session_id}.jsonl"
   if [[ -f "$stdout_file" ]]; then
     cp "$stdout_file" "$raw_log_file"
+    chmod 600 "$raw_log_file"
   fi
 
   # Handle error
   if [[ "$exit_code" -ne 0 ]]; then
+    local error_code
+    error_code="$(codex_error_code "$stderr_file" "$stdout_file")"
     local error_json
     error_json="$(emit_error \
       "$TOOL_NAME" \
       "review" \
-      "$DEFAULT_MODEL" \
+      "$MODEL" \
       "$XT_ATTEMPT" \
       "$exit_code" \
       "$stderr_file" \
       "$duration" \
-      "$raw_log_file")"
+      "$raw_log_file" \
+      "$error_code")"
     log_session "$error_json"
     printf '%s\n' "$error_json"
 
@@ -368,7 +437,7 @@ PROMPT_FOOTER
   result_json="$(emit_json \
     "$TOOL_NAME" \
     "review" \
-    "$DEFAULT_MODEL" \
+    "$MODEL" \
     "$XT_ATTEMPT" \
     "$exit_code" \
     "$branch" \
@@ -394,7 +463,7 @@ shift || true
 
 case "$command" in
   health)
-    cmd_health
+    cmd_health "$@"
     ;;
   implement)
     cmd_implement "$@"
@@ -408,7 +477,7 @@ Usage: $(basename "$0") <command> [options]
 
 Commands:
   health      Check if Codex CLI is installed, authenticated, and ready
-  implement   Run Codex in full-auto mode on a worktree to implement changes
+  implement   Run Codex in a workspace-write sandbox to implement changes
   review      Run Codex in read-only sandbox to review code changes
 
 Options (implement):
@@ -417,6 +486,9 @@ Options (implement):
   --attempt <N>           Attempt number (default: 1)
   --timeout <seconds>     Timeout in seconds (default: 300)
   --context-dir <dir>     Restrict changes to this directory
+  --model <slug>          Codex model (default: gpt-5.6-terra)
+  --effort <level>        Model reasoning effort (default: xhigh)
+  --allow-network         Allow network access in the workspace-write sandbox
 
 Options (review):
   --worktree <path>       Path to the git worktree (required)
@@ -424,10 +496,16 @@ Options (review):
   --spec-file <path>      Path to the specification file (required)
   --attempt <N>           Attempt number (default: 1)
   --timeout <seconds>     Timeout in seconds (default: 300)
+  --model <slug>          Codex model (default: gpt-5.6-sol)
+  --effort <level>        Model reasoning effort (default: xhigh)
 
 Environment variables:
   OPENAI_API_KEY          OpenAI API key for authentication
   CODEX_API_KEY           Codex-specific API key (alternative)
+  XT_MODEL                Default model when --model is omitted
+  XT_EFFORT               Default reasoning effort when --effort is omitted
+  XT_ALLOW_NETWORK=1      Allow network access for implement runs
+  XT_ULTRA_OPTIN=1        Required with --effort ultra (experimental Sol-only mode)
 USAGE
     exit 1
     ;;
